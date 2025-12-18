@@ -1,5 +1,5 @@
 import type { Document } from "mongoose";
-import { UserModel } from "../../model/User/user.model";
+import { UserModel } from "../../model/user.model";
 import type { IUser } from "../../types/user/IUser";
 import { BaseRepo } from "./base.repository";
 
@@ -48,4 +48,6 @@ export class UserRepo extends BaseRepo<Document & IUser> {
 			throw new Error("Failed to update user password");
 		}
 	}
+
+
 }

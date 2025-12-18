@@ -5,6 +5,13 @@ import {  errorMiddleware } from "./middlewares/ErrorHandling";
 //import { AuthGuard } from './middlewares/authGuard';
 import adminRouter from "./route/adminRouter";
 import authRouter from "./route/authRouter";
+import { checkBlocked } from "./middlewares/checkBlocked";
+import { AuthService } from "./services/Implementation/AuthServices";
+import { UserRepo } from "./repositories/Implementation/user.repository";
+import fileRouter from "./route/fileRouter";
+
+// const userRepo = new UserRepo()
+// const authService = new AuthService(userRepo) 
 
 const app = express();
 
@@ -13,22 +20,17 @@ app.use(
 		origin: "http://localhost:3000",
 		credentials: true,
 	}),
-);
-app.use(express.json({ limit: "10mb" }));
-app.use(cookieParser());
-//app.use(AuthGuard)
-app.use(errorMiddleware);
+)
+app.use(express.json({ limit: "10mb" }))
+app.use(cookieParser())
+app.use(errorMiddleware)
 
-// app.use((err: any, req: Request, res: Response, next: NextFunction): void => {
-//   console.error('🔥 Error:', err);
 
-//   res.status(500).json({
-//     message: 'Internal Server Error',
-//     error: err.message || 'Unknown error'
-//   });
-// });
 
-app.use("/api/auth", authRouter);
-app.use("/api/admin", adminRouter);
+app.use("/api/auth", authRouter)
+app.use("/api/files",fileRouter)
+//app.use(checkBlocked(authService))
+app.use("/api/admin", adminRouter)
+
 
 export { app };

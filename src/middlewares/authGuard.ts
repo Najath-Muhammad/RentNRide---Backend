@@ -6,7 +6,6 @@ export const AuthGuard =
 	(req: Request, res: Response, next: NextFunction) => {
 		try {
 			const token = req.cookies?.accessToken;
-
 			if (!token) {
 				return res.status(401).json({
 					success: false,

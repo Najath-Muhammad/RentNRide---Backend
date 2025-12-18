@@ -3,6 +3,7 @@ import type { IUser } from "../../types/user/IUser";
 import type { IBaseRepo } from "./base.interface";
 
 export interface IUserRepository extends IBaseRepo<IUser & Document> {
+	findByName(name:string):Promise<IUser | null>;
 	findAllUsers(
 		filters: any,
 		page: number,

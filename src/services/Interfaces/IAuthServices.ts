@@ -48,4 +48,5 @@ export interface IAuthService {
 		refreshToken?: string;
 	}>;
 	refreshToken(token: string): Promise<{ accessToken: string }>;
+	checkBlocked(email:string):Promise<{success:boolean,message:string}>
 }

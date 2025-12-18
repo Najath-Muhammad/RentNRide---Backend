@@ -25,7 +25,7 @@ export class AuthService implements IAuthService {
 			if (existingUser) {
 				throw new Error("User already exists");
 			}
-
+			
 			const userData = {
 				name: user.name,
 				email: user.email,
@@ -186,7 +186,6 @@ export class AuthService implements IAuthService {
 			};
 		} catch (error) {
 			console.error("Reset Password Service Error:", error);
-
 			return {
 				success: false,
 				message: "Password reset failed. Please try again.",
@@ -503,4 +502,23 @@ export class AuthService implements IAuthService {
 			throw error;
 		}
 	}
+
+	async checkBlocked(email:string):Promise<{success:boolean,message:string}>{
+		try {
+			const user = await this._userRepo.findByEmail(email)
+			
+			if (!user) {
+				return { success: false, message: 'user not found' };
+			}
+			if(user.isBlocked){
+				return{success:false,message:'user is blocked'} 
+			}
+			return {success:true,message:'user is not blocked'}
+		} catch (error) {
+			console.log(error)
+			return {success:false,message:'something went wrong'}
+		}
+	}
+
+
 }
