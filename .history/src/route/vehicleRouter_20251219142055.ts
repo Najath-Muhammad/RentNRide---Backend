@@ -1,0 +1,15 @@
+import {Router} from "express";
+import { VehicleController } from "../controller/Implementation/VehicleController";
+import { VehicleService } from "../services/Implementation/VehicleService";
+import { VehicleRepo } from "../repositories/Implementation/vehicle.repository";
+
+
+const vehicleRouter = Router()
+
+const vehicleRepo = new VehicleRepo()
+const vehicleService = new VehicleService(vehicleRepo)
+const vehicleController = new VehicleController(vehicleService)
+
+vehicleRouter.post('/createcreateVehicleVehicle',vehicleController.createVehicle.bind(vehicleController))
+
+export default vehicleRouter;

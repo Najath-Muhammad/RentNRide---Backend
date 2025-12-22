@@ -1,16 +1,14 @@
-import { generateUploadUrl } from '../../utils/s3';
-import { IFileService } from '../Interfaces/IFileService';
+import { generateUploadUrl } from "../../utils/s3";
+import { IFileService } from "../Interfaces/IFileService";
 
-export class FileService implements IFileService{
-
-    async generateUploadUrl(fileName:string,fileType:string):Promise<{success:boolean,uploadUrl?:string}>{
+export class FileService implements IFileService {
+    async generateUploadUrl(fileName: string, fileType: string): Promise<{ success: boolean; uploadUrl?: string; publicUrl?: string }> {
         try {
-            const uploadUrl = await generateUploadUrl(fileName, fileType);
-            return {success:true,uploadUrl:uploadUrl}
+            const { uploadUrl, publicUrl } = await generateUploadUrl(fileName, fileType);
+            return { success: true, uploadUrl, publicUrl };
         } catch (error) {
-            console.log(error)
-            return {success:false}
+            console.error("S3 upload URL error:", error);
+            return { success: false };
         }
     }
-    
 }

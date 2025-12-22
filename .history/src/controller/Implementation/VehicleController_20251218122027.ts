@@ -1,0 +1,19 @@
+import { Request, Response, NextFunction } from "express";
+import { IVehicleController } from "../interfaces/IVehicleController";
+
+
+
+
+export class VehicleController implements IVehicleController{
+
+    async createVehicle(req: Request, res: Response, next: NextFunction): Promise<Response> {
+        try {
+            
+            const VehicleData = req.body;
+            const response = 
+
+        } catch (error) {
+            
+        }
+    }
+}

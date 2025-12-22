@@ -7,22 +7,22 @@ export class FileController implements IFileController{
 
   constructor(private _fileService:IFileService) {}
 
-  async generateUploadUrl(req: Request, res: Response):Promise<void> {
-
+  async generateUploadUrl(req: Request, res: Response):Promise<Response> {
     try {
-
       const { fileName, fileType } = req.body;
+  
       if (!fileName || !fileType) {
-        res.status(HttpStatus.BAD_REQUEST).json({ error: 'fileName and fileType required' })
+        return res.status(HttpStatus.BAD_REQUEST).json({ error: 'fileName and fileType required' });
       }
-      const response = await this._fileService.generateUploadUrl(fileName, fileType)
-      const uploadUrl = response.uploadUrl
-      res.json({ uploadUrl  })
 
+      const response = await this._fileService.generateUploadUrl(fileName, fileType);
+      return res.json({
+          uploadUrl: response.uploadUrl, 
+          publicUrl: response.publicUrl 
+      });
     } catch (error) {
       console.error('Generate upload URL error:', error);
-      res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Failed to generate upload URL' });
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: 'Failed to generate upload URL' });
     }
-
   }
 }        

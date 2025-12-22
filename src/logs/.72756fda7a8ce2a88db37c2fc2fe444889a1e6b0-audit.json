@@ -14,6 +14,26 @@
             "date": 1765868753760,
             "name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2025-12-16.log",
             "hash": "6066b51a2c1ff4406472326f810c22da928afef27eaedc9dc3ac7e36ffcb6099"
+        },
+        {
+            "date": 1766063666509,
+            "name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2025-12-18.log",
+            "hash": "8ee5bb4706965f8882fb54ff4c191019d6faa6bc160bcaa70037c07be3b040b3"
+        },
+        {
+            "date": 1766115123347,
+            "name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2025-12-19.log",
+            "hash": "5efd7ce7cb9275d751133baee0854e851dc3c9b63651751bfdbdf0a61c887b39"
+        },
+        {
+            "date": 1766208143560,
+            "name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2025-12-20.log",
+            "hash": "ad723fd8d2aa2c3d63ebd6296de621f9548800054ff9c97cdeb692063f57e31a"
+        },
+        {
+            "date": 1766306852306,
+            "name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2025-12-21.log",
+            "hash": "3270c9861d804a8dced5b83282dc8b7675a2b74fb9fc08b681bec88333a3079b"
         }
     ],
     "hashType": "sha256"
