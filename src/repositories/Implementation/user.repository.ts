@@ -1,4 +1,4 @@
-import type { Document } from "mongoose";
+import type { Document, FilterQuery } from "mongoose";
 import { UserModel } from "../../model/user.model";
 import type { IUser } from "../../types/user/IUser";
 import { BaseRepo } from "./base.repository";
@@ -8,7 +8,7 @@ export class UserRepo extends BaseRepo<Document & IUser> {
 		super(UserModel);
 	}
 
-	async findAllUsers(filters: any, page: number, limit: number) {
+	async findAllUsers(filters: FilterQuery<IUser>, page: number, limit: number) {
 		const skip = (page - 1) * limit;
 
 		const data = await this.model
@@ -49,5 +49,7 @@ export class UserRepo extends BaseRepo<Document & IUser> {
 		}
 	}
 
-
+	async findByIdWithPassword(id: string): Promise<(IUser & Document) | null> {
+		return await this.model.findById(id).select("+password");
+	}
 }

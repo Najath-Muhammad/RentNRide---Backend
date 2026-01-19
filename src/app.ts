@@ -1,18 +1,19 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
-import {  errorMiddleware } from "./middlewares/ErrorHandling";
+import { errorMiddleware } from "./middlewares/ErrorHandling";
 //import { AuthGuard } from './middlewares/authGuard';
-import adminRouter from "./route/adminRouter";
-import authRouter from "./route/authRouter";
-import { checkBlocked } from "./middlewares/checkBlocked";
-import { AuthService } from "./services/Implementation/AuthServices";
-import { UserRepo } from "./repositories/Implementation/user.repository";
-import fileRouter from "./route/fileRouter";
-import vehicleRouter from "./route/vehicleRouter";
+import adminRouter from "./route/admin.routes";
+import authRouter from "./route/auth.routes";
+import fileRouter from "./route/file.routes";
+import vehicleRouter from "./route/vehicle.routes";
 
 // const userRepo = new UserRepo()
-// const authService = new AuthService(userRepo) 
+// const authService = new AuthService(userRepo)
+
+import { ROUTES } from "./constants/Routes/routeConstants";
+import bookingRouter from "./route/booking.routes";
+import userRouter from "./route/user.routes";
 
 const app = express();
 
@@ -21,18 +22,17 @@ app.use(
 		origin: "http://localhost:3000",
 		credentials: true,
 	}),
-)
-app.use(express.json({ limit: "10mb" }))
-app.use(cookieParser())
-app.use(errorMiddleware)
+);
+app.use(express.json({ limit: "10mb" }));
+app.use(cookieParser());
+app.use(errorMiddleware);
 
-
-
-app.use("/api/auth", authRouter)
-app.use("/api/files",fileRouter)
-app.use("/api/vehicles",vehicleRouter)
+app.use(ROUTES.AUTH.BASE, authRouter);
+app.use(ROUTES.FILE.BASE, fileRouter);
+app.use(ROUTES.VEHICLE.BASE, vehicleRouter);
+app.use('/api/bookings',bookingRouter)
+app.use('/api/user',userRouter)
 //app.use(checkBlocked(authService))
-app.use("/api/admin", adminRouter)
-
+app.use(ROUTES.ADMIN.BASE, adminRouter);
 
 export { app };

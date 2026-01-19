@@ -1,0 +1,97 @@
+import { IBookingRepo } from '../../repositories/interfaces/booking.interface';
+import { IVehicleRepository } from '../../repositories/interfaces/vehicle.interface';
+import type { IBookingService } from '../Interfaces/booking.interface.service';
+import type { CreateBookingInput, IBooking } from '../../types/booking/booking.types';
+import { Types } from 'mongoose';
+import { generateBookingId } from '../../utils/generate.bookinId';
+
+export class BookingService implements IBookingService {
+  constructor(private _vehicleRepo: IVehicleRepository,private _bookingRepo: IBookingRepo) {}
+  
+  async getBookingById(bookingId: string,requesterId: string | Types.ObjectId,role: 'user' | 'owner' | 'admin'): Promise<IBooking | null> {
+    try {
+        const booking = await this._bookingRepo.findById(bookingId);
+        if (!booking) return null;
+        if (role === 'admin') return booking;
+        if (role === 'user' && booking.userId.toString() === requesterId.toString()) return booking;
+        if (role === 'owner' && booking.ownerId.toString() === requesterId.toString()) return booking;
+        return null;
+    } catch (error) {
+        console.error("Error in getBookingById:", error);
+        throw error;
+    }
+  }
+
+  async getUserBookings(userId: string | Types.ObjectId,page: number = 1,limit: number = 10,status?: string): Promise<{data: IBooking[];total: number;page: number;limit: number;totalPages: number;}> {
+    try {
+        return await this._bookingRepo.findBookingsByUser(userId,page,limit,status as IBooking["bookingStatus"]);
+    } catch (error) {
+        console.error("Error in getUserBookings:", error);
+        throw error;
+    }
+  }
+
+  async createBooking(userId: string | Types.ObjectId,input: CreateBookingInput): Promise<IBooking> {
+    try {
+        const { vehicleId, startDate, endDate, withFuel = false } = input;
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        throw new Error('Invalid date format');
+        }
+        if (start >= end) {
+        throw new Error('End date must be after start date');
+        }
+        if (start < new Date()) {
+        throw new Error('Cannot book in the past');
+        }
+        const vehicle = await this._vehicleRepo.findById(vehicleId);
+        if (!vehicle) {
+        throw new Error('Vehicle not found');
+        }
+        if (!vehicle.isApproved || !vehicle.isActive) {
+        throw new Error('Vehicle is not available for booking');
+        }
+        const overlapping = await this._bookingRepo.findActiveBookingsForVehicle(
+        vehicleId,
+        start,
+        end
+        );
+
+        if (overlapping.length > 0) {
+        throw new Error('Vehicle is not available for the selected dates');
+        }
+        const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        const pricePerDay = vehicle.pricePerDay || 0
+        const totalAmount = pricePerDay * days;
+        const advancePaid = Math.round(totalAmount * 0.2)
+
+        const bookingData: Partial<IBooking> = {
+        bookingId: await generateBookingId.call(this),
+        vehicleId: typeof vehicleId === 'string' ? new Types.ObjectId(vehicleId) : vehicleId,
+        userId: typeof userId === 'string' ? new Types.ObjectId(userId) : userId,
+        ownerId: vehicle.ownerId,
+        startDate: start,
+        endDate: end,
+        withFuel,
+        pricePerDay,
+        totalAmount,
+        advancePaid,
+        paymentStatus: 'pending',
+        bookingStatus: 'pending',
+        tracking: { isEnabled: false },
+        };
+
+        const newBooking = await this._bookingRepo.create(bookingData);
+
+
+        return newBooking;
+    } catch (error) {
+        console.error("Error in createBooking:", error);
+        throw error;
+    }
+  }
+
+}

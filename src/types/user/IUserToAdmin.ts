@@ -1,12 +1,10 @@
-import mongoose, { type Types } from "mongoose";
+import type { Types } from "mongoose";
 
 export interface IUserToAdmin {
-	id: Types.ObjectId;
+	_id: Types.ObjectId;
 	name: string;
 	email: string;
 	phone: number;
+	role: string;
 	status: string;
-	createdAt: Date;
-	updatedAt: Date;
-	isBlocked: boolean;
 }

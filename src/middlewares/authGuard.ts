@@ -19,6 +19,7 @@ export const AuthGuard =
 				email: string;
 				userId: string;
 				role: string;
+				name: string;
 			};
 
 			//console.log("verify", verify);

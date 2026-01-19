@@ -12,4 +12,5 @@ export interface IBaseRepo<T extends Document> {
 	): Promise<T | null>;
 	deleteById(id: string | mongoose.Types.ObjectId): Promise<void>;
 	deleteByFilter(filter: FilterQuery<T>): Promise<void>;
+	countDocuments(filter: FilterQuery<T>): Promise<number>;
 }

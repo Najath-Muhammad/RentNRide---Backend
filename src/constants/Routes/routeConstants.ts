@@ -26,5 +26,29 @@ export const ROUTES = {
 		BLOCK_USER: "/users/:userId/block",
 		UNBLOCK_USER: "/users/:userId/unblock",
 		DELETE_USER: "/users/delete/:userId",
+
+		// Vehicle Management
+		GET_VEHICLES: "/vehicles",
+		GET_VEHICLE_STATS: "/vehicles/stats",
+		APPROVE_VEHICLE: "/vehicles/:id/approve",
+		BLOCK_VEHICLE: "/vehicles/:id/block",
+		UNBLOCK_VEHICLE: "/vehicles/:id/unblock",
+		GET_VEHICLE_BY_ID: "/vehicles/:id",
+		REJECT_VEHICLE: "/vehicles/:id/reject",
+	},
+	VEHICLE: {
+		BASE: "/api/vehicles",
+
+		CREATE_VEHICLE: "/createVehicle",
+		MY_VEHICLES: "/my-vehicles",
+		GET_PUBLIC_VEHICLES: "/",
+		GET_VEHICLE_BY_ID: "/:id",
+		UPDATE_VEHICLE: "/:id",
+		DELETE_VEHICLE: "/:id",
+	},
+	FILE: {
+		BASE: "/api/files",
+
+		GENERATE_UPLOAD_URL: "/generate-upload-url",
 	},
 };

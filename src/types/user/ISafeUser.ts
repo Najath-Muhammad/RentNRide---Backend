@@ -1,5 +1,4 @@
 import type mongoose from "mongoose";
-import { Document } from "mongoose";
 
 export interface ISafeUser {
 	_id: mongoose.Types.ObjectId;

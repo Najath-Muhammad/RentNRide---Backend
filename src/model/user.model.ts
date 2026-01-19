@@ -7,8 +7,9 @@ const UserSchema = new Schema<IUser>(
 		email: { type: String, required: true, unique: true },
 		password: { type: String, required: true },
 		phone: { type: Number },
+		profilePhoto: { type: String },
 		googleId: { type: String },
-		role: { type: String, enum: ["admin", "user"], default: "user" },
+		role: { type: String, enum: ["admin", "user", "premium"], default: "user" },
 		address: { type: Schema.Types.ObjectId, ref: "Address" },
 		subscription: { type: Schema.Types.ObjectId, ref: "Subscription" },
 		wallet: { type: Schema.Types.ObjectId, ref: "Wallet" },
@@ -20,6 +21,7 @@ const UserSchema = new Schema<IUser>(
 		notifications: { type: Schema.Types.ObjectId, ref: "Notification" },
 		status: { type: String, default: "active" },
 		isBlocked: { type: Boolean, default: false },
+		premiumExpiresAt: { type: Date },
 	},
 	{ timestamps: true },
 );

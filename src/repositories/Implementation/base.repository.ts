@@ -1,5 +1,5 @@
 import type mongoose from "mongoose";
-import type { Document, FilterQuery, Model, UpdateQuery,HydratedDocument } from "mongoose";
+import type { Document, FilterQuery, Model, UpdateQuery } from "mongoose";
 import type { IBaseRepo } from "../interfaces/base.interface";
 
 export class BaseRepo<T extends Document> implements IBaseRepo<T> {
@@ -32,5 +32,9 @@ export class BaseRepo<T extends Document> implements IBaseRepo<T> {
 	}
 	async deleteByFilter(filter: FilterQuery<T>): Promise<void> {
 		await this.model.deleteMany(filter);
+	}
+
+	async countDocuments(filter: FilterQuery<T>): Promise<number> {
+		return await this.model.countDocuments(filter).exec();
 	}
 }
