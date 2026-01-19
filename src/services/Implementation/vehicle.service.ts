@@ -176,6 +176,15 @@ export class VehicleService implements IVehicleService {
 		lat?: number,
 		lon?: number,
 		range?: number,
+		filters?: {
+			search?: string;
+			category?: string[];
+			fuelType?: string[];
+			transmission?: string[];
+			minPrice?: number;
+			maxPrice?: number;
+			sortBy?: string;
+		},
 	): Promise<{
 		success: boolean;
 		message: string;
@@ -194,6 +203,7 @@ export class VehicleService implements IVehicleService {
 				lat,
 				lon,
 				range,
+				filters,
 			);
 
 			const mappedVehicles = result.data

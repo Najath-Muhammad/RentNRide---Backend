@@ -9,6 +9,7 @@ const VehicleSchema = new Schema<IVehicle>(
 		modelName: { type: String, required: true },
 		category2: { type: String },
 		fuelType: { type: String, required: true },
+		transmission: { type: String, enum: ["Manual", "Automatic"], default: "Manual" },
 		seatingCapacity: { type: Number, required: true, min: 1, max: 50 },
 		pricePerDay: { type: Number, required: true, min: 0 },
 		doors: { type: Number },

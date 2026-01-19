@@ -9,6 +9,7 @@ export interface IVehicle extends Document {
 	modelName: string;
 	category2?: string;
 	fuelType: string;
+	transmission: 'Manual' | 'Automatic';
 	seatingCapacity: number;
 	pricePerDay: number;
 	doors: number;

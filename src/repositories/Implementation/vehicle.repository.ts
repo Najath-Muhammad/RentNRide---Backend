@@ -101,27 +101,89 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 		lat?: number,
 		lon?: number,
 		range: number = 10,
+		filters?: {
+			search?: string;
+			category?: string[];
+			fuelType?: string[];
+			transmission?: string[];
+			minPrice?: number;
+			maxPrice?: number;
+			sortBy?: string;
+		},
 	) {
 		const skip = (page - 1) * limit;
 		const baseFilter: any = { isApproved: true, isActive: true };
 		const filter: any = { ...baseFilter };
 
+		// Add additional filters
+		if (filters) {
+			if (filters.search) {
+				filter.$or = [
+					{ brand: { $regex: filters.search, $options: "i" } },
+					{ modelName: { $regex: filters.search, $options: "i" } },
+				];
+			}
+			if (filters.category && filters.category.length > 0) {
+				filter.category = { $in: filters.category };
+			}
+			if (filters.fuelType && filters.fuelType.length > 0) {
+				filter.fuelType = { $in: filters.fuelType };
+			}
+			if (filters.transmission && filters.transmission.length > 0) {
+				filter.transmission = { $in: filters.transmission };
+			}
+			if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+				filter.pricePerDay = {};
+				if (filters.minPrice !== undefined) filter.pricePerDay.$gte = filters.minPrice;
+				if (filters.maxPrice !== undefined) filter.pricePerDay.$lte = filters.maxPrice;
+			}
+		}
+
+		const countFilter: any = { ...filter };
+
+		// Proximity filtering
 		if (lat !== undefined && lon !== undefined) {
-			filter.location = {
-				$near: {
-					$geometry: {
-						type: "Point",
-						coordinates: [lon, lat],
+			// If we have sortBy, we must use $geoWithin because $near doesn't allow custom sort
+			if (filters?.sortBy) {
+				filter.location = {
+					$geoWithin: {
+						$centerSphere: [[lon, lat], range / 6378.1],
 					},
-					$maxDistance: range * 1000, // range in km -> meters
-				},
-			};
+				};
+				countFilter.location = filter.location;
+			} else {
+				// Use $near for automatic distance sorting
+				filter.location = {
+					$near: {
+						$geometry: {
+							type: "Point",
+							coordinates: [lon, lat],
+						},
+						$maxDistance: range * 1000,
+					},
+				};
+				// For count, always use $geoWithin
+				countFilter.location = {
+					$geoWithin: {
+						$centerSphere: [[lon, lat], range / 6378.1],
+					},
+				};
+			}
 		}
 
 		let query = this.model.find(filter);
 
-		// Apply sort only if NOT using geospatial query (which auto-sorts by distance)
-		if (lat === undefined || lon === undefined) {
+		// Handle Sorting
+		if (filters?.sortBy) {
+			if (filters.sortBy === "price_asc") {
+				query = query.sort({ pricePerDay: 1 });
+			} else if (filters.sortBy === "price_desc") {
+				query = query.sort({ pricePerDay: -1 });
+			} else {
+				query = query.sort({ createdAt: -1 });
+			}
+		} else if (lat === undefined || lon === undefined) {
+			// Default sort if no proximity sort
 			query = query.sort({ createdAt: -1 });
 		}
 
@@ -130,17 +192,6 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 			.limit(limit)
 			.select("-__v -updatedAt")
 			.exec();
-
-		// For countDocuments, we cannot use $near.
-		// We use a separate filter for count.
-		let countFilter: any = { ...baseFilter };
-		if (lat !== undefined && lon !== undefined) {
-			countFilter.location = {
-				$geoWithin: {
-					$centerSphere: [[lon, lat], range / 6378.1], // km to radians
-				},
-			};
-		}
 
 		const total = await this.model.countDocuments(countFilter).exec();
 		return {

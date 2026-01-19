@@ -216,12 +216,30 @@ export class VehicleController implements IVehicleController {
 				? parseInt(req.query.range as string, 10)
 				: undefined;
 
+			// Helper to handle both string and array query params
+			const toStringArray = (val: any): string[] | undefined => {
+				if (!val) return undefined;
+				if (Array.isArray(val)) return val.map(String);
+				return [String(val)];
+			};
+
+			const filters = {
+				search: req.query.search as string,
+				category: toStringArray(req.query.category),
+				fuelType: toStringArray(req.query.fuelType),
+				transmission: toStringArray(req.query.transmission),
+				minPrice: req.query.minPrice ? parseInt(req.query.minPrice as string, 10) : undefined,
+				maxPrice: req.query.maxPrice ? parseInt(req.query.maxPrice as string, 10) : undefined,
+				sortBy: req.query.sortBy as string,
+			};
+
 			const result = await this._vehicleService.getPublicVehicles(
 				page,
 				limit,
 				lat,
 				lon,
 				range,
+				filters,
 			);
 
 			if (!result.success) {
