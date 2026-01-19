@@ -44,7 +44,7 @@ router.post(
 
 router.get(
 	ROUTES.AUTH.ME,
-	AuthGuard(["user", "admin"]),
+	AuthGuard(["user", "premium", "admin"]),
 	authController.exampleRoute.bind(authController),
 );
 

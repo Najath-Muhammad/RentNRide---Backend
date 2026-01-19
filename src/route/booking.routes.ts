@@ -20,7 +20,7 @@ const bookingController = new BookingController(bookingService);
 
 bookingRouter.post(
   '/',
-  AuthGuard(['user', 'admin']),
+  AuthGuard(['user', 'premium', 'admin']),
   checkBlocked(authService),
   bookingController.createBooking.bind(bookingController)
 );

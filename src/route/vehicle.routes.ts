@@ -13,14 +13,14 @@ const vehicleController = new VehicleController(vehicleService);
 
 vehicleRouter.post(
 	ROUTES.VEHICLE.CREATE_VEHICLE,
-	AuthGuard(["user", "admin"]),
+	AuthGuard(["user", "premium", "admin"]),
 	vehicleController.createVehicle.bind(vehicleController),
 );
 vehicleRouter.get(
 	ROUTES.VEHICLE.MY_VEHICLES,
-	AuthGuard(["user"]),
+	AuthGuard(["user", "premium", "admin"]),
 	vehicleController.getMyVehicles.bind(vehicleController),
-)
+);
 vehicleRouter.get(
 	ROUTES.VEHICLE.GET_PUBLIC_VEHICLES,
 	vehicleController.getPublicVehicles.bind(vehicleController),
@@ -31,12 +31,12 @@ vehicleRouter.get(
 );
 vehicleRouter.patch(
 	ROUTES.VEHICLE.UPDATE_VEHICLE,
-	AuthGuard(["user"]),
+	AuthGuard(["user", "premium", "admin"]),
 	vehicleController.updateVehicle.bind(vehicleController),
 );
 vehicleRouter.delete(
 	ROUTES.VEHICLE.DELETE_VEHICLE,
-	AuthGuard(["user"]),
+	AuthGuard(["user", "premium", "admin"]),
 	vehicleController.deleteVehicle.bind(vehicleController),
 );
 

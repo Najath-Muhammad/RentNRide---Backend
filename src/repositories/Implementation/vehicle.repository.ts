@@ -103,7 +103,8 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 		range: number = 10,
 	) {
 		const skip = (page - 1) * limit;
-		const filter: any = { isApproved: true, isActive: true };
+		const baseFilter: any = { isApproved: true, isActive: true };
+		const filter: any = { ...baseFilter };
 
 		if (lat !== undefined && lon !== undefined) {
 			filter.location = {
@@ -119,7 +120,7 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 
 		let query = this.model.find(filter);
 
-		// Apply sort only if NOT using geospatial query (which aut-sorts by distance)
+		// Apply sort only if NOT using geospatial query (which auto-sorts by distance)
 		if (lat === undefined || lon === undefined) {
 			query = query.sort({ createdAt: -1 });
 		}
@@ -130,7 +131,18 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 			.select("-__v -updatedAt")
 			.exec();
 
-		const total = await this.model.countDocuments(filter).exec();
+		// For countDocuments, we cannot use $near.
+		// We use a separate filter for count.
+		let countFilter: any = { ...baseFilter };
+		if (lat !== undefined && lon !== undefined) {
+			countFilter.location = {
+				$geoWithin: {
+					$centerSphere: [[lon, lat], range / 6378.1], // km to radians
+				},
+			};
+		}
+
+		const total = await this.model.countDocuments(countFilter).exec();
 		return {
 			data: vehicles,
 			total,
