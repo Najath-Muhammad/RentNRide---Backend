@@ -2,3 +2,8 @@ node_modules/
 .env
 dist/
 .history/
+src/logs/
+*.log
+git rm -r --cached src/logs
+git commit -m "chore: stop tracking log files"
+
