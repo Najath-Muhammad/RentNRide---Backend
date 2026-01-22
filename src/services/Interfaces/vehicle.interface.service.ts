@@ -9,6 +9,7 @@ export interface IVehicleService {
 	}>;
 	createVehicle(
 		vehicleData: IVehicle,
+		user: any,
 	): Promise<{ success: boolean; message: string }>;
 	getAllVehicles(
 		filters?: FilterQuery<Document & IVehicle>,
@@ -40,6 +41,7 @@ export interface IVehicleService {
 		lat?: number,
 		lon?: number,
 		range?: number,
+		minRange?: number,
 		filters?: {
 			search?: string;
 			category?: string[];
@@ -48,6 +50,7 @@ export interface IVehicleService {
 			minPrice?: number;
 			maxPrice?: number;
 			sortBy?: string;
+			excludeOwnerId?: string;
 		},
 	): Promise<{
 		success: boolean;

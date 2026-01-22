@@ -20,4 +20,9 @@ export interface IAuthController {
 		res: Response,
 		next: NextFunction,
 	): Promise<Response>;
+	changePassword(
+		req: Request,
+		res: Response,
+		next: NextFunction,
+	): Promise<Response>;
 }

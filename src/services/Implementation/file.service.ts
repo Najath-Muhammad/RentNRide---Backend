@@ -12,7 +12,6 @@ export class FileService implements IFileService {
 				fileType,
 			);
 
-
 			return { success: true, uploadUrl, publicUrl };
 		} catch (error) {
 			console.error("S3 upload URL error:", error);

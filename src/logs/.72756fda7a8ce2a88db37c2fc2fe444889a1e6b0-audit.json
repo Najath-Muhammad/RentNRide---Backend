@@ -1,45 +1,50 @@
 {
-    "keep": {
-        "days": true,
-        "amount": 7
-    },
-    "auditLog": "D:\\Second Project\\second project\\backend\\src\\logs\\.72756fda7a8ce2a88db37c2fc2fe444889a1e6b0-audit.json",
-    "files": [
-        {
-            "date": 1768285469233,
-            "name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2026-01-13.log",
-            "hash": "c7cdbb4389733bdb68ff35544cb2d5bf2052e0e5e6c5ef58036b2619a5db6496"
-        },
-        {
-            "date": 1768363018284,
-            "name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2026-01-14.log",
-            "hash": "f4c7efc73de4eae1ac3d22306ab6762f69ab11c9ef7f0e7a186ecd5f8d8c12c0"
-        },
-        {
-            "date": 1768455843769,
-            "name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2026-01-15.log",
-            "hash": "fd9f528c4d7ba5b8201e895d4907fa0463518b358485e9b0207e6fa202932061"
-        },
-        {
-            "date": 1768564423968,
-            "name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2026-01-16.log",
-            "hash": "f003b62b614f3c3530a3981c9c713074438e1c2bad2b0207aacf71bed2b74858"
-        },
-        {
-            "date": 1768625475089,
-            "name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2026-01-17.log",
-            "hash": "00dcd152fd9dc5bd640a8aa0fa5f4e0e62cd598b6f0c3d22985642235a2a1e2a"
-        },
-        {
-            "date": 1768682782045,
-            "name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2026-01-18.log",
-            "hash": "2ef0e7961ed9d14f21c02191b97c3bbc6cd2ddbf15d4006f95defb5b4532f228"
-        },
-        {
-            "date": 1768800432367,
-            "name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2026-01-19.log",
-            "hash": "fff958d5ce72721a72b79bf2ad8aac537236d7799d286011d6a20e0282f382be"
-        }
-    ],
-    "hashType": "sha256"
+	"keep": {
+		"days": true,
+		"amount": 7
+	},
+	"auditLog": "D:\\Second Project\\second project\\backend\\src\\logs\\.72756fda7a8ce2a88db37c2fc2fe444889a1e6b0-audit.json",
+	"files": [
+		{
+			"date": 1768455843769,
+			"name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2026-01-15.log",
+			"hash": "fd9f528c4d7ba5b8201e895d4907fa0463518b358485e9b0207e6fa202932061"
+		},
+		{
+			"date": 1768564423968,
+			"name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2026-01-16.log",
+			"hash": "f003b62b614f3c3530a3981c9c713074438e1c2bad2b0207aacf71bed2b74858"
+		},
+		{
+			"date": 1768625475089,
+			"name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2026-01-17.log",
+			"hash": "00dcd152fd9dc5bd640a8aa0fa5f4e0e62cd598b6f0c3d22985642235a2a1e2a"
+		},
+		{
+			"date": 1768682782045,
+			"name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2026-01-18.log",
+			"hash": "2ef0e7961ed9d14f21c02191b97c3bbc6cd2ddbf15d4006f95defb5b4532f228"
+		},
+		{
+			"date": 1768800432367,
+			"name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2026-01-19.log",
+			"hash": "fff958d5ce72721a72b79bf2ad8aac537236d7799d286011d6a20e0282f382be"
+		},
+		{
+			"date": 1768883696618,
+			"name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2026-01-20.log",
+			"hash": "17c40e7bf53e6254a07a2b3019258184d87a5e8e08f8418b2932ca74c2f34b8c"
+		},
+		{
+			"date": 1768968025972,
+			"name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2026-01-21.log",
+			"hash": "4103f3d932107373a11c1ff36b9569d807456d23111e60906e6d457f8efbae6d"
+		},
+		{
+			"date": 1769044898582,
+			"name": "D:\\Second Project\\second project\\backend\\src\\logs\\error-2026-01-22.log",
+			"hash": "386afe4ef048ed29e86f259bf222d39f803683897c596f96deab52530451c81c"
+		}
+	],
+	"hashType": "sha256"
 }

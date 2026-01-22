@@ -12,7 +12,10 @@ import vehicleRouter from "./route/vehicle.routes";
 // const authService = new AuthService(userRepo)
 
 import { ROUTES } from "./constants/Routes/routeConstants";
+import adminBookingRouter from "./route/admin.booking.routes";
+import categoryRouter from "./route/admin.category.routes";
 import bookingRouter from "./route/booking.routes";
+import reviewRouter from "./route/review.routes";
 import userRouter from "./route/user.routes";
 
 const app = express();
@@ -30,9 +33,12 @@ app.use(errorMiddleware);
 app.use(ROUTES.AUTH.BASE, authRouter);
 app.use(ROUTES.FILE.BASE, fileRouter);
 app.use(ROUTES.VEHICLE.BASE, vehicleRouter);
-app.use('/api/bookings',bookingRouter)
-app.use('/api/user',userRouter)
+app.use("/api/bookings", bookingRouter);
+app.use("/api/user", userRouter);
 //app.use(checkBlocked(authService))
 app.use(ROUTES.ADMIN.BASE, adminRouter);
+app.use("/api/admin/category", categoryRouter);
+app.use("/api/reviews", reviewRouter);
+app.use("/api/admin/bookings", adminBookingRouter);
 
 export { app };

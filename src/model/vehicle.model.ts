@@ -4,13 +4,17 @@ import type { IVehicle } from "../types/vehicles/IVehicle";
 const VehicleSchema = new Schema<IVehicle>(
 	{
 		ownerId: { type: Schema.Types.ObjectId, ref: "User" },
-		category: { type: String, required: true },
+		category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
 		brand: { type: String, required: true },
 		modelName: { type: String, required: true },
-		category2: { type: String },
-		fuelType: { type: String, required: true },
-		transmission: { type: String, enum: ["Manual", "Automatic"], default: "Manual" },
-		seatingCapacity: { type: Number, required: true, min: 1, max: 50 },
+		category2: { type: Schema.Types.ObjectId, required: true },
+		fuelType: { type: Schema.Types.ObjectId, ref: "FuelType", required: true },
+		transmission: {
+			type: String,
+			enum: ["Manual", "Automatic"],
+			default: "Manual",
+		},
+		seatingCapacity: { type: Number, min: 1, max: 50 },
 		pricePerDay: { type: Number, required: true, min: 0 },
 		doors: { type: Number },
 		vehicleImages: [{ type: String, required: true }],

@@ -9,6 +9,7 @@ import { VehicleRepo } from "../repositories/Implementation/vehicle.repository";
 import { AdminServices } from "../services/Implementation/admin.service";
 import { AuthService } from "../services/Implementation/auth.service";
 import { VehicleService } from "../services/Implementation/vehicle.service";
+import categoryRouter from "./admin.category.routes";
 
 const adminRouter = Router();
 
@@ -51,7 +52,6 @@ adminRouter.delete(
 	adminController.deleteUser.bind(adminController),
 );
 
-//vehicle management
 adminRouter.get(
 	ROUTES.ADMIN.GET_VEHICLES,
 	adminVehicleController.getAllVehicles.bind(adminVehicleController),
@@ -81,5 +81,7 @@ adminRouter.patch(
 	AuthGuard(["admin"]),
 	adminVehicleController.rejectVehicle.bind(adminVehicleController),
 );
+
+adminRouter.use(categoryRouter);
 
 export default adminRouter;

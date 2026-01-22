@@ -6,9 +6,13 @@ import { errorResponse, successResponse } from "../../utils/response.util";
 import type { IVehicleController } from "../interfaces/ivehicle.controller";
 
 export class VehicleController implements IVehicleController {
-	constructor(private _vehicleService: IVehicleService) { }
+	constructor(private _vehicleService: IVehicleService) {}
 
-	async createVehicle(req: Request, res: Response, _next: NextFunction,): Promise<Response> {
+	async createVehicle(
+		req: Request,
+		res: Response,
+		_next: NextFunction,
+	): Promise<Response> {
 		try {
 			const user = req.user;
 			console.log("user in the create controller is: ", user);
@@ -17,10 +21,19 @@ export class VehicleController implements IVehicleController {
 			}
 			const VehicleData = req.body;
 
-			const _response = await this._vehicleService.createVehicle({
-				ownerId: user.userId,
-				...VehicleData,
-			});
+			const _response = await this._vehicleService.createVehicle(
+				{
+					ownerId: user.userId,
+					...VehicleData,
+				},
+				user,
+			);
+
+			console.log("Response from vehicle service in controller:", _response);
+
+			if (!_response.success) {
+				return errorResponse(res, _response.message, HttpStatus.BAD_REQUEST);
+			}
 
 			return successResponse(
 				res,
@@ -29,11 +42,12 @@ export class VehicleController implements IVehicleController {
 				HttpStatus.OK,
 			);
 		} catch (error) {
-			console.log(error);
+			console.error("Error in createVehicle controller:", error);
 			return errorResponse(
 				res,
-				String(error),
+				"Unexpected error occurred during vehicle creation",
 				HttpStatus.INTERNAL_SERVER_ERROR,
+				error,
 			);
 		}
 	}
@@ -205,7 +219,7 @@ export class VehicleController implements IVehicleController {
 	async getPublicVehicles(req: Request, res: Response): Promise<Response> {
 		try {
 			const page = parseInt(req.query.page as string, 10) || 1;
-			const limit = Math.min(parseInt(req.query.limit as string, 10) || 20, 50); // Max 50
+			const limit = Math.min(parseInt(req.query.limit as string, 10) || 20, 50);
 			const lat = req.query.lat
 				? parseFloat(req.query.lat as string)
 				: undefined;
@@ -215,9 +229,11 @@ export class VehicleController implements IVehicleController {
 			const range = req.query.range
 				? parseInt(req.query.range as string, 10)
 				: undefined;
+			const minRange = req.query.minRange
+				? parseInt(req.query.minRange as string, 10)
+				: undefined;
 
-			// Helper to handle both string and array query params
-			const toStringArray = (val: any): string[] | undefined => {
+			const toStringArray = (val: unknown): string[] | undefined => {
 				if (!val) return undefined;
 				if (Array.isArray(val)) return val.map(String);
 				return [String(val)];
@@ -228,9 +244,14 @@ export class VehicleController implements IVehicleController {
 				category: toStringArray(req.query.category),
 				fuelType: toStringArray(req.query.fuelType),
 				transmission: toStringArray(req.query.transmission),
-				minPrice: req.query.minPrice ? parseInt(req.query.minPrice as string, 10) : undefined,
-				maxPrice: req.query.maxPrice ? parseInt(req.query.maxPrice as string, 10) : undefined,
+				minPrice: req.query.minPrice
+					? parseInt(req.query.minPrice as string, 10)
+					: undefined,
+				maxPrice: req.query.maxPrice
+					? parseInt(req.query.maxPrice as string, 10)
+					: undefined,
 				sortBy: req.query.sortBy as string,
+				excludeOwnerId: req.user?.userId,
 			};
 
 			const result = await this._vehicleService.getPublicVehicles(
@@ -239,6 +260,7 @@ export class VehicleController implements IVehicleController {
 				lat,
 				lon,
 				range,
+				minRange,
 				filters,
 			);
 
@@ -247,7 +269,13 @@ export class VehicleController implements IVehicleController {
 			}
 
 			if (!result.data) {
-				return successResponse(res, "Public vehicles fetched", result.data);
+				return successResponse(res, "Public vehicles fetched", {
+					data: [],
+					total: 0,
+					page,
+					limit,
+					totalPages: 0,
+				});
 			}
 
 			return successResponse(res, "Public vehicles fetched", result.data);

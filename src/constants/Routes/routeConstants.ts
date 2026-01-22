@@ -15,6 +15,7 @@ export const ROUTES = {
 		RESET_PASSWORD: "/reset-password",
 
 		ME: "/me",
+		CHANGE_PASSWORD: "/change-password",
 	},
 	ADMIN: {
 		BASE: "/api/admin",

@@ -59,4 +59,9 @@ export interface IAuthService {
 	}>;
 	refreshToken(token: string): Promise<{ accessToken: string }>;
 	checkBlocked(email: string): Promise<{ success: boolean; message: string }>;
+	changePassword(
+		userId: string,
+		oldPassword: string,
+		newPassword: string,
+	): Promise<{ success: boolean; message: string }>;
 }

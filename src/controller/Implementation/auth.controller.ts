@@ -4,6 +4,7 @@ import { MESSAGES } from "../../constants/messages/messageConstants";
 import type { IAuthService } from "../../services/Interfaces/auth.interface.service";
 import { errorResponse, successResponse } from "../../utils/response.util";
 import {
+	changePasswordSchema,
 	loginSchema,
 	resetPassword,
 	signupSchema,
@@ -411,6 +412,48 @@ export class AuthController implements IAuthController {
 			});
 		} catch (error) {
 			next(error);
+			return errorResponse(
+				res,
+				MESSAGES.ERRORS.SERVER_ERROR,
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	async changePassword(
+		req: Request,
+		res: Response,
+		next: NextFunction,
+	): Promise<Response> {
+		try {
+			const { old_password, new_password } = changePasswordSchema.parse(
+				req.body,
+			);
+
+			// Assume user ID is available in req.user due to auth middleware
+			const user = (req as Request & { user?: { userId: string } }).user;
+			if (!user || !user.userId) {
+				return errorResponse(
+					res,
+					MESSAGES.AUTH.UNAUTHORIZED,
+					HttpStatus.UNAUTHORIZED,
+				);
+			}
+
+			const result = await this._authService.changePassword(
+				user.userId,
+				old_password,
+				new_password,
+			);
+
+			if (!result.success) {
+				return errorResponse(res, result.message, HttpStatus.BAD_REQUEST);
+			}
+
+			return successResponse(res, result.message);
+		} catch (error) {
+			next(error);
+			console.log("change password error: ", error);
 			return errorResponse(
 				res,
 				MESSAGES.ERRORS.SERVER_ERROR,

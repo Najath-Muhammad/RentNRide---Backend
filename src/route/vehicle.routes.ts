@@ -2,6 +2,7 @@ import { Router } from "express";
 import { ROUTES } from "../constants/Routes/routeConstants";
 import { VehicleController } from "../controller/Implementation/vehicle.controller";
 import { AuthGuard } from "../middlewares/authGuard";
+import { SoftAuth } from "../middlewares/softAuth";
 import { VehicleRepo } from "../repositories/Implementation/vehicle.repository";
 import { VehicleService } from "../services/Implementation/vehicle.service";
 
@@ -23,6 +24,7 @@ vehicleRouter.get(
 );
 vehicleRouter.get(
 	ROUTES.VEHICLE.GET_PUBLIC_VEHICLES,
+	SoftAuth,
 	vehicleController.getPublicVehicles.bind(vehicleController),
 );
 vehicleRouter.get(

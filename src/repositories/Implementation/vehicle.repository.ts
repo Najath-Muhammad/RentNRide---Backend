@@ -38,6 +38,9 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 
 		const vehicles = await this.model
 			.find(queryFilters)
+			.populate("category", "name")
+			.populate("fuelType", "name")
+			.populate("ownerId", "name")
 			.skip(skip)
 			.limit(limit)
 			.sort({ createdAt: -1 })
@@ -65,7 +68,7 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 				.exec();
 			const approved = await this.model
 				.countDocuments({ isApproved: true, isActive: true })
-				.exec(); // Approved and not blocked
+				.exec();
 			const blocked = await this.model
 				.countDocuments({ isActive: false })
 				.exec();
@@ -95,12 +98,22 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 			.exec();
 	}
 
+	async findById(id: string): Promise<(Document & IVehicle) | null> {
+		return await this.model
+			.findById(id)
+			.populate("category", "name")
+			.populate("fuelType", "name")
+			.populate("ownerId", "name email mobileNumber profileImage")
+			.exec();
+	}
+
 	async getPublicVehicles(
 		page: number = 1,
 		limit: number = 20,
 		lat?: number,
 		lon?: number,
 		range: number = 10,
+		minRange?: number,
 		filters?: {
 			search?: string;
 			category?: string[];
@@ -109,13 +122,16 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 			minPrice?: number;
 			maxPrice?: number;
 			sortBy?: string;
+			excludeOwnerId?: string;
 		},
 	) {
 		const skip = (page - 1) * limit;
-		const baseFilter: any = { isApproved: true, isActive: true };
-		const filter: any = { ...baseFilter };
+		const baseFilter: FilterQuery<IVehicle> = {
+			isApproved: true,
+			isActive: true,
+		};
+		const filter: FilterQuery<IVehicle> = { ...baseFilter };
 
-		// Add additional filters
 		if (filters) {
 			if (filters.search) {
 				filter.$or = [
@@ -134,16 +150,18 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 			}
 			if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
 				filter.pricePerDay = {};
-				if (filters.minPrice !== undefined) filter.pricePerDay.$gte = filters.minPrice;
-				if (filters.maxPrice !== undefined) filter.pricePerDay.$lte = filters.maxPrice;
+				if (filters.minPrice !== undefined)
+					filter.pricePerDay.$gte = filters.minPrice;
+				if (filters.maxPrice !== undefined)
+					filter.pricePerDay.$lte = filters.maxPrice;
+			}
+			if (filters.excludeOwnerId) {
+				filter.ownerId = { $ne: filters.excludeOwnerId };
 			}
 		}
 
-		const countFilter: any = { ...filter };
-
-		// Proximity filtering
+		const countFilter: FilterQuery<IVehicle> = { ...filter };
 		if (lat !== undefined && lon !== undefined) {
-			// If we have sortBy, we must use $geoWithin because $near doesn't allow custom sort
 			if (filters?.sortBy) {
 				filter.location = {
 					$geoWithin: {
@@ -152,7 +170,6 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 				};
 				countFilter.location = filter.location;
 			} else {
-				// Use $near for automatic distance sorting
 				filter.location = {
 					$near: {
 						$geometry: {
@@ -160,9 +177,9 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 							coordinates: [lon, lat],
 						},
 						$maxDistance: range * 1000,
+						...(minRange ? { $minDistance: minRange * 1000 } : {}),
 					},
 				};
-				// For count, always use $geoWithin
 				countFilter.location = {
 					$geoWithin: {
 						$centerSphere: [[lon, lat], range / 6378.1],
@@ -172,8 +189,6 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 		}
 
 		let query = this.model.find(filter);
-
-		// Handle Sorting
 		if (filters?.sortBy) {
 			if (filters.sortBy === "price_asc") {
 				query = query.sort({ pricePerDay: 1 });
@@ -183,16 +198,22 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 				query = query.sort({ createdAt: -1 });
 			}
 		} else if (lat === undefined || lon === undefined) {
-			// Default sort if no proximity sort
 			query = query.sort({ createdAt: -1 });
 		}
 
 		const vehicles = await query
+			.populate("category", "name")
+			.populate("fuelType", "name")
+			.populate("ownerId", "name")
 			.skip(skip)
 			.limit(limit)
 			.select("-__v -updatedAt")
 			.exec();
 
+		const totalCount = await this.model.countDocuments({}).exec();
+		const approvedCount = await this.model
+			.countDocuments({ isApproved: true, isActive: true })
+			.exec();
 		const total = await this.model.countDocuments(countFilter).exec();
 		return {
 			data: vehicles,
@@ -206,6 +227,8 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 	async getVehiclesByOwner(ownerId: string) {
 		return await this.model
 			.find({ ownerId: ownerId })
+			.populate("category", "name")
+			.populate("fuelType", "name")
 			.sort({ createdAt: -1 })
 			.exec();
 	}
@@ -214,6 +237,6 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 		try {
 			const _today = Date.now();
 			const _count = this.model.find({ ownerId: ownerId });
-		} catch (_error) { }
+		} catch (_error) {}
 	}
 }
