@@ -1,97 +1,161 @@
-import { IBookingRepo } from '../../repositories/interfaces/booking.interface';
-import { IVehicleRepository } from '../../repositories/interfaces/vehicle.interface';
-import type { IBookingService } from '../Interfaces/booking.interface.service';
-import type { CreateBookingInput, IBooking } from '../../types/booking/booking.types';
-import { Types } from 'mongoose';
-import { generateBookingId } from '../../utils/generate.bookinId';
+import { Types } from "mongoose";
+import type { IBookingRepo } from "../../repositories/interfaces/booking.interface";
+import type { IVehicleRepository } from "../../repositories/interfaces/vehicle.interface";
+import type {
+	CreateBookingInput,
+	IBooking,
+} from "../../types/booking/booking.types";
+import { generateBookingId } from "../../utils/generate.bookinId";
+import type { IBookingService } from "../Interfaces/booking.interface.service";
 
 export class BookingService implements IBookingService {
-  constructor(private _vehicleRepo: IVehicleRepository,private _bookingRepo: IBookingRepo) {}
-  
-  async getBookingById(bookingId: string,requesterId: string | Types.ObjectId,role: 'user' | 'owner' | 'admin'): Promise<IBooking | null> {
-    try {
-        const booking = await this._bookingRepo.findById(bookingId);
-        if (!booking) return null;
-        if (role === 'admin') return booking;
-        if (role === 'user' && booking.userId.toString() === requesterId.toString()) return booking;
-        if (role === 'owner' && booking.ownerId.toString() === requesterId.toString()) return booking;
-        return null;
-    } catch (error) {
-        console.error("Error in getBookingById:", error);
-        throw error;
-    }
-  }
+	constructor(
+		private _vehicleRepo: IVehicleRepository,
+		private _bookingRepo: IBookingRepo,
+	) {}
 
-  async getUserBookings(userId: string | Types.ObjectId,page: number = 1,limit: number = 10,status?: string): Promise<{data: IBooking[];total: number;page: number;limit: number;totalPages: number;}> {
-    try {
-        return await this._bookingRepo.findBookingsByUser(userId,page,limit,status as IBooking["bookingStatus"]);
-    } catch (error) {
-        console.error("Error in getUserBookings:", error);
-        throw error;
-    }
-  }
+	async getBookingById(
+		bookingId: string,
+		requesterId: string | Types.ObjectId,
+		role: "user" | "owner" | "admin",
+	): Promise<IBooking | null> {
+		try {
+			const booking = await this._bookingRepo.findById(bookingId)
+			if (!booking) return null
+			if (role === "admin") return booking
+			if (role === "user" &&booking.userId.toString() === requesterId.toString()){
+				return booking
+			}
+			if (role === "owner" && booking.ownerId.toString() === requesterId.toString()){
+				return booking
+			}
+			return null
+		} catch (error) {
+			console.error("Error in getBookingById:", error)
+			throw error
+		}
+	}
 
-  async createBooking(userId: string | Types.ObjectId,input: CreateBookingInput): Promise<IBooking> {
-    try {
-        const { vehicleId, startDate, endDate, withFuel = false } = input;
+	async getUserBookings(
+		userId: string | Types.ObjectId,
+		page: number = 1,
+		limit: number = 10,
+		status?: string,
+	): Promise<{
+		data: IBooking[];
+		total: number;
+		page: number;
+		limit: number;
+		totalPages: number;
+	}> {
+		try {
+			return await this._bookingRepo.findBookingsByUser(
+				userId,
+				page,
+				limit,
+				status as IBooking["bookingStatus"],
+			);
+		} catch (error) {
+			console.error("Error in getUserBookings:", error);
+			throw error;
+		}
+	}
 
-        const start = new Date(startDate);
-        const end = new Date(endDate);
+	async createBooking(userId: string | Types.ObjectId,input: CreateBookingInput): Promise<IBooking> {
+		try {
+			const { vehicleId, startDate, endDate, withFuel = false } = input;
 
-        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-        throw new Error('Invalid date format');
-        }
-        if (start >= end) {
-        throw new Error('End date must be after start date');
-        }
-        if (start < new Date()) {
-        throw new Error('Cannot book in the past');
-        }
-        const vehicle = await this._vehicleRepo.findById(vehicleId);
-        if (!vehicle) {
-        throw new Error('Vehicle not found');
-        }
-        if (!vehicle.isApproved || !vehicle.isActive) {
-        throw new Error('Vehicle is not available for booking');
-        }
-        const overlapping = await this._bookingRepo.findActiveBookingsForVehicle(
-        vehicleId,
-        start,
-        end
-        );
+			const start = new Date(startDate);
+			const end = new Date(endDate);
 
-        if (overlapping.length > 0) {
-        throw new Error('Vehicle is not available for the selected dates');
-        }
-        const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        const pricePerDay = vehicle.pricePerDay || 0
-        const totalAmount = pricePerDay * days;
-        const advancePaid = Math.round(totalAmount * 0.2)
+			if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+				throw new Error("Invalid date format");
+			}
+			if (start >= end) {
+				throw new Error("End date must be after start date");
+			}
+			if (start < new Date()) {
+				throw new Error("Cannot book in the past");
+			}
+			const vehicle = await this._vehicleRepo.findById(vehicleId);
+			if (!vehicle) {
+				throw new Error("Vehicle not found");
+			}
+			if (!vehicle.isApproved || !vehicle.isActive) {
+				throw new Error("Vehicle is not available for booking");
+			}
+			const overlapping = await this._bookingRepo.findActiveBookingsForVehicle(
+				vehicleId,
+				start,
+				end,
+			);
 
-        const bookingData: Partial<IBooking> = {
-        bookingId: await generateBookingId.call(this),
-        vehicleId: typeof vehicleId === 'string' ? new Types.ObjectId(vehicleId) : vehicleId,
-        userId: typeof userId === 'string' ? new Types.ObjectId(userId) : userId,
-        ownerId: vehicle.ownerId,
-        startDate: start,
-        endDate: end,
-        withFuel,
-        pricePerDay,
-        totalAmount,
-        advancePaid,
-        paymentStatus: 'pending',
-        bookingStatus: 'pending',
-        tracking: { isEnabled: false },
-        };
+			if (overlapping.length > 0) {
+				throw new Error("Vehicle is not available for the selected dates");
+			}
+			const days = Math.ceil(
+				(end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+			);
+			const pricePerDay = vehicle.pricePerDay || 0;
+			const totalAmount = pricePerDay * days;
+			const advancePaid = Math.round(totalAmount * 0.2);
 
-        const newBooking = await this._bookingRepo.create(bookingData);
+			const bookingData: Partial<IBooking> = {
+				bookingId: await generateBookingId(this._bookingRepo),
+				vehicleId:
+					typeof vehicleId === "string"
+						? new Types.ObjectId(vehicleId)
+						: vehicleId,
+				userId:
+					typeof userId === "string" ? new Types.ObjectId(userId) : userId,
+				ownerId: vehicle.ownerId,
+				startDate: start,
+				endDate: end,
+				withFuel,
+				pricePerDay,
+				totalAmount,
+				advancePaid,
+				paymentStatus: "pending",
+				bookingStatus: "pending",
+				tracking: { isEnabled: false },
+			};
 
+			const newBooking = await this._bookingRepo.create(bookingData);
 
-        return newBooking;
-    } catch (error) {
-        console.error("Error in createBooking:", error);
-        throw error;
-    }
-  }
+			return newBooking;
+		} catch (error) {
+			console.error("Error in createBooking:", error);
+			throw error;
+		}
+	}
 
+	async cancelBooking(
+		bookingId: string,
+		userId: string | Types.ObjectId,
+		reason?: string,
+	): Promise<IBooking | null> {
+		try {
+			const booking = await this._bookingRepo.findById(bookingId);
+			if (!booking) {
+				throw new Error("Booking not found");
+			}
+
+			if (booking.userId.toString() !== userId.toString()) {
+				throw new Error("Not authorized to cancel this booking");
+			}
+
+			if (booking.bookingStatus === "cancelled") {
+				throw new Error("Booking is already cancelled");
+			}
+
+			if (booking.bookingStatus === "completed") {
+				throw new Error("Cannot cancel a completed booking");
+			}
+
+			return await this._bookingRepo.cancelBooking(bookingId, "user", reason);
+		} catch (error) {
+			console.error("Error in cancelBooking:", error);
+			throw error;
+		}
+	}
 }

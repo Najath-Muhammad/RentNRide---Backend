@@ -13,18 +13,38 @@ type PaginatedVehicles = {
 };
 
 export class VehicleService implements IVehicleService {
-	constructor(private _vehicleRepo: IVehicleRepository) { }
+	constructor(private _vehicleRepo: IVehicleRepository) {}
 
-	async createVehicle(vehicleData: IVehicle) {
+	async createVehicle(
+		vehicleData: IVehicle,
+		user: { userId: string; role: string },
+	) {
 		try {
+			if (user.role === "user") {
+				const vehicles = await this._vehicleRepo.getVehiclesByOwner(
+					user.userId,
+				);
+				if (vehicles && vehicles.length >= 5) {
+					return {
+						success: false,
+						message:
+							"Limit exceeded. Standard users can only list up to 5 vehicles. Please upgrade to Premium to add more.",
+					};
+				}
+			}
+
 			const res = await this._vehicleRepo.create(vehicleData);
 			console.log("response from the repo", res);
 			return { success: true, message: "Vehicle created successfully" };
 		} catch (error) {
-			console.error(error);
+			console.error("Error creating vehicle in service:", error);
+			const message =
+				error instanceof Error
+					? error.message
+					: "There was an error creating the vehicle";
 			return {
 				success: false,
-				message: "There was an error creating the vehicle",
+				message,
 			};
 		}
 	}
@@ -145,7 +165,11 @@ export class VehicleService implements IVehicleService {
 	async getVehicleById(
 		id: string,
 		isPublic: boolean = false,
-	): Promise<{ success: boolean; message: string; data?: any }> {
+	): Promise<{
+		success: boolean;
+		message: string;
+		data?: IVehicle | Partial<IVehicle>;
+	}> {
 		try {
 			const vehicle = await this._vehicleRepo.findById(id);
 			if (!vehicle) {
@@ -156,10 +180,21 @@ export class VehicleService implements IVehicleService {
 			}
 			const plainVehicle = vehicle.toObject() as IVehicle;
 
+			const resultData = isPublic
+				? mapVehicleToResponse(plainVehicle)
+				: plainVehicle;
+
+			if (!resultData) {
+				return {
+					success: false,
+					message: "Vehicle is not available",
+				};
+			}
+
 			return {
 				success: true,
 				message: "Vehicle retrieved successfully",
-				data: isPublic ? mapVehicleToResponse(plainVehicle) : plainVehicle,
+				data: resultData,
 			};
 		} catch (error) {
 			console.error("Error in getVehicleById service:", error);
@@ -176,6 +211,7 @@ export class VehicleService implements IVehicleService {
 		lat?: number,
 		lon?: number,
 		range?: number,
+		minRange?: number,
 		filters?: {
 			search?: string;
 			category?: string[];
@@ -184,12 +220,13 @@ export class VehicleService implements IVehicleService {
 			minPrice?: number;
 			maxPrice?: number;
 			sortBy?: string;
+			excludeOwnerId?: string;
 		},
 	): Promise<{
 		success: boolean;
 		message: string;
 		data?: {
-			data: any[];
+			data: Partial<IVehicle>[];
 			total: number;
 			page: number;
 			limit: number;
@@ -203,8 +240,10 @@ export class VehicleService implements IVehicleService {
 				lat,
 				lon,
 				range,
+				minRange,
 				filters,
 			);
+			console.log(`Service: Found ${result.total} vehicles from repo`);
 
 			const mappedVehicles = result.data
 				.map((v) => mapVehicleToResponse(v.toObject() as IVehicle))
@@ -232,16 +271,18 @@ export class VehicleService implements IVehicleService {
 		}
 	}
 
-	async getMyVehicles(
-		ownerId: string,
-	): Promise<{ success: boolean; message: string; vehicles?: any[] }> {
+	async getMyVehicles(ownerId: string): Promise<{
+		success: boolean;
+		message: string;
+		vehicles?: Partial<IVehicle>[];
+	}> {
 		try {
 			const vehicles = await this._vehicleRepo.getVehiclesByOwner(ownerId);
 
 			const plainVehicles = vehicles.map((v) => v.toObject() as IVehicle);
-			const mappedVehicles = plainVehicles.map((vehicle: any) =>
-				mapVehicleToResponse(vehicle),
-			);
+			const mappedVehicles = plainVehicles
+				.map((vehicle) => mapVehicleToResponse(vehicle))
+				.filter((v): v is Partial<IVehicle> => v !== null);
 
 			return {
 				success: true,
@@ -308,11 +349,11 @@ export class VehicleService implements IVehicleService {
 					message: "Unauthorized: You can only edit your own vehicles",
 				};
 			}
+			// If the vehicle was rejected, reset the rejection status upon update
 			if (vehicle.isRejected) {
-				return {
-					success: false,
-					message: "Cannot edit a rejected vehicle. Please contact support.",
-				};
+				updates.isRejected = false;
+				updates.rejectionReason = "";
+				updates.isApproved = false; // Ensure it stays pending
 			}
 
 			const updated = await this._vehicleRepo.updateById(id, updates);
@@ -361,6 +402,6 @@ export class VehicleService implements IVehicleService {
 
 	async checkLimit(_userId: string) {
 		try {
-		} catch (_error) { }
+		} catch (_error) {}
 	}
 }

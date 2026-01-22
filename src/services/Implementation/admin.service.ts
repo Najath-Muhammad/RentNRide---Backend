@@ -2,14 +2,19 @@ import type { FilterQuery } from "mongoose";
 import type { IUserRepository } from "../../repositories/interfaces/user.interface";
 import type { IUser } from "../../types/user/IUser";
 import type { IUserToAdmin } from "../../types/user/IUserToAdmin";
-import type { IAdminService } from "../Interfaces/admin.interface.service";
 import { adminUserDTO } from "../../utils/mapper/adminService.mapper";
+import type { IAdminService } from "../Interfaces/admin.interface.service";
 
 export class AdminServices implements IAdminService {
 	constructor(private _userRepo: IUserRepository) {}
 
-	async getAllUsers(query: {page?: number | string;limit?: number | string;search?: string;status?: string;}): Promise<
-		|  {
+	async getAllUsers(query: {
+		page?: number | string;
+		limit?: number | string;
+		search?: string;
+		status?: string;
+	}): Promise<
+		| {
 				success: true;
 				message?: string;
 				data: {

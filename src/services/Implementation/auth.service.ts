@@ -469,7 +469,11 @@ export class AuthService implements IAuthService {
 	}
 
 	async refreshToken(token: string): Promise<{ accessToken: string }> {
-		let user;
+		let user: {
+			userId: string;
+			email: string;
+			role: string;
+		};
 		try {
 			user = verifyToken(
 				token,
@@ -513,6 +517,34 @@ export class AuthService implements IAuthService {
 		} catch (error) {
 			console.log(error);
 			return { success: false, message: "something went wrong" };
+		}
+	}
+
+	async changePassword(
+		userId: string,
+		oldPassword: string,
+		newPassword: string,
+	): Promise<{ success: boolean; message: string }> {
+		try {
+			const user = await this._userRepo.findByIdWithPassword(userId);
+			if (!user) {
+				return { success: false, message: "User not found" };
+			}
+			const isPasswordValid = await verifyPassword(user.password, oldPassword);
+
+			if (!isPasswordValid) {
+				return { success: false, message: "Invalid old password" };
+			}
+			const hashedPassword = await hashPassword(newPassword);
+
+			// Use save() instead of updateById to ensure persistence and trigger hooks if any
+			user.password = hashedPassword;
+			await user.save();
+
+			return { success: true, message: "Password changed successfully" };
+		} catch (error) {
+			console.log("changePassword error:", error);
+			throw error;
 		}
 	}
 }

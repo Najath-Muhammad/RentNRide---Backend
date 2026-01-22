@@ -24,7 +24,7 @@ export class FileController implements IFileController {
 				fileType,
 			);
 
-			console.log("upload url",response.uploadUrl)
+			console.log("upload url", response.uploadUrl);
 
 			return successResponse(res, "Upload URL generated", {
 				uploadUrl: response.uploadUrl,

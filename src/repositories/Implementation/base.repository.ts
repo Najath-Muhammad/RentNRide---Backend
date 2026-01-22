@@ -15,8 +15,8 @@ export class BaseRepo<T extends Document> implements IBaseRepo<T> {
 	async findById(id: string | mongoose.Types.ObjectId): Promise<T | null> {
 		return await this.model.findById(id);
 	}
-	async findAll(filter?: FilterQuery<T>): Promise<T[]> {
-		return await this.model.find({ filter }).sort({ createdAt: -1 });
+	async findAll(filter: FilterQuery<T> = {}): Promise<T[]> {
+		return await this.model.find(filter).sort({ createdAt: -1 });
 	}
 	async findOne(filter: FilterQuery<T>): Promise<T | null> {
 		return await this.model.findOne(filter);

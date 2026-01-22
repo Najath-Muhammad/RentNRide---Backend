@@ -48,4 +48,10 @@ router.get(
 	authController.exampleRoute.bind(authController),
 );
 
+router.patch(
+	ROUTES.AUTH.CHANGE_PASSWORD,
+	AuthGuard(["user", "premium", "admin"]),
+	authController.changePassword.bind(authController),
+);
+
 export default router;

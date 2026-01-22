@@ -24,6 +24,7 @@ export interface IVehicleRepository extends IBaseRepo<IVehicle> {
 		lat?: number,
 		lon?: number,
 		range?: number,
+		minRange?: number,
 		filters?: {
 			search?: string;
 			category?: string[];
@@ -32,6 +33,7 @@ export interface IVehicleRepository extends IBaseRepo<IVehicle> {
 			minPrice?: number;
 			maxPrice?: number;
 			sortBy?: string;
+			excludeOwnerId?: string;
 		},
 	): Promise<{
 		data: (Document & IVehicle)[];

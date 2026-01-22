@@ -20,4 +20,3 @@ export const adminToToken = (user: IUser): IAdminToFrontend => {
 		role: user.role,
 	};
 };
- 

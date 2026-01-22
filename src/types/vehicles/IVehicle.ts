@@ -4,13 +4,13 @@ import type { Document } from "mongoose";
 export interface IVehicle extends Document {
 	_id: mongoose.Types.ObjectId;
 	ownerId: mongoose.Types.ObjectId;
-	category: string;
+	category: mongoose.Types.ObjectId;
 	brand: string;
 	modelName: string;
-	category2?: string;
-	fuelType: string;
-	transmission: 'Manual' | 'Automatic';
-	seatingCapacity: number;
+	category2?: mongoose.Types.ObjectId;
+	fuelType: mongoose.Types.ObjectId;
+	transmission: "Manual" | "Automatic";
+	seatingCapacity?: number;
 	pricePerDay: number;
 	doors: number;
 	vehicleImages: string[];

@@ -1,96 +1,103 @@
 import mongoose, { Schema } from "mongoose";
-import { IBooking } from "../types/booking/booking.types";
+import type { IBooking } from "../types/booking/booking.types";
 
 const BookingSchema = new Schema<IBooking>(
-  {
-    bookingId: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    vehicleId: {
-      type: Schema.Types.ObjectId,
-      ref: "Vehicle",
-      required: true,
-    },
+	{
+		bookingId: {
+			type: String,
+			required: true,
+			unique: true,
+		},
+		vehicleId: {
+			type: Schema.Types.ObjectId,
+			ref: "Vehicle",
+			required: true,
+		},
 
-    userId: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
+		userId: {
+			type: Schema.Types.ObjectId,
+			ref: "User",
+			required: true,
+		},
 
-    ownerId: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
+		ownerId: {
+			type: Schema.Types.ObjectId,
+			ref: "User",
+			required: true,
+		},
 
-    startDate: {
-      type: Date,
-      required: true,
-    },
+		startDate: {
+			type: Date,
+			required: true,
+		},
 
-    endDate: {
-      type: Date,
-      required: true,
-    },
+		endDate: {
+			type: Date,
+			required: true,
+		},
 
-    withFuel: {
-      type: Boolean,
-      default: false,
-    },
+		withFuel: {
+			type: Boolean,
+			default: false,
+		},
 
-    pricePerDay: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
+		pricePerDay: {
+			type: Number,
+			required: true,
+			min: 0,
+		},
 
-    totalAmount: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
+		totalAmount: {
+			type: Number,
+			required: true,
+			min: 0,
+		},
 
-    advancePaid: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
+		advancePaid: {
+			type: Number,
+			default: 0,
+			min: 0,
+		},
 
-    paymentStatus: {
-      type: String,
-      enum: ["pending", "partial", "paid", "refunded"],
-      default: "pending",
-    },
+		paymentStatus: {
+			type: String,
+			enum: ["pending", "partial", "paid", "refunded"],
+			default: "pending",
+		},
 
-    bookingStatus: {
-      type: String,
-      enum: ["pending", "confirmed", "ongoing", "completed", "cancelled", "rejected"],
-      default: "pending",
-    },
+		bookingStatus: {
+			type: String,
+			enum: [
+				"pending",
+				"confirmed",
+				"ongoing",
+				"completed",
+				"cancelled",
+				"rejected",
+			],
+			default: "pending",
+		},
 
-    cancellationReason: {
-      type: String,
-      trim: true,
-    },
+		cancellationReason: {
+			type: String,
+			trim: true,
+		},
 
-    cancelledBy: {
-      type: String,
-      enum: ["user", "owner", "system"],
-    },
+		cancelledBy: {
+			type: String,
+			enum: ["user", "owner", "system"],
+		},
 
-    tracking: {
-      isEnabled: {
-        type: Boolean,
-        default: false,
-      },
-    },
-  },
-  {
-    timestamps: true, 
-  }
+		tracking: {
+			isEnabled: {
+				type: Boolean,
+				default: false,
+			},
+		},
+	},
+	{
+		timestamps: true,
+	},
 );
 BookingSchema.index({ userId: 1, bookingStatus: 1 });
 BookingSchema.index({ ownerId: 1, bookingStatus: 1 });

@@ -1,6 +1,8 @@
 import type { IVehicle } from "../../types/vehicles/IVehicle";
 
-export const mapVehicleToResponse = (vehicle: IVehicle): any | null => {
+export const mapVehicleToResponse = (
+	vehicle: IVehicle,
+): Partial<IVehicle> | null => {
 	const now = new Date();
 
 	const isRcExpired = vehicle.rcExpiryDate
