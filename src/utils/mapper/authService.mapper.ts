@@ -14,6 +14,7 @@ export const userDTO = (user: IUser): ISafeUser => {
 		createdAt: user.createdAt,
 		updatedAt: user.updatedAt,
 		isBlocked: user.isBlocked,
+		profilePhoto: user.profilePhoto,
 	};
 };
 

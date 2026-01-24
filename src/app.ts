@@ -13,7 +13,7 @@ import vehicleRouter from "./route/vehicle.routes";
 
 import { ROUTES } from "./constants/Routes/routeConstants";
 import adminBookingRouter from "./route/admin.booking.routes";
-import categoryRouter from "./route/admin.category.routes";
+
 import bookingRouter from "./route/booking.routes";
 import reviewRouter from "./route/review.routes";
 import userRouter from "./route/user.routes";
@@ -37,7 +37,7 @@ app.use("/api/bookings", bookingRouter);
 app.use("/api/user", userRouter);
 //app.use(checkBlocked(authService))
 app.use(ROUTES.ADMIN.BASE, adminRouter);
-app.use("/api/admin/category", categoryRouter);
+
 app.use("/api/reviews", reviewRouter);
 app.use("/api/admin/bookings", adminBookingRouter);
 

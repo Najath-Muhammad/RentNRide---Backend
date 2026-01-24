@@ -5,10 +5,11 @@ export interface ISafeUser {
 	name: string;
 	email: string;
 	phone: number;
-	role: "admin" | "user";
-	address: mongoose.Types.ObjectId;
+	role: "admin" | "user" | "premium";
+	address?: mongoose.Types.ObjectId;
 	status: string;
 	createdAt: Date;
 	updatedAt: Date;
 	isBlocked: boolean;
+    profilePhoto?: string;
 }
