@@ -1,36 +1,28 @@
-import type { Document, FilterQuery } from "mongoose";
+import type { Document, FilterQuery, Types } from "mongoose";
 import type { IVehicleRepository } from "../../repositories/interfaces/vehicle.interface";
-import type { IVehicle, IVehicleStats } from "../../types/vehicles/IVehicle";
-import { mapVehicleToResponse } from "../../utils/mapper/vehicleService.mapper";
+import type { IVehicle, IVehicleStats, PaginatedVehicles } from "../../types/vehicles/IVehicle";
+import { mapVehicleToDTO, mapVehicleToPublicResponse } from "../../utils/mapper/vehicleService.mapper";
 import type { IVehicleService } from "../Interfaces/vehicle.interface.service";
-
-type PaginatedVehicles = {
-	data: (Document & IVehicle)[];
-	total: number;
-	page: number;
-	limit: number;
-	totalPages: number;
-};
+import { SubscriptionPlanRepo, UserSubscriptionRepo } from "../../repositories/Implementation/subscription.repository";
+import { SubscriptionService } from "./subscription.service";
 
 export class VehicleService implements IVehicleService {
-	constructor(private _vehicleRepo: IVehicleRepository) {}
+	constructor(private _vehicleRepo: IVehicleRepository) { }
 
 	async createVehicle(
 		vehicleData: IVehicle,
 		user: { userId: string; role: string },
 	) {
 		try {
-			if (user.role === "user") {
-				const vehicles = await this._vehicleRepo.getVehiclesByOwner(
-					user.userId,
-				);
-				if (vehicles && vehicles.length >= 5) {
-					return {
-						success: false,
-						message:
-							"Limit exceeded. Standard users can only list up to 5 vehicles. Please upgrade to Premium to add more.",
-					};
-				}
+			// Enforce subscription vehicle limit
+			const subService = new SubscriptionService(new SubscriptionPlanRepo(), new UserSubscriptionRepo());
+			const vehicleLimit = await subService.getUserVehicleLimit(user.userId);
+			const vehicles = await this._vehicleRepo.getVehiclesByOwner(user.userId);
+			if (vehicles && vehicles.length >= vehicleLimit) {
+				return {
+					success: false,
+					message: `Limit exceeded. Your current plan allows up to ${vehicleLimit} vehicle listing${vehicleLimit !== 1 ? 's' : ''}. Please upgrade your subscription to add more.`,
+				};
 			}
 
 			const res = await this._vehicleRepo.create(vehicleData);
@@ -73,7 +65,9 @@ export class VehicleService implements IVehicleService {
 				};
 			}
 
-			const mappedVehicles = response.data;
+			const mappedVehicles = response.data.map((vehicle) =>
+				mapVehicleToDTO(vehicle),
+			);
 
 			return {
 				success: true,
@@ -124,7 +118,7 @@ export class VehicleService implements IVehicleService {
 			return {
 				success: true,
 				message: "Vehicle approved successfully",
-				data: vehicle.toObject(),
+				data: mapVehicleToDTO(vehicle) as IVehicle,
 			};
 		} catch (error) {
 			console.error("Error approving vehicle in service:", error);
@@ -164,7 +158,7 @@ export class VehicleService implements IVehicleService {
 
 	async getVehicleById(
 		id: string,
-		isPublic: boolean = false,
+		user?: { userId: string; role: string },
 	): Promise<{
 		success: boolean;
 		message: string;
@@ -178,11 +172,32 @@ export class VehicleService implements IVehicleService {
 					message: "Vehicle not found",
 				};
 			}
+
+			let isOwnerOrAdmin = false;
+			if (user) {
+				if (user.role === 'admin') {
+					isOwnerOrAdmin = true;
+				} else {
+					// Check ownerId
+					let vehicleOwnerIdStr: string;
+					const ownerIdValue = vehicle.ownerId as unknown as Types.ObjectId | { _id: Types.ObjectId };
+					if (typeof ownerIdValue === 'object' && ownerIdValue !== null && '_id' in ownerIdValue) {
+						vehicleOwnerIdStr = ownerIdValue._id.toString();
+					} else {
+						vehicleOwnerIdStr = String(ownerIdValue);
+					}
+
+					if (vehicleOwnerIdStr === user.userId) {
+						isOwnerOrAdmin = true;
+					}
+				}
+			}
+
 			const plainVehicle = vehicle.toObject() as IVehicle;
 
-			const resultData = isPublic
-				? mapVehicleToResponse(plainVehicle)
-				: plainVehicle;
+			const resultData = !isOwnerOrAdmin
+				? mapVehicleToPublicResponse(plainVehicle)
+				: mapVehicleToDTO(plainVehicle);
 
 			if (!resultData) {
 				return {
@@ -243,10 +258,10 @@ export class VehicleService implements IVehicleService {
 				minRange,
 				filters,
 			);
-			console.log(`Service: Found ${result.total} vehicles from repo`);
+
 
 			const mappedVehicles = result.data
-				.map((v) => mapVehicleToResponse(v.toObject() as IVehicle))
+				.map((v) => mapVehicleToPublicResponse(v.toObject() as IVehicle))
 				.filter(
 					(vehicle): vehicle is NonNullable<typeof vehicle> => vehicle !== null,
 				);
@@ -281,7 +296,7 @@ export class VehicleService implements IVehicleService {
 
 			const plainVehicles = vehicles.map((v) => v.toObject() as IVehicle);
 			const mappedVehicles = plainVehicles
-				.map((vehicle) => mapVehicleToResponse(vehicle))
+				.map((vehicle) => mapVehicleToDTO(vehicle))
 				.filter((v): v is Partial<IVehicle> => v !== null);
 
 			return {
@@ -343,7 +358,18 @@ export class VehicleService implements IVehicleService {
 				return { success: false, message: "Vehicle not found" };
 			}
 
-			if (vehicle.ownerId.toString() !== ownerId) {
+			// Handle both populated (user object) and non-populated (ObjectId) cases
+			let vehicleOwnerIdStr: string;
+			const ownerIdValue = vehicle.ownerId as unknown as Types.ObjectId | { _id: Types.ObjectId };
+			if (typeof ownerIdValue === 'object' && ownerIdValue !== null && '_id' in ownerIdValue) {
+				// ownerId is populated with user object, extract the _id
+				vehicleOwnerIdStr = ownerIdValue._id.toString();
+			} else {
+				// ownerId is just an ObjectId
+				vehicleOwnerIdStr = String(ownerIdValue);
+			}
+
+			if (vehicleOwnerIdStr !== ownerId) {
 				return {
 					success: false,
 					message: "Unauthorized: You can only edit your own vehicles",
@@ -365,7 +391,7 @@ export class VehicleService implements IVehicleService {
 			return {
 				success: true,
 				message: "Vehicle updated successfully",
-				data: updated.toObject() as IVehicle,
+				data: mapVehicleToDTO(updated.toObject() as IVehicle) as IVehicle,
 			};
 		} catch (error) {
 			console.error("Error updating vehicle:", error);
@@ -378,20 +404,40 @@ export class VehicleService implements IVehicleService {
 		ownerId: string,
 	): Promise<{ success: boolean; message: string }> {
 		try {
+			console.log("Delete vehicle request - ID:", id, "Owner ID:", ownerId);
 			const vehicle = await this._vehicleRepo.findById(id);
 
 			if (!vehicle) {
+				console.log("Vehicle not found with ID:", id);
 				return { success: false, message: "Vehicle not found" };
 			}
 
-			if (vehicle.ownerId.toString() !== ownerId) {
+
+			console.log("Vehicle found - Vehicle ownerId:", vehicle.ownerId, "Token ownerId:", ownerId);
+			console.log("Vehicle ownerId type:", typeof vehicle.ownerId, "Token ownerId type:", typeof ownerId);
+
+			// Handle both populated (user object) and non-populated (ObjectId) cases
+			let vehicleOwnerIdStr: string;
+			const ownerIdValue = vehicle.ownerId as unknown as Types.ObjectId | { _id: Types.ObjectId };
+			if (typeof ownerIdValue === 'object' && ownerIdValue !== null && '_id' in ownerIdValue) {
+				// ownerId is populated with user object, extract the _id
+				vehicleOwnerIdStr = ownerIdValue._id.toString();
+			} else {
+				// ownerId is just an ObjectId
+				vehicleOwnerIdStr = String(ownerIdValue);
+			}
+
+			const tokenOwnerIdStr = ownerId.toString();
+
+			if (vehicleOwnerIdStr !== tokenOwnerIdStr) {
+				console.log("Owner mismatch - Vehicle owner:", vehicleOwnerIdStr, "Token owner:", tokenOwnerIdStr);
 				return {
 					success: false,
 					message: "Unauthorized: You can only delete your own vehicles",
 				};
 			}
-
 			await this._vehicleRepo.deleteById(id);
+			console.log("Vehicle deleted successfully:", id);
 
 			return { success: true, message: "Vehicle deleted successfully" };
 		} catch (error) {
@@ -402,6 +448,6 @@ export class VehicleService implements IVehicleService {
 
 	async checkLimit(_userId: string) {
 		try {
-		} catch (_error) {}
+		} catch (_error) { }
 	}
 }

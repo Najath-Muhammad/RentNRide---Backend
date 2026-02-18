@@ -55,8 +55,8 @@ export class BookingController implements IBookingController {
 				return;
 			}
 
-			const page = parseInt(req.query.page as string) || 1;
-			const limit = parseInt(req.query.limit as string) || 10;
+			const page = parseInt(req.query.page as string, 10) || 1;
+			const limit = parseInt(req.query.limit as string, 10) || 10;
 			const status = req.query.status as string;
 
 			const result = await this._bookingService.getUserBookings(
@@ -93,7 +93,7 @@ export class BookingController implements IBookingController {
 				bookingId,
 				userId,
 				reason,
-			);
+			)
 
 			if (!booking) {
 				errorResponse(
@@ -111,7 +111,7 @@ export class BookingController implements IBookingController {
 				res,
 				error instanceof Error ? error.message : "Internal server error",
 				HttpStatus.INTERNAL_SERVER_ERROR,
-			);
+			)
 		}
 	}
 }

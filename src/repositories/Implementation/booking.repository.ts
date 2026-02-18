@@ -1,4 +1,4 @@
-import type { Document, FilterQuery, Types } from "mongoose";
+import type { FilterQuery, Types } from "mongoose";
 import { BookingModel } from "../../model/booking.model";
 import type { IBooking } from "../../types/booking/booking.types";
 import type { IBookingRepo } from "../interfaces/booking.interface";
@@ -199,5 +199,25 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 			limit,
 			totalPages: Math.ceil(total / limit),
 		};
+	}
+	async expireStaleBookings(
+		userId?: string | Types.ObjectId,
+	): Promise<number> {
+		const now = new Date();
+		const filter: FilterQuery<IBooking> = {
+			bookingStatus: { $in: ['pending', 'confirmed'] },
+			endDate: { $lt: now },
+		};
+		if (userId) {
+			filter.userId = userId;
+		}
+		const result = await this.model.updateMany(filter, {
+			$set: {
+				bookingStatus: 'cancelled',
+				cancelledBy: 'system',
+				cancellationReason: 'Booking expired — end date passed without confirmation.',
+			},
+		}).exec();
+		return result.modifiedCount;
 	}
 }

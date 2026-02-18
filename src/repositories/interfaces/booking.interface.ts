@@ -1,4 +1,4 @@
-import type { Document, FilterQuery, Types } from "mongoose";
+import type { Types } from "mongoose";
 import type { IBooking } from "../../types/booking/booking.types";
 
 import type { IBaseRepo } from "./base.interface";
@@ -69,4 +69,7 @@ export interface IBookingRepo extends IBaseRepo<IBooking> {
 		limit: number;
 		totalPages: number;
 	}>;
+	expireStaleBookings(
+		userId?: string | Types.ObjectId,
+	): Promise<number>;
 }

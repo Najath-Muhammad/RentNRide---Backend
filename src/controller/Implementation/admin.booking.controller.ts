@@ -9,8 +9,8 @@ export class AdminBookingController implements IAdminBookingController {
 
 	async getAllBookings(req: Request, res: Response): Promise<void> {
 		try {
-			const page = parseInt(req.query.page as string) || 1;
-			const limit = parseInt(req.query.limit as string) || 10;
+			const page = parseInt(req.query.page as string, 10) || 1;
+			const limit = parseInt(req.query.limit as string, 10) || 10;
 			const status = req.query.status as string;
 			const search = req.query.search as string;
 

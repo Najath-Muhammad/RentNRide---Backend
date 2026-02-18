@@ -6,7 +6,7 @@ import { errorResponse, successResponse } from "../../utils/response.util";
 import type { IVehicleController } from "../interfaces/ivehicle.controller";
 
 export class VehicleController implements IVehicleController {
-	constructor(private _vehicleService: IVehicleService) {}
+	constructor(private _vehicleService: IVehicleService) { }
 
 	async createVehicle(
 		req: Request,
@@ -192,7 +192,8 @@ export class VehicleController implements IVehicleController {
 				return errorResponse(res, "Invalid vehicle ID", HttpStatus.BAD_REQUEST);
 			}
 
-			const result = await this._vehicleService.getVehicleById(id, true);
+			const user = req.user ? { userId: req.user.userId, role: req.user.role } : undefined;
+			const result = await this._vehicleService.getVehicleById(id, user);
 
 			if (!result.success) {
 				return errorResponse(res, result.message, HttpStatus.NOT_FOUND);
@@ -241,9 +242,9 @@ export class VehicleController implements IVehicleController {
 
 			const filters = {
 				search: req.query.search as string,
-				category: toStringArray(req.query.category),
-				fuelType: toStringArray(req.query.fuelType),
-				transmission: toStringArray(req.query.transmission),
+				category: toStringArray(req.query.category || req.query['category[]']),
+				fuelType: toStringArray(req.query.fuelType || req.query['fuelType[]']),
+				transmission: toStringArray(req.query.transmission || req.query['transmission[]']),
 				minPrice: req.query.minPrice
 					? parseInt(req.query.minPrice as string, 10)
 					: undefined,

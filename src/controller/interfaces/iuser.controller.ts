@@ -1,18 +1,18 @@
 import type { NextFunction, Request, Response } from "express";
 
 export interface IuserController {
-	getProfile(req: Request, res: Response, next: NextFunction): Promise<any>;
-	updateProfile(req: Request, res: Response, next: NextFunction): Promise<any>;
+	getProfile(req: Request, res: Response, next: NextFunction): Promise<Response>;
+	updateProfile(req: Request, res: Response, next: NextFunction): Promise<Response>;
 	updateProfilePhoto(
 		req: Request,
 		res: Response,
 		next: NextFunction,
-	): Promise<any>;
-	changePassword(req: Request, res: Response, next: NextFunction): Promise<any>;
+	): Promise<Response>;
+	changePassword(req: Request, res: Response, next: NextFunction): Promise<Response>;
 	getSubscription(
 		req: Request,
 		res: Response,
 		next: NextFunction,
-	): Promise<any>;
-	upgradePremium(req: Request, res: Response, next: NextFunction): Promise<any>;
+	): Promise<Response>;
+	upgradePremium(req: Request, res: Response, next: NextFunction): Promise<Response>;
 }

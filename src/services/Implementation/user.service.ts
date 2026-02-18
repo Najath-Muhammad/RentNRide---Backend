@@ -16,7 +16,7 @@ export class UserService implements IUserService {
 				throw new Error("User not found");
 			}
 
-			const { password, ...safeUser } = user.toObject ? user.toObject() : user;
+			const { password: _password, ...safeUser } = user.toObject ? user.toObject() : user;
 			return safeUser;
 		} catch (error) {
 			if (error instanceof Error) {
@@ -29,7 +29,7 @@ export class UserService implements IUserService {
 	async updateProfile(
 		userId: string,
 		data: { name?: string; phone?: string },
-	): Promise<any> {
+	): Promise<IUser> {
 		try {
 			if (data.name && data.name.trim().length < 2) {
 				throw new Error("Name must be at least 2 characters");

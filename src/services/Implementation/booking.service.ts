@@ -12,7 +12,7 @@ export class BookingService implements IBookingService {
 	constructor(
 		private _vehicleRepo: IVehicleRepository,
 		private _bookingRepo: IBookingRepo,
-	) {}
+	) { }
 
 	async getBookingById(
 		bookingId: string,
@@ -23,10 +23,10 @@ export class BookingService implements IBookingService {
 			const booking = await this._bookingRepo.findById(bookingId)
 			if (!booking) return null
 			if (role === "admin") return booking
-			if (role === "user" &&booking.userId.toString() === requesterId.toString()){
+			if (role === "user" && booking.userId.toString() === requesterId.toString()) {
 				return booking
 			}
-			if (role === "owner" && booking.ownerId.toString() === requesterId.toString()){
+			if (role === "owner" && booking.ownerId.toString() === requesterId.toString()) {
 				return booking
 			}
 			return null
@@ -49,6 +49,9 @@ export class BookingService implements IBookingService {
 		totalPages: number;
 	}> {
 		try {
+			// Auto-expire stale bookings for this user before returning the list
+			await this._bookingRepo.expireStaleBookings(userId);
+
 			return await this._bookingRepo.findBookingsByUser(
 				userId,
 				page,
@@ -61,14 +64,14 @@ export class BookingService implements IBookingService {
 		}
 	}
 
-	async createBooking(userId: string | Types.ObjectId,input: CreateBookingInput): Promise<IBooking> {
+	async createBooking(userId: string | Types.ObjectId, input: CreateBookingInput): Promise<IBooking> {
 		try {
 			const { vehicleId, startDate, endDate, withFuel = false } = input;
 
 			const start = new Date(startDate);
 			const end = new Date(endDate);
 
-			if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+			if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
 				throw new Error("Invalid date format");
 			}
 			if (start >= end) {

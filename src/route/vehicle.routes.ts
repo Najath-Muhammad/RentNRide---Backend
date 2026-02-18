@@ -29,6 +29,7 @@ vehicleRouter.get(
 );
 vehicleRouter.get(
 	ROUTES.VEHICLE.GET_VEHICLE_BY_ID,
+	SoftAuth,
 	vehicleController.getVehicleById.bind(vehicleController),
 );
 vehicleRouter.patch(

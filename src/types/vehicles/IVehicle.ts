@@ -40,3 +40,12 @@ export interface IVehicleStats {
 	approved: number;
 	blocked: number;
 }
+
+
+export type PaginatedVehicles = {
+	data: Partial<IVehicle>[];
+	total: number;
+	page: number;
+	limit: number;
+	totalPages: number;
+};

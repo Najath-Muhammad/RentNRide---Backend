@@ -13,16 +13,20 @@ export const AuthGuard =
 				});
 			}
 
-			//console.log("enf reading: ", process.env.JWT_SECRET_KEY);
+			const jwtSecret = process.env.JWT_SECRET_KEY;
+			if (!jwtSecret) {
+				return res.status(500).json({
+					success: false,
+					message: "Server configuration error",
+				});
+			}
 
-			const verify = verifyToken(token, process.env.JWT_SECRET_KEY!) as {
+			const verify = verifyToken(token, jwtSecret) as {
 				email: string;
 				userId: string;
 				role: string;
 				name: string;
 			};
-
-			//console.log("verify", verify);
 
 			if (!verify) {
 				return res.status(401).json({
@@ -40,8 +44,7 @@ export const AuthGuard =
 
 			req.user = verify;
 			next();
-		} catch (error) {
-			console.log("error is: ", error);
+		} catch (_error) {
 			return res.status(401).json({
 				success: false,
 				message: "Invalid or expired token",

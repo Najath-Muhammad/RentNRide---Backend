@@ -16,12 +16,12 @@ export interface IAdminCategoryService {
 	createCategory(data: {
 		name: string;
 		description?: string;
-		subCategories?: any[];
+		subCategories?: { name: string }[];
 	}): Promise<ICategory>;
-	updateCategory(id: string, data: any): Promise<ICategory>;
+	updateCategory(id: string, data: Partial<ICategory>): Promise<ICategory>;
 	toggleCategoryStatus(id: string): Promise<ICategory>;
 	getAllFuelTypes(): Promise<IFuelType[]>;
-	createFuelType(data: any): Promise<IFuelType>;
-	updateFuelType(id: string, data: any): Promise<IFuelType>;
+	createFuelType(data: Partial<IFuelType>): Promise<IFuelType>;
+	updateFuelType(id: string, data: Partial<IFuelType>): Promise<IFuelType>;
 	toggleFuelTypeStatus(id: string): Promise<IFuelType>;
 }

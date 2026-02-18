@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import type { IReview } from "../../model/review.model";
 import type { BookingRepo } from "../../repositories/Implementation/booking.repository";
 import type { ReviewRepo } from "../../repositories/Implementation/review.repository";
@@ -26,9 +27,9 @@ export class ReviewService implements IReviewService {
 		}
 
 		return await this._reviewRepo.create({
-			userId: userId as any,
-			vehicleId: vehicleId as any,
-			bookingId: bookingId as any,
+			userId: new Types.ObjectId(userId),
+			vehicleId: new Types.ObjectId(vehicleId),
+			bookingId: new Types.ObjectId(bookingId),
 			rating,
 			comment,
 		});
@@ -52,7 +53,7 @@ export class ReviewService implements IReviewService {
 		}
 
 		const existingReview = await this._reviewRepo.findOne({
-			bookingId: completedBooking._id as any,
+			bookingId: completedBooking._id,
 		});
 
 		if (existingReview) {

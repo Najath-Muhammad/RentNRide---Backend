@@ -2,7 +2,6 @@ import { OAuth2Client } from "google-auth-library";
 import redisClient from "../../config/redis.config";
 import type { IUserRepository } from "../../repositories/interfaces/user.interface";
 import type { IAdminToFrontend } from "../../types/admin/IAdmin";
-import type { IUser } from "../../types/user/IUser";
 import type { IUserToFrontend } from "../../types/user/IUserToFrontend";
 import { generateToken, verifyToken } from "../../utils/jwt-service.utils";
 import logger from "../../utils/logger";
@@ -20,7 +19,7 @@ import type {
 } from "../Interfaces/auth.interface.service";
 
 export class AuthService implements IAuthService {
-	constructor(private _userRepo: IUserRepository) {}
+	constructor(private _userRepo: IUserRepository) { }
 
 	async signup(user: UserType): Promise<{ success: boolean; message: string }> {
 		try {
@@ -383,7 +382,7 @@ export class AuthService implements IAuthService {
 	async googleAuth(credential: string): Promise<{
 		success: boolean;
 		message: string;
-		user?: IUser;
+		user?: IUserToFrontend;
 		accessToken?: string;
 		refreshToken?: string;
 	}> {
@@ -451,7 +450,7 @@ export class AuthService implements IAuthService {
 			return {
 				success: true,
 				message: "Google authentication successful",
-				user,
+				user: userToToken(user),
 				accessToken,
 				refreshToken,
 			};
@@ -537,7 +536,7 @@ export class AuthService implements IAuthService {
 			}
 			const hashedPassword = await hashPassword(newPassword);
 
-			// Use save() instead of updateById to ensure persistence and trigger hooks if any
+			
 			user.password = hashedPassword;
 			await user.save();
 

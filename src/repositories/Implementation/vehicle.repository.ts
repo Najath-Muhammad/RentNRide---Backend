@@ -46,9 +46,6 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 			.sort({ createdAt: -1 })
 			.exec();
 
-		console.log("Applied query:", queryFilters);
-		console.log("Found vehicles:", vehicles);
-
 		const total = await this.model.countDocuments(queryFilters).exec();
 
 		return {
@@ -140,7 +137,13 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 				];
 			}
 			if (filters.category && filters.category.length > 0) {
-				filter.category = { $in: filters.category };
+				const categoryQuery = {
+					$or: [
+						{ category: { $in: filters.category } },
+						{ category2: { $in: filters.category } },
+					],
+				};
+				filter.$and = [...(filter.$and || []), categoryQuery];
 			}
 			if (filters.fuelType && filters.fuelType.length > 0) {
 				filter.fuelType = { $in: filters.fuelType };
@@ -210,10 +213,6 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 			.select("-__v -updatedAt")
 			.exec();
 
-		const totalCount = await this.model.countDocuments({}).exec();
-		const approvedCount = await this.model
-			.countDocuments({ isApproved: true, isActive: true })
-			.exec();
 		const total = await this.model.countDocuments(countFilter).exec();
 		return {
 			data: vehicles,
@@ -237,6 +236,6 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 		try {
 			const _today = Date.now();
 			const _count = this.model.find({ ownerId: ownerId });
-		} catch (_error) {}
+		} catch (_error) { }
 	}
 }

@@ -1,5 +1,4 @@
 import type { IAdminToFrontend } from "../../types/admin/IAdmin";
-import type { IUser } from "../../types/user/IUser";
 import type { IUserToFrontend } from "../../types/user/IUserToFrontend";
 
 export interface UserType {
@@ -53,7 +52,7 @@ export interface IAuthService {
 	googleAuth(credential: string): Promise<{
 		success: boolean;
 		message: string;
-		user?: IUser;
+		user?: IUserToFrontend;
 		accessToken?: string;
 		refreshToken?: string;
 	}>;

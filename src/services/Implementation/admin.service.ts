@@ -6,7 +6,7 @@ import { adminUserDTO } from "../../utils/mapper/adminService.mapper";
 import type { IAdminService } from "../Interfaces/admin.interface.service";
 
 export class AdminServices implements IAdminService {
-	constructor(private _userRepo: IUserRepository) {}
+	constructor(private _userRepo: IUserRepository) { }
 
 	async getAllUsers(query: {
 		page?: number | string;
@@ -15,21 +15,21 @@ export class AdminServices implements IAdminService {
 		status?: string;
 	}): Promise<
 		| {
-				success: true;
-				message?: string;
-				data: {
-					users: IUserToAdmin[];
-					total: number;
-					page: number;
-					limit: number;
-					totalPages: number;
-				};
-		  }
+			success: true;
+			message?: string;
+			data: {
+				users: IUserToAdmin[];
+				total: number;
+				page: number;
+				limit: number;
+				totalPages: number;
+			};
+		}
 		| {
-				success: false;
-				message: string;
-				data: IUserToAdmin[];
-		  }
+			success: false;
+			message: string;
+			data: IUserToAdmin[];
+		}
 	> {
 		try {
 			const page = Number(query.page) || 1;
@@ -73,7 +73,7 @@ export class AdminServices implements IAdminService {
 	async blockUser(
 		userId: string,
 	): Promise<
-		| { success: true; message: string; data?: IUser | null }
+		| { success: true; message: string; data?: IUserToAdmin | null }
 		| { success: false; message: string }
 	> {
 		try {
@@ -90,7 +90,7 @@ export class AdminServices implements IAdminService {
 			return {
 				success: true,
 				message: "User blocked successfully",
-				data: result ?? undefined,
+				data: result ? adminUserDTO(result) : undefined,
 			};
 		} catch (error) {
 			console.error("Block user service error:", error);
@@ -101,7 +101,7 @@ export class AdminServices implements IAdminService {
 	async unBlockUser(
 		userId: string,
 	): Promise<
-		| { success: true; message: string; data?: IUser | null }
+		| { success: true; message: string; data?: IUserToAdmin | null }
 		| { success: false; message: string }
 	> {
 		try {
@@ -118,7 +118,7 @@ export class AdminServices implements IAdminService {
 			return {
 				success: true,
 				message: "User unblocked successfully",
-				data: result ?? undefined,
+				data: result ? adminUserDTO(result) : undefined,
 			};
 		} catch (error) {
 			console.error("Unblock user service error:", error);
@@ -138,7 +138,7 @@ export class AdminServices implements IAdminService {
 				return { success: false, message: "User not found" };
 			}
 
-			const result = await this._userRepo.deleteById(userId);
+			await this._userRepo.deleteById(userId);
 
 			return {
 				success: true,

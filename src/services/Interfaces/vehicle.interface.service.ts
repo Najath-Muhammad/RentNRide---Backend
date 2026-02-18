@@ -9,7 +9,7 @@ export interface IVehicleService {
 	}>;
 	createVehicle(
 		vehicleData: IVehicle,
-		user: any,
+		user: { userId: string; role: string },
 	): Promise<{ success: boolean; message: string }>;
 	getAllVehicles(
 		filters?: FilterQuery<Document & IVehicle>,
@@ -19,7 +19,7 @@ export interface IVehicleService {
 		success: boolean;
 		message: string;
 		data?: {
-			data: (Document & IVehicle)[];
+			data: Partial<IVehicle>[];
 			total: number;
 			page: number;
 			limit: number;
@@ -28,13 +28,13 @@ export interface IVehicleService {
 	}>;
 	approveVehicle(
 		id: string,
-	): Promise<{ success: boolean; message: string; data?: IVehicle }>;
+	): Promise<{ success: boolean; message: string; data?: IVehicle | Partial<IVehicle> }>;
 	blockVehicle(id: string): Promise<{ success: boolean; message: string }>;
 	unblockVehicle(id: string): Promise<{ success: boolean; message: string }>;
 	getVehicleById(
 		id: string,
-		isPublic?: boolean,
-	): Promise<{ success: boolean; message: string; data?: any }>;
+		user?: { userId: string; role: string },
+	): Promise<{ success: boolean; message: string; data?: IVehicle | Partial<IVehicle> }>;
 	getPublicVehicles(
 		page?: number,
 		limit?: number,
@@ -56,7 +56,7 @@ export interface IVehicleService {
 		success: boolean;
 		message: string;
 		data?: {
-			data: any[];
+			data: Partial<IVehicle>[];
 			total: number;
 			page: number;
 			limit: number;
@@ -65,7 +65,7 @@ export interface IVehicleService {
 	}>;
 	getMyVehicles(
 		ownerId: string,
-	): Promise<{ success: boolean; message: string; vehicles?: any[] }>;
+	): Promise<{ success: boolean; message: string; vehicles?: Partial<IVehicle>[] }>;
 	rejectVehicle(
 		id: string,
 		reason: string,
@@ -74,7 +74,7 @@ export interface IVehicleService {
 		id: string,
 		ownerId: string,
 		updates: Partial<IVehicle>,
-	): Promise<{ success: boolean; message: string; data?: IVehicle }>;
+	): Promise<{ success: boolean; message: string; data?: IVehicle | Partial<IVehicle> }>;
 	deleteVehicle(
 		id: string,
 		ownerId: string,

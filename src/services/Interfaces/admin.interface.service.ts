@@ -1,4 +1,3 @@
-import type { IUser } from "../../types/user/IUser";
 import type { IUserToAdmin } from "../../types/user/IUserToAdmin";
 
 export interface IAdminService {
@@ -9,32 +8,32 @@ export interface IAdminService {
 		status?: string;
 	}): Promise<
 		| {
-				success: boolean;
-				message?: string;
-				data: {
-					users: IUserToAdmin[];
-					total: number;
-					page: number;
-					limit: number;
-					totalPages: number;
-				};
-		  }
+			success: boolean;
+			message?: string;
+			data: {
+				users: IUserToAdmin[];
+				total: number;
+				page: number;
+				limit: number;
+				totalPages: number;
+			};
+		}
 		| {
-				success: boolean;
-				message: string;
-				data: IUserToAdmin[];
-		  }
+			success: boolean;
+			message: string;
+			data: IUserToAdmin[];
+		}
 	>;
 	blockUser(
 		userId: string,
 	): Promise<
-		| { success: boolean; message: string; data?: IUser | null }
+		| { success: boolean; message: string; data?: IUserToAdmin | null }
 		| { success: false; message: string }
 	>;
 	unBlockUser(
 		userId: string,
 	): Promise<
-		| { success: boolean; message: string; data?: IUser | null }
+		| { success: boolean; message: string; data?: IUserToAdmin | null }
 		| { success: false; message: string }
 	>;
 	deleteUser(
