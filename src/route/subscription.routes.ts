@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { AuthGuard } from "../middlewares/authGuard";
 import { SubscriptionPlanRepo, UserSubscriptionRepo } from "../repositories/Implementation/subscription.repository";
+import { UserRepo } from "../repositories/Implementation/user.repository";
 import { SubscriptionService } from "../services/Implementation/subscription.service";
 import { SubscriptionController } from "../controller/Implementation/subscription.controller";
 
@@ -8,7 +9,8 @@ const subscriptionRouter = Router();
 
 const planRepo = new SubscriptionPlanRepo();
 const userSubRepo = new UserSubscriptionRepo();
-const subscriptionService = new SubscriptionService(planRepo, userSubRepo);
+const userRepo = new UserRepo();
+const subscriptionService = new SubscriptionService(planRepo, userSubRepo, userRepo);
 const subscriptionController = new SubscriptionController(subscriptionService);
 
 // ── Admin: Plan Management ─────────────────────────────────────────────────
@@ -76,6 +78,13 @@ subscriptionRouter.get(
 subscriptionRouter.get(
     "/subscriptions/plans",
     subscriptionController.getActivePlans.bind(subscriptionController),
+);
+
+// User-facing: subscribe to a plan (user subscribes themselves)
+subscriptionRouter.post(
+    "/subscriptions/subscribe",
+    AuthGuard(["user", "premium", "admin"]),
+    subscriptionController.selfSubscribe.bind(subscriptionController),
 );
 
 export default subscriptionRouter;

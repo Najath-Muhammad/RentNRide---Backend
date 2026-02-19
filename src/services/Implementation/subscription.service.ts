@@ -2,14 +2,14 @@ import type { Types } from "mongoose";
 import type { ISubscriptionPlanRepo, IUserSubscriptionRepo } from "../../repositories/interfaces/subscription.interface";
 import type { ISubscriptionPlan, IUserSubscription } from "../../types/subscription/subscription.types";
 import type { ISubscriptionService } from "../Interfaces/subscription.interface.service";
+import type { IUserRepository } from "../../repositories/interfaces/user.interface";
 
 export class SubscriptionService implements ISubscriptionService {
     constructor(
         private _planRepo: ISubscriptionPlanRepo,
         private _userSubRepo: IUserSubscriptionRepo,
+        private _userRepo: IUserRepository,
     ) { }
-
-    // ── Plan Management ────────────────────────────────────────────────────
 
     async getAllPlans(
         page: number = 1,
@@ -86,7 +86,6 @@ export class SubscriptionService implements ISubscriptionService {
         }
     }
 
-    // ── User Subscription Management ───────────────────────────────────────
 
     async getAllUserSubscriptions(
         page: number = 1,
@@ -95,7 +94,6 @@ export class SubscriptionService implements ISubscriptionService {
         status?: string,
     ): Promise<{ data: IUserSubscription[]; total: number; page: number; totalPages: number }> {
         try {
-            // Auto-expire stale subscriptions first
             await this._userSubRepo.expireStaleSubscriptions();
             return await this._userSubRepo.findAllSubscriptions(page, limit, search, status);
         } catch (error) {
@@ -110,7 +108,6 @@ export class SubscriptionService implements ISubscriptionService {
             if (!plan) throw new Error("Subscription plan not found");
             if (!plan.isActive) throw new Error("Subscription plan is not active");
 
-            // Cancel any existing active subscription
             const existing = await this._userSubRepo.findActiveByUser(userId);
             if (existing) {
                 await this._userSubRepo.cancelSubscription(
@@ -123,13 +120,21 @@ export class SubscriptionService implements ISubscriptionService {
             const endDate = new Date();
             endDate.setDate(endDate.getDate() + plan.durationDays);
 
-            return await this._userSubRepo.create({
+            const sub = await this._userSubRepo.create({
                 userId: userId as unknown as Types.ObjectId,
                 planId: planId as unknown as Types.ObjectId,
                 startDate,
                 endDate,
                 status: "active",
             });
+
+            // Sync user role to 'premium' and set expiry
+            await this._userRepo.updateById(userId, {
+                role: "premium",
+                premiumExpiresAt: endDate,
+            });
+
+            return sub;
         } catch (error) {
             console.error("Error in assignSubscription:", error);
             throw error;
@@ -144,6 +149,14 @@ export class SubscriptionService implements ISubscriptionService {
 
             const cancelled = await this._userSubRepo.cancelSubscription(id, reason);
             if (!cancelled) throw new Error("Failed to cancel subscription");
+
+            // Reset user role back to 'user'
+            const userId = (sub.userId as Types.ObjectId).toString();
+            await this._userRepo.updateById(userId, {
+                role: "user",
+                premiumExpiresAt: undefined,
+            });
+
             return cancelled;
         } catch (error) {
             console.error("Error in cancelUserSubscription:", error);
@@ -156,7 +169,17 @@ export class SubscriptionService implements ISubscriptionService {
     async getMySubscription(userId: string | Types.ObjectId): Promise<IUserSubscription | null> {
         try {
             await this._userSubRepo.expireStaleSubscriptions();
-            return await this._userSubRepo.findActiveByUser(userId);
+            const active = await this._userSubRepo.findActiveByUser(userId);
+
+            // If no active subscription, ensure user role is reset (handles auto-expiry)
+            if (!active) {
+                await this._userRepo.updateById(userId.toString(), {
+                    role: "user",
+                    premiumExpiresAt: undefined,
+                });
+            }
+
+            return active;
         } catch (error) {
             console.error("Error in getMySubscription:", error);
             throw error;

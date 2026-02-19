@@ -6,8 +6,6 @@ import { errorResponse, successResponse } from "../../utils/response.util";
 export class SubscriptionController {
     constructor(private _subscriptionService: ISubscriptionService) { }
 
-    // ── Plan Management (Admin) ────────────────────────────────────────────
-
     async getAllPlans(req: Request, res: Response, next: NextFunction): Promise<Response> {
         try {
             const page = parseInt(req.query.page as string, 10) || 1;
@@ -118,7 +116,6 @@ export class SubscriptionController {
         }
     }
 
-    // ── User Subscription Management (Admin) ───────────────────────────────
 
     async getAllUserSubscriptions(req: Request, res: Response, next: NextFunction): Promise<Response> {
         try {
@@ -177,7 +174,6 @@ export class SubscriptionController {
         }
     }
 
-    // ── User-Facing ────────────────────────────────────────────────────────
 
     async getMySubscription(req: Request, res: Response, next: NextFunction): Promise<Response> {
         try {
@@ -213,6 +209,38 @@ export class SubscriptionController {
                 res,
                 error instanceof Error ? error.message : "Failed to fetch history",
                 HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+        }
+    }
+
+    async selfSubscribe(req: Request, res: Response, next: NextFunction): Promise<Response> {
+        try {
+            const userId = req.user?.userId;
+            if (!userId) {
+                return errorResponse(res, "Unauthorized", HttpStatus.UNAUTHORIZED);
+            }
+            const { planId } = req.body;
+            if (!planId) {
+                return errorResponse(res, "planId is required", HttpStatus.BAD_REQUEST);
+            }
+
+            const existing = await this._subscriptionService.getMySubscription(userId);
+            if (existing) {
+                return errorResponse(
+                    res,
+                    "You already have an active subscription. Please contact admin to change your plan.",
+                    HttpStatus.CONFLICT,
+                );
+            }
+
+            const sub = await this._subscriptionService.assignSubscription(userId, planId);
+            return successResponse(res, "Subscription activated successfully", sub, HttpStatus.CREATED);
+        } catch (error) {
+            next(error);
+            return errorResponse(
+                res,
+                error instanceof Error ? error.message : "Failed to subscribe",
+                HttpStatus.BAD_REQUEST,
             );
         }
     }

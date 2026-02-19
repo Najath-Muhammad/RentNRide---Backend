@@ -67,20 +67,20 @@ export class UserSubscriptionRepo
         const filter: FilterQuery<IUserSubscription> = {};
         if (status) filter.status = status;
 
-        const query = this.model
-            .find(filter)
-            .populate("userId", "name email")
-            .populate("planId", "name price durationDays vehicleLimit")
-            .sort({ createdAt: -1 });
-
         if (search) {
-            // search is applied post-populate via aggregation alternative — use lean + filter
-            const all = await query.exec();
+            // Post-populate in-memory search (Mongoose doesn't support searching populated fields in DB)
+            const all = await this.model
+                .find(filter)
+                .populate("userId", "name email")
+                .populate("planId", "name price durationDays vehicleLimit features")
+                .sort({ createdAt: -1 })
+                .exec();
             const filtered = all.filter((s) => {
                 const user = s.userId as unknown as { name?: string; email?: string };
+                const term = search.toLowerCase();
                 return (
-                    user?.name?.toLowerCase().includes(search.toLowerCase()) ||
-                    user?.email?.toLowerCase().includes(search.toLowerCase())
+                    user?.name?.toLowerCase().includes(term) ||
+                    user?.email?.toLowerCase().includes(term)
                 );
             });
             const paginated = filtered.slice(skip, skip + limit);
@@ -88,15 +88,22 @@ export class UserSubscriptionRepo
                 data: paginated,
                 total: filtered.length,
                 page,
-                totalPages: Math.ceil(filtered.length / limit),
+                totalPages: Math.ceil(filtered.length / limit) || 1,
             };
         }
 
         const [data, total] = await Promise.all([
-            query.skip(skip).limit(limit).exec(),
+            this.model
+                .find(filter)
+                .populate("userId", "name email")
+                .populate("planId", "name price durationDays vehicleLimit features")
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .exec(),
             this.model.countDocuments(filter).exec(),
         ]);
-        return { data, total, page, totalPages: Math.ceil(total / limit) };
+        return { data, total, page, totalPages: Math.ceil(total / limit) || 1 };
     }
 
     async findByUser(
