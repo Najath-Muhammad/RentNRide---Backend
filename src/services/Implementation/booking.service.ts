@@ -7,11 +7,13 @@ import type {
 } from "../../types/booking/booking.types";
 import { generateBookingId } from "../../utils/generate.bookinId";
 import type { IBookingService } from "../Interfaces/booking.interface.service";
+import type { IChatService } from "../Interfaces/chat.interface.service";
 
 export class BookingService implements IBookingService {
 	constructor(
 		private _vehicleRepo: IVehicleRepository,
 		private _bookingRepo: IBookingRepo,
+		private _chatService?: IChatService,
 	) { }
 
 	async getBookingById(
@@ -124,6 +126,24 @@ export class BookingService implements IBookingService {
 			};
 
 			const newBooking = await this._bookingRepo.create(bookingData);
+
+			// Auto-send a booking request chat message to the owner
+			if (this._chatService) {
+				try {
+					const startStr = start.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+					const endStr = end.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+					const details = `🚗 Rent Request — ${vehicle.brand} ${vehicle.modelName}\n📅 ${startStr} → ${endStr} (${days} day${days > 1 ? "s" : ""})\n💰 Total: ₹${totalAmount.toLocaleString("en-IN")} (20% advance: ₹${advancePaid.toLocaleString("en-IN")})${withFuel ? "\n⛽ With Fuel" : ""}\nBooking ID: ${newBooking.bookingId}`;
+					await this._chatService.handleBookingRequest(
+						userId,
+						vehicle.ownerId,
+						newBooking._id,
+						vehicle._id,
+						details,
+					);
+				} catch (chatErr) {
+					console.error("Chat notification failed (non-fatal):", chatErr);
+				}
+			}
 
 			return newBooking;
 		} catch (error) {

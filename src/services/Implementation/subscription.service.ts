@@ -128,7 +128,6 @@ export class SubscriptionService implements ISubscriptionService {
                 status: "active",
             });
 
-            // Sync user role to 'premium' and set expiry
             await this._userRepo.updateById(userId, {
                 role: "premium",
                 premiumExpiresAt: endDate,
@@ -150,7 +149,6 @@ export class SubscriptionService implements ISubscriptionService {
             const cancelled = await this._userSubRepo.cancelSubscription(id, reason);
             if (!cancelled) throw new Error("Failed to cancel subscription");
 
-            // Reset user role back to 'user'
             const userId = (sub.userId as Types.ObjectId).toString();
             await this._userRepo.updateById(userId, {
                 role: "user",
@@ -164,7 +162,6 @@ export class SubscriptionService implements ISubscriptionService {
         }
     }
 
-    // ── User-Facing ────────────────────────────────────────────────────────
 
     async getMySubscription(userId: string | Types.ObjectId): Promise<IUserSubscription | null> {
         try {
@@ -202,7 +199,7 @@ export class SubscriptionService implements ISubscriptionService {
     async getUserVehicleLimit(userId: string | Types.ObjectId): Promise<number> {
         try {
             const sub = await this._userSubRepo.findActiveByUser(userId);
-            if (!sub) return 1; // default: free users can list 1 vehicle
+            if (!sub) return 1
             const plan = sub.planId as unknown as ISubscriptionPlan;
             return plan?.vehicleLimit ?? 1;
         } catch (error) {

@@ -18,6 +18,7 @@ import bookingRouter from "./route/booking.routes";
 import reviewRouter from "./route/review.routes";
 import userRouter from "./route/user.routes";
 import subscriptionRouter from "./route/subscription.routes";
+import chatRouter from "./route/chat.routes";
 
 const app = express();
 
@@ -42,5 +43,6 @@ app.use(ROUTES.ADMIN.BASE, adminRouter);
 app.use("/api/reviews", reviewRouter);
 app.use("/api/admin/bookings", adminBookingRouter);
 app.use("/api", subscriptionRouter);
+app.use("/api/chat", chatRouter);
 
 export { app };
