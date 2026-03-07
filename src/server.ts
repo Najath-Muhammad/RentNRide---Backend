@@ -16,8 +16,17 @@ async function bootstrap() {
 	await connectDB();
 	await redisClient.connect();
 
+<<<<<<< Updated upstream
 	app.listen(PORT, () =>
 		console.log("server starting on http://locahost:5000"),
+=======
+	const httpServer = createServer(app);
+
+	initSocket(httpServer);
+
+	httpServer.listen(PORT, () =>
+		console.log(`Server running on http://localhost:${PORT}`),
+>>>>>>> Stashed changes
 	);
 }
 
