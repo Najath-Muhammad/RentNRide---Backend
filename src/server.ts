@@ -17,14 +17,27 @@ async function bootstrap() {
 	await connectDB();
 	await redisClient.connect();
 
+<<<<<<< HEAD
 	// Create a plain HTTP server so Socket.IO can attach to it
 	const httpServer = createServer(app);
 
 	// Initialize Socket.IO
+=======
+<<<<<<< Updated upstream
+	app.listen(PORT, () =>
+		console.log("server starting on http://locahost:5000"),
+=======
+	const httpServer = createServer(app);
+
+>>>>>>> feat/chat
 	initSocket(httpServer);
 
 	httpServer.listen(PORT, () =>
 		console.log(`Server running on http://localhost:${PORT}`),
+<<<<<<< HEAD
+=======
+>>>>>>> Stashed changes
+>>>>>>> feat/chat
 	);
 }
 

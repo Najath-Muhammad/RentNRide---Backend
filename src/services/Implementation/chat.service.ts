@@ -1,6 +1,11 @@
 import { Types } from "mongoose";
 import { MessageModel } from "../../model/message.model";
+<<<<<<< HEAD
 import type { IConversationRepo, IMessageRepo,} from "../../repositories/interfaces/chat.interface";
+=======
+import { BookingModel } from "../../model/booking.model";
+import type { IConversationRepo, IMessageRepo, } from "../../repositories/interfaces/chat.interface";
+>>>>>>> feat/chat
 import type {
     IConversation,
     IMessage,
@@ -220,6 +225,20 @@ export class ChatService implements IChatService {
             const bookingObjId =
                 typeof bookingId === "string" ? new Types.ObjectId(bookingId) : bookingId;
 
+<<<<<<< HEAD
+=======
+            const booking = await BookingModel.findById(bookingObjId);
+            if (!booking) {
+                throw new Error("Booking not found");
+            }
+            if (booking.bookingStatus !== "pending") {
+                throw new Error(`Booking request is already ${booking.bookingStatus}`);
+            }
+            if (new Date(booking.startDate) < new Date()) {
+                throw new Error("Booking date has already passed. Request expired.");
+            }
+
+>>>>>>> feat/chat
             const convObjId =
                 typeof conversationId === "string"
                     ? new Types.ObjectId(conversationId)
@@ -244,6 +263,13 @@ export class ChatService implements IChatService {
             const message = await this._messageRepo.create(messageData);
             await this._conversationRepo.updateLastMessage(convObjId, message._id);
 
+<<<<<<< HEAD
+=======
+            // Update booking status
+            booking.bookingStatus = action === "approved" ? "confirmed" : "rejected";
+            await booking.save();
+
+>>>>>>> feat/chat
             const populated = await this.populateMessage(message._id);
             return populated ?? message;
         } catch (error) {
