@@ -121,7 +121,7 @@ export class BookingService implements IBookingService {
 				totalAmount,
 				advancePaid,
 				paymentStatus: "pending",
-				bookingStatus: "pending",
+				bookingStatus: "requested",
 				tracking: { isEnabled: false },
 			};
 

@@ -19,6 +19,7 @@ import reviewRouter from "./route/review.routes";
 import userRouter from "./route/user.routes";
 import subscriptionRouter from "./route/subscription.routes";
 import chatRouter from "./route/chat.routes";
+import paymentRouter from "./route/payment.routes";
 
 const app = express();
 
@@ -28,7 +29,16 @@ app.use(
 		credentials: true,
 	}),
 );
-app.use(express.json({ limit: "10mb" }));
+
+// We need raw body for stripe webhook, json parser for everything else.
+app.use((req, res, next) => {
+	if (req.originalUrl.includes("/webhook")) {
+		express.raw({ type: "application/json" })(req, res, next);
+	} else {
+		express.json({ limit: "10mb" })(req, res, next);
+	}
+});
+
 app.use(cookieParser());
 app.use(errorMiddleware);
 
@@ -44,5 +54,6 @@ app.use("/api/reviews", reviewRouter);
 app.use("/api/admin/bookings", adminBookingRouter);
 app.use("/api", subscriptionRouter);
 app.use("/api/chat", chatRouter);
+app.use("/api/payments", paymentRouter);
 
 export { app };

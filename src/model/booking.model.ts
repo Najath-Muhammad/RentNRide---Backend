@@ -59,23 +59,29 @@ const BookingSchema = new Schema<IBooking>(
 			min: 0,
 		},
 
+		paymentIntentId: {
+			type: String,
+		},
+
 		paymentStatus: {
 			type: String,
-			enum: ["pending", "partial", "paid", "refunded"],
+			enum: ["pending", "authorized", "captured", "refunded", "failed"],
 			default: "pending",
 		},
 
 		bookingStatus: {
 			type: String,
 			enum: [
-				"pending",
-				"confirmed",
-				"ongoing",
+				"requested",
+				"approved",
+				"advance_authorized",
+				"ride_started",
+				"payment_captured",
 				"completed",
 				"cancelled",
 				"rejected",
 			],
-			default: "pending",
+			default: "requested",
 		},
 
 		cancellationReason: {
