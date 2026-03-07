@@ -20,7 +20,7 @@ export class ChatService implements IChatService {
             .findById(messageId)
             .populate("senderId", "name email profileImage")
             .populate("receiverId", "name email profileImage")
-            .populate("bookingId", "bookingId startDate endDate totalAmount bookingStatus")
+            .populate("bookingId", "bookingId startDate endDate totalAmount advancePaid bookingStatus")
             .exec() as IMessage | null;
     }
 
