@@ -4,6 +4,7 @@ import type { IVehicle, IVehicleStats, PaginatedVehicles } from "../../types/veh
 import { mapVehicleToDTO, mapVehicleToPublicResponse } from "../../utils/mapper/vehicleService.mapper";
 import type { IVehicleService } from "../Interfaces/vehicle.interface.service";
 import { SubscriptionPlanRepo, UserSubscriptionRepo } from "../../repositories/Implementation/subscription.repository";
+import { UserRepo } from "../../repositories/Implementation/user.repository";
 import { SubscriptionService } from "./subscription.service";
 
 export class VehicleService implements IVehicleService {
@@ -15,7 +16,7 @@ export class VehicleService implements IVehicleService {
 	) {
 		try {
 			// Enforce subscription vehicle limit
-			const subService = new SubscriptionService(new SubscriptionPlanRepo(), new UserSubscriptionRepo());
+			const subService = new SubscriptionService(new SubscriptionPlanRepo(), new UserSubscriptionRepo(), new UserRepo());
 			const vehicleLimit = await subService.getUserVehicleLimit(user.userId);
 			const vehicles = await this._vehicleRepo.getVehiclesByOwner(user.userId);
 			if (vehicles && vehicles.length >= vehicleLimit) {

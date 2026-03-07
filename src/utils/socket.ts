@@ -8,10 +8,7 @@ import { ChatService } from "../services/Implementation/chat.service";
 
 let io: SocketServer;
 
-<<<<<<< HEAD
 // Track online users: userId -> Set of socketIds
-=======
->>>>>>> feat/chat
 const onlineUsers = new Map<string, Set<string>>();
 
 export function initSocket(server: HttpServer): SocketServer {
@@ -22,28 +19,19 @@ export function initSocket(server: HttpServer): SocketServer {
         },
     });
 
-<<<<<<< HEAD
     // Set up chat service
-=======
->>>>>>> feat/chat
     const messageRepo = new MessageRepo();
     const conversationRepo = new ConversationRepo();
     const chatService = new ChatService(messageRepo, conversationRepo);
 
-<<<<<<< HEAD
     // Authentication middleware
-=======
->>>>>>> feat/chat
     io.use((socket, next) => {
         try {
             const token =
                 socket.handshake.auth.token ||
                 socket.handshake.headers.authorization?.replace("Bearer ", "");
 
-<<<<<<< HEAD
             // Also try from cookie
-=======
->>>>>>> feat/chat
             const cookieHeader = socket.handshake.headers.cookie || "";
             const cookieToken = cookieHeader
                 .split(";")
@@ -83,16 +71,12 @@ export function initSocket(server: HttpServer): SocketServer {
         const userId: string = socket.data.user.userId;
         console.log(`[Socket] User connected: ${userId} (${socket.id})`);
 
-<<<<<<< HEAD
         // Track online users
-=======
->>>>>>> feat/chat
         if (!onlineUsers.has(userId)) {
             onlineUsers.set(userId, new Set());
         }
         onlineUsers.get(userId)!.add(socket.id);
 
-<<<<<<< HEAD
         // Join personal room to receive direct messages
         socket.join(`user:${userId}`);
 
@@ -100,12 +84,10 @@ export function initSocket(server: HttpServer): SocketServer {
         socket.broadcast.emit("user:online", { userId });
 
         // ─── Room: join a conversation ─────────────────────────────
-=======
         socket.join(`user:${userId}`);
 
         socket.broadcast.emit("user:online", { userId });
 
->>>>>>> feat/chat
         socket.on("conversation:join", (conversationId: string) => {
             socket.join(`conversation:${conversationId}`);
             console.log(`[Socket] ${userId} joined conversation: ${conversationId}`);
@@ -115,10 +97,7 @@ export function initSocket(server: HttpServer): SocketServer {
             socket.leave(`conversation:${conversationId}`);
         });
 
-<<<<<<< HEAD
         // ─── Send message ──────────────────────────────────────────
-=======
->>>>>>> feat/chat
         socket.on(
             "message:send",
             async (data: {
@@ -139,10 +118,7 @@ export function initSocket(server: HttpServer): SocketServer {
                         bookingId: data.bookingId,
                     });
 
-<<<<<<< HEAD
                     // Emit to conversation room
-=======
->>>>>>> feat/chat
                     if (data.conversationId) {
                         io.to(`conversation:${data.conversationId}`).emit(
                             "message:new",
@@ -150,15 +126,12 @@ export function initSocket(server: HttpServer): SocketServer {
                         );
                     }
 
-<<<<<<< HEAD
                     // Always emit to receiver's personal room
                     io.to(`user:${data.receiverId}`).emit("message:new", message);
 
                     // Confirm to sender
-=======
                     io.to(`user:${data.receiverId}`).emit("message:new", message);
 
->>>>>>> feat/chat
                     socket.emit("message:sent", message);
                 } catch (err) {
                     socket.emit("error", {
@@ -169,10 +142,7 @@ export function initSocket(server: HttpServer): SocketServer {
             },
         );
 
-<<<<<<< HEAD
         // ─── Booking action (approve/reject) ───────────────────────
-=======
->>>>>>> feat/chat
         socket.on(
             "booking:action",
             async (data: {
@@ -188,19 +158,13 @@ export function initSocket(server: HttpServer): SocketServer {
                         data.action,
                     );
 
-<<<<<<< HEAD
                     // Emit to the conversation room
-=======
->>>>>>> feat/chat
                     io.to(`conversation:${data.conversationId}`).emit(
                         "message:new",
                         message,
                     );
-<<<<<<< HEAD
 
                     // Also emit directly to the renter
-=======
->>>>>>> feat/chat
                     const conversation = await conversationRepo.findById(
                         data.conversationId,
                     );
@@ -232,10 +196,7 @@ export function initSocket(server: HttpServer): SocketServer {
             },
         );
 
-<<<<<<< HEAD
         // ─── Typing indicators ─────────────────────────────────────
-=======
->>>>>>> feat/chat
         socket.on(
             "typing:start",
             (data: { conversationId: string; receiverId: string }) => {
@@ -262,10 +223,7 @@ export function initSocket(server: HttpServer): SocketServer {
             },
         );
 
-<<<<<<< HEAD
         // ─── Disconnect ────────────────────────────────────────────
-=======
->>>>>>> feat/chat
         socket.on("disconnect", () => {
             const userSockets = onlineUsers.get(userId);
             if (userSockets) {
