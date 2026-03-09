@@ -28,7 +28,7 @@ export class MessageRepo
             .find({ conversationId })
             .populate("senderId", "name email profileImage")
             .populate("receiverId", "name email profileImage")
-            .populate("bookingId", "bookingId startDate endDate totalAmount bookingStatus")
+            .populate("bookingId", "bookingId startDate endDate totalAmount advancePaid bookingStatus")
             .sort({ createdAt: 1 })
             .skip(skip)
             .limit(limit)

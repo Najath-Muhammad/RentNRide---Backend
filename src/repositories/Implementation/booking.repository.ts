@@ -84,7 +84,7 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 	): Promise<IBooking[]> {
 		const filter: FilterQuery<IBooking> = {
 			vehicleId,
-			bookingStatus: { $in: ["pending", "confirmed", "ongoing"] },
+			bookingStatus: { $in: ["requested", "approved", "advance_authorized", "ride_started", "payment_captured"] },
 		};
 
 		if (startDate && endDate) {
@@ -101,11 +101,13 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 		try {
 			const totalBookings = await this.model.countDocuments().exec();
 
-			const [pending, confirmed, ongoing, completed, cancelled, refunded] =
+			const [requested, approved, advance_authorized, ride_started, payment_captured, completed, cancelled, refunded] =
 				await Promise.all([
-					this.model.countDocuments({ bookingStatus: "pending" }).exec(),
-					this.model.countDocuments({ bookingStatus: "confirmed" }).exec(),
-					this.model.countDocuments({ bookingStatus: "ongoing" }).exec(),
+					this.model.countDocuments({ bookingStatus: "requested" }).exec(),
+					this.model.countDocuments({ bookingStatus: "approved" }).exec(),
+					this.model.countDocuments({ bookingStatus: "advance_authorized" }).exec(),
+					this.model.countDocuments({ bookingStatus: "ride_started" }).exec(),
+					this.model.countDocuments({ bookingStatus: "payment_captured" }).exec(),
 					this.model.countDocuments({ bookingStatus: "completed" }).exec(),
 					this.model.countDocuments({ bookingStatus: "cancelled" }).exec(),
 					this.model.countDocuments({ paymentStatus: "refunded" }).exec(),
@@ -113,9 +115,11 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 
 			return {
 				totalBookings,
-				pending,
-				confirmed,
-				ongoing,
+				requested,
+				approved,
+				advance_authorized,
+				ride_started,
+				payment_captured,
 				completed,
 				cancelled,
 				refunded,
@@ -124,9 +128,11 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 			console.error("Error in getBookingStats:", error);
 			return {
 				totalBookings: 0,
-				pending: 0,
-				confirmed: 0,
-				ongoing: 0,
+				requested: 0,
+				approved: 0,
+				advance_authorized: 0,
+				ride_started: 0,
+				payment_captured: 0,
 				completed: 0,
 				cancelled: 0,
 				refunded: 0,
@@ -205,7 +211,7 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 	): Promise<number> {
 		const now = new Date();
 		const filter: FilterQuery<IBooking> = {
-			bookingStatus: { $in: ['pending', 'confirmed'] },
+			bookingStatus: { $in: ['requested', 'approved', 'advance_authorized'] },
 			endDate: { $lt: now },
 		};
 		if (userId) {
@@ -219,5 +225,9 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 			},
 		}).exec();
 		return result.modifiedCount;
+	}
+
+	async updateBookingDetails(bookingId: string | Types.ObjectId, updateData: Partial<IBooking>): Promise<IBooking | null> {
+		return await this.model.findByIdAndUpdate(bookingId, { $set: updateData }, { new: true }).exec();
 	}
 }

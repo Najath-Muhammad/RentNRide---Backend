@@ -38,9 +38,11 @@ export interface IBookingRepo extends IBaseRepo<IBooking> {
 
 	getBookingStats(): Promise<{
 		totalBookings: number;
-		pending: number;
-		confirmed: number;
-		ongoing: number;
+		requested: number;
+		approved: number;
+		advance_authorized: number;
+		ride_started: number;
+		payment_captured: number;
 		completed: number;
 		cancelled: number;
 		refunded: number;
@@ -72,4 +74,5 @@ export interface IBookingRepo extends IBaseRepo<IBooking> {
 	expireStaleBookings(
 		userId?: string | Types.ObjectId,
 	): Promise<number>;
+	updateBookingDetails(bookingId: string | Types.ObjectId, updateData: Partial<IBooking>): Promise<IBooking | null>;
 }
