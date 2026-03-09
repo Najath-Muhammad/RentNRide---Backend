@@ -20,7 +20,7 @@ export class ChatService implements IChatService {
             .findById(messageId)
             .populate("senderId", "name email profileImage")
             .populate("receiverId", "name email profileImage")
-            .populate("bookingId", "bookingId startDate endDate totalAmount bookingStatus")
+            .populate("bookingId", "bookingId startDate endDate totalAmount advancePaid bookingStatus")
             .exec() as IMessage | null;
     }
 
@@ -225,7 +225,7 @@ export class ChatService implements IChatService {
             if (!booking) {
                 throw new Error("Booking not found");
             }
-            if (booking.bookingStatus !== "pending") {
+            if (booking.bookingStatus !== "requested") {
                 throw new Error(`Booking request is already ${booking.bookingStatus}`);
             }
             if (new Date(booking.startDate) < new Date()) {
@@ -256,7 +256,7 @@ export class ChatService implements IChatService {
             await this._conversationRepo.updateLastMessage(convObjId, message._id);
 
             // Update booking status
-            booking.bookingStatus = action === "approved" ? "confirmed" : "rejected";
+            booking.bookingStatus = action === "approved" ? "approved" : "rejected";
             await booking.save();
             const populated = await this.populateMessage(message._id);
             return populated ?? message;
