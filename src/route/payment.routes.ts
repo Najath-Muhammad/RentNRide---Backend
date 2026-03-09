@@ -10,15 +10,13 @@ const bookingRepo = new BookingRepo();
 const paymentService = new PaymentService(bookingRepo);
 const paymentController = new PaymentController(paymentService);
 
-// Stripe webhook requires the raw body, so we use express.raw before json parsing
 router.post(
     "/webhook",
     express.raw({ type: "application/json" }),
     paymentController.handleWebhook.bind(paymentController),
 );
 
-// Protected routes
-router.use(AuthGuard(["user", "admin"]));
+router.use(AuthGuard(["user", "premium", "admin"]));
 router.post(
     "/advance-payment",
     paymentController.createAdvancePaymentIntent.bind(paymentController),
