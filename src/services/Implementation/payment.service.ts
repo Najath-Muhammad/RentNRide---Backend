@@ -2,6 +2,8 @@ import type { Types } from "mongoose";
 import { stripe } from "../../config/stripe.config";
 import type { IBookingRepo } from "../../repositories/interfaces/booking.interface";
 import type { IPaymentService } from "../Interfaces/payment.interface.service";
+import { WalletRepo } from "../../repositories/Implementation/wallet.repository";
+import { WalletService } from "./wallet.service";
 
 export class PaymentService implements IPaymentService {
     constructor(private _bookingRepo: IBookingRepo) { }
@@ -69,7 +71,18 @@ export class PaymentService implements IPaymentService {
                 paymentStatus: "captured",
                 bookingStatus: "payment_captured", // or you can keep ride_started if you want that as the primary status
             });
-            return { success: true, message: "Payment successfully captured" };
+
+            // Add the captured advance to the owner's wallet
+            const walletRepo = new WalletRepo();
+            const walletService = new WalletService(walletRepo);
+            await walletService.addTransaction(
+                booking.ownerId.toString(),
+                booking.advancePaid,
+                "credit",
+                `Advance payment received for booking ${booking.bookingId}`
+            );
+
+            return { success: true, message: "Payment successfully captured and added to wallet" };
         } catch (error) {
             console.error("Error capturing payment:", error);
             throw new Error("Captured failed: " + (error as Error).message);
@@ -127,11 +140,26 @@ export class PaymentService implements IPaymentService {
             }
             case "payment_intent.succeeded": {
                 const paymentIntent = event.data.object as any;
-                const bookingId = paymentIntent.metadata.bookingId;
-                if (bookingId) {
-                    await this._bookingRepo.updateBookingDetails(bookingId, {
-                        paymentStatus: "captured",
-                    });
+
+                if (paymentIntent.metadata.purpose === "wallet_funding") {
+                    const userId = paymentIntent.metadata.userId;
+                    const amount = parseFloat(paymentIntent.metadata.amount);
+                    if (userId && amount) {
+                        try {
+                            const walletRepo = new WalletRepo();
+                            const walletService = new WalletService(walletRepo);
+                            await walletService.addTransaction(userId, amount, "credit", "Wallet Top-up via Stripe");
+                        } catch (err) {
+                            console.error("Failed to add money to wallet from webhook:", err);
+                        }
+                    }
+                } else {
+                    const bookingId = paymentIntent.metadata.bookingId;
+                    if (bookingId) {
+                        await this._bookingRepo.updateBookingDetails(bookingId, {
+                            paymentStatus: "captured",
+                        });
+                    }
                 }
                 break;
             }
