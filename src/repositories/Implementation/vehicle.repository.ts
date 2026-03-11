@@ -134,6 +134,7 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 				filter.$or = [
 					{ brand: { $regex: filters.search, $options: "i" } },
 					{ modelName: { $regex: filters.search, $options: "i" } },
+					{ pickupAddress: { $regex: filters.search, $options: "i" } },
 				];
 			}
 			if (filters.category && filters.category.length > 0) {

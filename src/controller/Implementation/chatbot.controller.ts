@@ -3,13 +3,10 @@ import { Groq } from "groq-sdk";
 import type { IVehicleService } from "../../services/Interfaces/vehicle.interface.service";
 import { errorResponse, successResponse } from "../../utils/response.util";
 import { HttpStatus } from "../../constants/enum/statuscode";
+import { Category } from "../../model/category.model";
 
 export class ChatbotController {
-    private groq: Groq;
-
-    constructor(private _vehicleService: IVehicleService) {
-        this.groq = new Groq({ apiKey: process.env.GROQ_API_KEY || "development_key" });
-    }
+    constructor(private _vehicleService: IVehicleService) { }
 
     async handleChat(req: Request, res: Response) {
         try {
@@ -32,9 +29,10 @@ Return ONLY JSON, no markdown formatting or explaining text.`;
             let filters: any;
 
             try {
-                const completion = await this.groq.chat.completions.create({
+                const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+                const completion = await groq.chat.completions.create({
                     messages: [{ role: "user", content: prompt }],
-                    model: "llama3-70b-8192",
+                    model: "llama-3.3-70b-versatile",
                     temperature: 0.1,
                 });
 
@@ -51,12 +49,22 @@ Return ONLY JSON, no markdown formatting or explaining text.`;
                 filters = JSON.parse(cleanedContent);
             } catch (err) {
                 console.error("Failed to fetch or parse LLM JSON:", err);
+                if (err instanceof Error) {
+                    console.error("Error message:", err.message);
+                    console.error("Error stack:", err.stack);
+                }
                 return errorResponse(res, "Could not understand your search criteria. Please try rewriting your request.", HttpStatus.BAD_REQUEST);
             }
 
             // Map extracted filters to the actual parameters expected by getPublicVehicles
             const parsedFilters: Record<string, any> = {};
-            if (filters.vehicleType) parsedFilters.category = [filters.vehicleType];
+            if (filters.vehicleType) {
+                // Find matching category ID since repo requires ObjectId
+                const categoryMatch = await Category.findOne({ name: { $regex: new RegExp(`^${filters.vehicleType}$`, 'i') } });
+                if (categoryMatch) {
+                    parsedFilters.category = [categoryMatch._id.toString()];
+                }
+            }
             if (filters.location) parsedFilters.search = filters.location; // The getPublicVehicles uses search block for fuzzy location match typically
             if (filters.maxPrice) parsedFilters.maxPrice = filters.maxPrice;
 
