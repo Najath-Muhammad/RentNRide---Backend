@@ -21,6 +21,7 @@ import subscriptionRouter from "./route/subscription.routes";
 import chatRouter from "./route/chat.routes";
 import paymentRouter from "./route/payment.routes";
 import walletRouter from "./route/wallet.routes";
+import chatbotRouter from "./route/chatbot.routes";
 const app = express();
 
 app.use(
@@ -56,5 +57,6 @@ app.use("/api", subscriptionRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/payments", paymentRouter);
 app.use("/api/wallet", walletRouter);
+app.use("/api/chatbot", chatbotRouter);
 
 export { app };
