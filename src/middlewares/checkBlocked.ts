@@ -1,27 +1,39 @@
-import { Request, Response, NextFunction } from 'express';
-import { IUserRepository } from '../repositories/interfaces/user.interface';
-import  logger  from '../utils/logger';
+import type { NextFunction, Request, Response } from "express";
+import type { IAuthService } from "../services/Interfaces/auth.interface.service";
+import logger from "../utils/logger";
 
-export const checkBlocked = (userRepository: IUserRepository) => {
-  return async (req: Request & { user?: any }, res: Response, next: NextFunction) => {
-    try {
-      const userId = req.user?._id || req.user?.id;
-      if (!userId) return res.status(401).json({ success: false, message: 'Unauthorized' });
+export const checkBlocked = (userService: IAuthService) => {
+	return async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const email = req.user?.email;
+			console.log(email);
 
-      const user = await userRepository.findById(userId);
+			if (!email) {
+				return res.status(401).json({
+					success: false,
+					message: "Unauthorized: No user email found",
+					logout: true,
+				});
+			}
 
-      if (user?.isBlocked) {
-        logger.warn(`Blocked user access attempt: ${userId}`);
-        return res.status(403).json({
-          success: false,
-          message: 'Your account has been suspended. Contact support.',
-        });
-      }
+			const response = await userService.checkBlocked(email);
+			console.log("this is the res", response);
+			if (!response.success) {
+				return res.status(403).json({
+					success: false,
+					message: response.message || "Your account has been blocked.",
+					blocked: true,
+					logout: true,
+				});
+			}
 
-      next();
-    } catch (error) {
-      logger.error('checkBlocked middleware error:', error);
-      return res.status(500).json({ success: false, message: 'Internal server error' });
-    }
-  };
+			next();
+		} catch (error) {
+			logger.error("checkBlocked middleware error:", error);
+			return res.status(500).json({
+				success: false,
+				message: "Internal server error",
+			});
+		}
+	};
 };
