@@ -114,10 +114,13 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 		filters?: {
 			search?: string;
 			category?: string[];
+			category2?: string;
 			fuelType?: string[];
 			transmission?: string[];
 			minPrice?: number;
 			maxPrice?: number;
+			minSeats?: number;
+			doors?: number;
 			sortBy?: string;
 			excludeOwnerId?: string;
 		},
@@ -146,6 +149,10 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 				};
 				filter.$and = [...(filter.$and || []), categoryQuery];
 			}
+			// Filter by subcategory (e.g. SUV, Sedan) stored on the vehicle as category2
+			if (filters.category2) {
+				filter.category2 = filters.category2;
+			}
 			if (filters.fuelType && filters.fuelType.length > 0) {
 				filter.fuelType = { $in: filters.fuelType };
 			}
@@ -158,6 +165,12 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 					filter.pricePerDay.$gte = filters.minPrice;
 				if (filters.maxPrice !== undefined)
 					filter.pricePerDay.$lte = filters.maxPrice;
+			}
+			if (filters.minSeats !== undefined) {
+				filter.seatingCapacity = { $gte: filters.minSeats };
+			}
+			if (filters.doors !== undefined) {
+				filter.doors = filters.doors;
 			}
 			if (filters.excludeOwnerId) {
 				filter.ownerId = { $ne: filters.excludeOwnerId };

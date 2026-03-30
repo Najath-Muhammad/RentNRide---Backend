@@ -22,6 +22,7 @@ export const ROUTES = {
 
 		LOGIN: "/login",
 		LOGOUT: "/logout",
+		GET_DASHBOARD: "/dashboard",
 
 		GET_USERS: "/users",
 		BLOCK_USER: "/users/:userId/block",

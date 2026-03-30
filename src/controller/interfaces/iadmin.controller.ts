@@ -5,4 +5,5 @@ export interface IAdminController {
 	blockUser(req: Request, res: Response): Promise<Response>;
 	unblockUser(req: Request, res: Response): Promise<Response>;
 	deleteUser(req: Request, res: Response): Promise<Response>;
+	getDashboardStats(req: Request, res: Response): Promise<Response>;
 }

@@ -68,7 +68,7 @@ export class BookingService implements IBookingService {
 
 	async createBooking(userId: string | Types.ObjectId, input: CreateBookingInput): Promise<IBooking> {
 		try {
-			const { vehicleId, startDate, endDate, withFuel = false } = input;
+			const { vehicleId, startDate, endDate, withFuel = false } = input
 
 			const start = new Date(startDate);
 			const end = new Date(endDate);
@@ -127,7 +127,7 @@ export class BookingService implements IBookingService {
 
 			const newBooking = await this._bookingRepo.create(bookingData);
 
-			// Auto-send a booking request chat message to the owner
+
 			if (this._chatService) {
 				try {
 					const startStr = start.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
@@ -144,6 +144,7 @@ export class BookingService implements IBookingService {
 					console.error("Chat notification failed (non-fatal):", chatErr);
 				}
 			}
+
 
 			return newBooking;
 		} catch (error) {

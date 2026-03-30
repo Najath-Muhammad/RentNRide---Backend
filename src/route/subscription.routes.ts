@@ -87,4 +87,18 @@ subscriptionRouter.post(
     subscriptionController.selfSubscribe.bind(subscriptionController),
 );
 
+// User-facing: create Stripe payment intent for subscription purchase
+subscriptionRouter.post(
+    "/subscriptions/payment-intent",
+    AuthGuard(["user", "premium", "admin"]),
+    subscriptionController.createSubscriptionPaymentIntent.bind(subscriptionController),
+);
+
+// User-facing: verify Stripe payment manually (for local development or if webhook is missed)
+subscriptionRouter.post(
+    "/subscriptions/verify-payment",
+    AuthGuard(["user", "premium", "admin"]),
+    subscriptionController.verifySubscriptionPayment.bind(subscriptionController),
+);
+
 export default subscriptionRouter;

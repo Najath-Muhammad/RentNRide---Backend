@@ -45,10 +45,13 @@ export interface IVehicleService {
 		filters?: {
 			search?: string;
 			category?: string[];
+			category2?: string;
 			fuelType?: string[];
 			transmission?: string[];
 			minPrice?: number;
 			maxPrice?: number;
+			minSeats?: number;
+			doors?: number;
 			sortBy?: string;
 			excludeOwnerId?: string;
 		},

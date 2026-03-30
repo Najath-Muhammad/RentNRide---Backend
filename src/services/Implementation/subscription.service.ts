@@ -1,4 +1,6 @@
 import type { Types } from "mongoose";
+import { stripe } from "../../config/stripe.config";
+
 import type { ISubscriptionPlanRepo, IUserSubscriptionRepo } from "../../repositories/interfaces/subscription.interface";
 import type { ISubscriptionPlan, IUserSubscription } from "../../types/subscription/subscription.types";
 import type { ISubscriptionService } from "../Interfaces/subscription.interface.service";
@@ -205,6 +207,83 @@ export class SubscriptionService implements ISubscriptionService {
         } catch (error) {
             console.error("Error in getUserVehicleLimit:", error);
             return 1;
+        }
+    }
+
+    async createSubscriptionPaymentIntent(
+        userId: string,
+        planId: string,
+    ): Promise<{ clientSecret: string; amount: number; planName: string }> {
+        try {
+            const plan = await this._planRepo.findById(planId);
+            if (!plan) throw new Error("Subscription plan not found");
+            if (!plan.isActive) throw new Error("This subscription plan is no longer available");
+            if (plan.price <= 0) throw new Error("This plan is free — no payment needed");
+
+            const existing = await this._userSubRepo.findActiveByUser(userId);
+            if (existing) throw new Error("You already have an active subscription");
+
+            const amountInPaise = Math.round(plan.price * 100);
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amountInPaise,
+                currency: "inr",
+                metadata: {
+                    purpose: "subscription",
+                    userId,
+                    planId,
+                    planName: plan.name,
+                },
+            });
+
+            return {
+                clientSecret: paymentIntent.client_secret as string,
+                amount: plan.price,
+                planName: plan.name,
+            };
+        } catch (error) {
+            console.error("Error in createSubscriptionPaymentIntent:", error);
+            throw error;
+        }
+    }
+
+    async activateSubscriptionAfterPayment(
+        userId: string,
+        planId: string,
+    ): Promise<IUserSubscription> {
+        try {
+            return await this.assignSubscription(userId, planId);
+        } catch (error) {
+            console.error("Error in activateSubscriptionAfterPayment:", error);
+            throw error;
+        }
+    }
+
+    async verifySubscriptionPayment(
+        userId: string,
+        paymentIntentId: string,
+    ): Promise<IUserSubscription> {
+        try {
+            const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+            if (!intent || intent.status !== "succeeded") {
+                throw new Error("Payment has not succeeded");
+            }
+            if (intent.metadata.purpose !== "subscription" || intent.metadata.userId !== userId) {
+                throw new Error("Invalid payment intent for this action");
+            }
+
+            const planId = intent.metadata.planId;
+            const existing = await this._userSubRepo.findActiveByUser(userId);
+
+            // If the webhook already processed this, don't do it again
+            if (existing && existing.planId.toString() === planId) {
+                return existing;
+            }
+
+            return await this.assignSubscription(userId, planId);
+        } catch (error) {
+            console.error("Error verifying subscription payment:", error);
+            throw error;
         }
     }
 }

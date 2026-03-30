@@ -34,6 +34,12 @@ adminRouter.post(
 	authController.adminLogout.bind(authController),
 );
 
+adminRouter.get(
+	ROUTES.ADMIN.GET_DASHBOARD,
+	AuthGuard(["admin"]),
+	adminController.getDashboardStats.bind(adminController),
+);
+
 //user management
 adminRouter.get(
 	ROUTES.ADMIN.GET_USERS,
