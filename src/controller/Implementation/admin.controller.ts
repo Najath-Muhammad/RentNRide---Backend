@@ -7,7 +7,7 @@ import { errorResponse, successResponse } from "../../utils/response.util";
 import type { IAdminController } from "../interfaces/iadmin.controller";
 
 export class AdminController implements IAdminController {
-	constructor(private _adminService: IAdminService) {}
+	constructor(private _adminService: IAdminService) { }
 
 	async getAllUsers(req: Request, res: Response): Promise<Response> {
 		try {
@@ -69,6 +69,16 @@ export class AdminController implements IAdminController {
 				MESSAGES.ERRORS.SERVER_ERROR,
 				HttpStatus.INTERNAL_SERVER_ERROR,
 			);
+		}
+	}
+
+	async getDashboardStats(req: Request, res: Response): Promise<Response> {
+		try {
+			const result = await this._adminService.getDashboardStats();
+			return successResponse(res, "Dashboard stats fetched successfully", result.data);
+		} catch (_error) {
+			logger.error("error in getDashboardStats", _error);
+			return errorResponse(res, "Failed to fetch dashboard stats", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 }

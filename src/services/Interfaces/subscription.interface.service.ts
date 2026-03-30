@@ -42,4 +42,16 @@ export interface ISubscriptionService {
         limit?: number,
     ): Promise<{ data: IUserSubscription[]; total: number; page: number; totalPages: number }>;
     getUserVehicleLimit(userId: string | Types.ObjectId): Promise<number>;
+    createSubscriptionPaymentIntent(
+        userId: string,
+        planId: string,
+    ): Promise<{ clientSecret: string; amount: number; planName: string }>;
+    activateSubscriptionAfterPayment(
+        userId: string,
+        planId: string,
+    ): Promise<IUserSubscription>;
+    verifySubscriptionPayment(
+        userId: string,
+        paymentIntentId: string,
+    ): Promise<IUserSubscription>;
 }

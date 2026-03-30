@@ -244,4 +244,48 @@ export class SubscriptionController {
             );
         }
     }
+
+    async createSubscriptionPaymentIntent(req: Request, res: Response, next: NextFunction): Promise<Response> {
+        try {
+            const userId = req.user?.userId;
+            if (!userId) {
+                return errorResponse(res, "Unauthorized", HttpStatus.UNAUTHORIZED);
+            }
+            const { planId } = req.body;
+            if (!planId) {
+                return errorResponse(res, "planId is required", HttpStatus.BAD_REQUEST);
+            }
+            const result = await this._subscriptionService.createSubscriptionPaymentIntent(userId, planId);
+            return successResponse(res, "Payment intent created", result);
+        } catch (error) {
+            next(error);
+            return errorResponse(
+                res,
+                error instanceof Error ? error.message : "Failed to create payment intent",
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+    }
+
+    async verifySubscriptionPayment(req: Request, res: Response, next: NextFunction): Promise<Response> {
+        try {
+            const userId = req.user?.userId;
+            if (!userId) {
+                return errorResponse(res, "Unauthorized", HttpStatus.UNAUTHORIZED);
+            }
+            const { paymentIntentId } = req.body;
+            if (!paymentIntentId) {
+                return errorResponse(res, "paymentIntentId is required", HttpStatus.BAD_REQUEST);
+            }
+            const result = await this._subscriptionService.verifySubscriptionPayment(userId, paymentIntentId);
+            return successResponse(res, "Subscription activated successfully", result);
+        } catch (error) {
+            next(error);
+            return errorResponse(
+                res,
+                error instanceof Error ? error.message : "Failed to verify payment",
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+    }
 }

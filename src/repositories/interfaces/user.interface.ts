@@ -3,6 +3,7 @@ import type { IUser } from "../../types/user/IUser";
 import type { IBaseRepo } from "./base.interface";
 
 export interface IUserRepository extends IBaseRepo<IUser & Document> {
+	findByIdSub(userId: string): any;
 	findAllUsers(
 		filters: FilterQuery<IUser>,
 		page: number,

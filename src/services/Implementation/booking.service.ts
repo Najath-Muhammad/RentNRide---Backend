@@ -66,7 +66,7 @@ export class BookingService implements IBookingService {
 
 	async createBooking(userId: string | Types.ObjectId, input: CreateBookingInput): Promise<IBooking> {
 		try {
-			const { vehicleId, startDate, endDate, withFuel = false } = input;
+			const { vehicleId, startDate, endDate, withFuel = false } = input
 
 			const start = new Date(startDate);
 			const end = new Date(endDate);
@@ -125,6 +125,26 @@ export class BookingService implements IBookingService {
 
 			const newBooking = await this._bookingRepo.create(bookingData);
 
+<<<<<<< Updated upstream
+=======
+			if (this._chatService) {
+				try {
+					const startStr = start.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+					const endStr = end.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+					const details = `🚗 Rent Request — ${vehicle.brand} ${vehicle.modelName}\n📅 ${startStr} → ${endStr} (${days} day${days > 1 ? "s" : ""})\n💰 Total: ₹${totalAmount.toLocaleString("en-IN")} (20% advance: ₹${advancePaid.toLocaleString("en-IN")})${withFuel ? "\n⛽ With Fuel" : ""}\nBooking ID: ${newBooking.bookingId}`;
+					await this._chatService.handleBookingRequest(
+						userId,
+						vehicle.ownerId,
+						newBooking._id,
+						vehicle._id,
+						details,
+					);
+				} catch (chatErr) {
+					console.error("Chat notification failed (non-fatal):", chatErr);
+				}
+			}
+
+>>>>>>> Stashed changes
 			return newBooking;
 		} catch (error) {
 			console.error("Error in createBooking:", error);
