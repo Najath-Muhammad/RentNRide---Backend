@@ -5,6 +5,7 @@ import connectDB from "./config/db.config";
 import redisClient from "./config/redis.config";
 import logger from "./utils/logger";
 import { initSocket } from "./utils/socket";
+import { initFirebase } from "./config/firebase.config";
 
 config();
 
@@ -15,7 +16,9 @@ logger.info("Server started...");
 
 async function bootstrap() {
 	await connectDB();
-	await redisClient.connect(); const httpServer = createServer(app);
+	await redisClient.connect();
+	initFirebase();
+	const httpServer = createServer(app);
 
 	initSocket(httpServer);
 

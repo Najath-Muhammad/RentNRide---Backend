@@ -56,4 +56,18 @@ export class UserRepo extends BaseRepo<Document & IUser> {
 	async findByIdSub(userId: string): Promise<(IUser & Document) | null> {
 		return await this.model.findById(userId).select("_id name email role premiumExpiresAt");
 	}
+
+	/** Add an FCM token (prevents duplicates via $addToSet) */
+	async addFcmToken(userId: string, token: string): Promise<void> {
+		await this.model.findByIdAndUpdate(userId, {
+			$addToSet: { fcmTokens: token },
+		});
+	}
+
+	/** Remove a specific FCM token (called on logout or token refresh) */
+	async removeFcmToken(userId: string, token: string): Promise<void> {
+		await this.model.findByIdAndUpdate(userId, {
+			$pull: { fcmTokens: token },
+		});
+	}
 }

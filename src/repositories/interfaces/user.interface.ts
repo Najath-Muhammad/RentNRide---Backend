@@ -18,4 +18,6 @@ export interface IUserRepository extends IBaseRepo<IUser & Document> {
 	findByEmail(email: string): Promise<IUser | null>;
 	findByEmailAndUpdate(email: string, password: string): Promise<IUser | null>;
 	findByIdWithPassword(id: string): Promise<(IUser & Document) | null>;
+	addFcmToken(userId: string, token: string): Promise<void>;
+	removeFcmToken(userId: string, token: string): Promise<void>;
 }

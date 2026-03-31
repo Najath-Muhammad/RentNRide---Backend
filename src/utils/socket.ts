@@ -5,6 +5,8 @@ import { verifyToken } from "../utils/jwt-service.utils";
 import { ConversationRepo } from "../repositories/Implementation/conversation.repository";
 import { MessageRepo } from "../repositories/Implementation/message.repository";
 import { ChatService } from "../services/Implementation/chat.service";
+import { sendPushNotification } from "./fcm.util";
+import { UserModel } from "../model/user.model";
 
 let io: SocketServer;
 
@@ -126,13 +128,26 @@ export function initSocket(server: HttpServer): SocketServer {
                         );
                     }
 
-                    // Always emit to receiver's personal room
-                    io.to(`user:${data.receiverId}`).emit("message:new", message);
-
-                    // Confirm to sender
+                    // Emit to receiver's personal room
                     io.to(`user:${data.receiverId}`).emit("message:new", message);
 
                     socket.emit("message:sent", message);
+
+                    // FCM push notification (works even when receiver is in background / offline)
+                    try {
+                        const senderUser = await UserModel.findById(userId).select("name");
+                        const senderName = senderUser?.name ?? "Someone";
+                        await sendPushNotification(data.receiverId, {
+                            title: "New Message",
+                            body: `You have a new message from ${senderName}`,
+                            data: {
+                                type: "chat",
+                                conversationId: message.conversationId?.toString() ?? "",
+                            },
+                        });
+                    } catch (fcmErr) {
+                        console.error("[FCM] Chat notification failed:", fcmErr);
+                    }
                 } catch (err) {
                     socket.emit("error", {
                         message:

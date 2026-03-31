@@ -21,6 +21,7 @@ export interface IUser extends Document {
 	notifications?: mongoose.Types.ObjectId;
 	status: string;
 	premiumExpiresAt?: Date;
+	fcmTokens?: string[];
 	createdAt: Date;
 	updatedAt: Date;
 	isBlocked: boolean;

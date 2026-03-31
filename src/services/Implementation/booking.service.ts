@@ -8,6 +8,7 @@ import type {
 import { generateBookingId } from "../../utils/generate.bookinId";
 import type { IBookingService } from "../Interfaces/booking.interface.service";
 import type { IChatService } from "../Interfaces/chat.interface.service";
+import { sendPushNotification } from "../../utils/fcm.util";
 
 export class BookingService implements IBookingService {
 	constructor(
@@ -126,6 +127,20 @@ export class BookingService implements IBookingService {
 			};
 
 			const newBooking = await this._bookingRepo.create(bookingData);
+
+			// Notify the vehicle owner via FCM push notification
+			try {
+				await sendPushNotification(vehicle.ownerId.toString(), {
+					title: "Car Booked 🚗",
+					body: "Your car has been booked successfully",
+					data: {
+						type: "booking",
+						bookingId: newBooking.bookingId,
+					},
+				});
+			} catch (fcmErr) {
+				console.error("[FCM] Booking notification failed (non-fatal):", fcmErr);
+			}
 
 
 			if (this._chatService) {

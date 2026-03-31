@@ -22,6 +22,7 @@ const UserSchema = new Schema<IUser>(
 		status: { type: String, default: "active" },
 		isBlocked: { type: Boolean, default: false },
 		premiumExpiresAt: { type: Date },
+		fcmTokens: { type: [String], default: [] },
 	},
 	{ timestamps: true },
 );
