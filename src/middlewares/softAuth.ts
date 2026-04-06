@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import { env } from "../config/env";
 import { verifyToken } from "../utils/jwt-service.utils";
 
 export const SoftAuth = (req: Request, _res: Response, next: NextFunction) => {
@@ -8,7 +9,7 @@ export const SoftAuth = (req: Request, _res: Response, next: NextFunction) => {
 			return next();
 		}
 
-		const jwtSecret = process.env.JWT_SECRET_KEY;
+		const jwtSecret = env.JWT_SECRET_KEY;
 		if (!jwtSecret) {
 			return next();
 		}

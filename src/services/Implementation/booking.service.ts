@@ -5,10 +5,10 @@ import type {
 	CreateBookingInput,
 	IBooking,
 } from "../../types/booking/booking.types";
-import { generateBookingId } from "../../utils/generate.bookinId";
-import type { IBookingService } from "../Interfaces/booking.interface.service";
-import type { IChatService } from "../Interfaces/chat.interface.service";
 import { sendPushNotification } from "../../utils/fcm.util";
+import { generateBookingId } from "../../utils/generate.bookinId";
+import type { IBookingService } from "../interfaces/booking.interface.service";
+import type { IChatService } from "../interfaces/chat.interface.service";
 
 export class BookingService implements IBookingService {
 	constructor(
@@ -23,19 +23,25 @@ export class BookingService implements IBookingService {
 		role: "user" | "owner" | "admin",
 	): Promise<IBooking | null> {
 		try {
-			const booking = await this._bookingRepo.findById(bookingId)
-			if (!booking) return null
-			if (role === "admin") return booking
-			if (role === "user" && booking.userId.toString() === requesterId.toString()) {
-				return booking
+			const booking = await this._bookingRepo.findById(bookingId);
+			if (!booking) return null;
+			if (role === "admin") return booking;
+			if (
+				role === "user" &&
+				booking.userId.toString() === requesterId.toString()
+			) {
+				return booking;
 			}
-			if (role === "owner" && booking.ownerId.toString() === requesterId.toString()) {
-				return booking
+			if (
+				role === "owner" &&
+				booking.ownerId.toString() === requesterId.toString()
+			) {
+				return booking;
 			}
-			return null
+			return null;
 		} catch (error) {
-			console.error("Error in getBookingById:", error)
-			throw error
+			console.error("Error in getBookingById:", error);
+			throw error;
 		}
 	}
 
@@ -67,9 +73,12 @@ export class BookingService implements IBookingService {
 		}
 	}
 
-	async createBooking(userId: string | Types.ObjectId, input: CreateBookingInput): Promise<IBooking> {
+	async createBooking(
+		userId: string | Types.ObjectId,
+		input: CreateBookingInput,
+	): Promise<IBooking> {
 		try {
-			const { vehicleId, startDate, endDate, withFuel = false } = input
+			const { vehicleId, startDate, endDate, withFuel = false } = input;
 
 			const start = new Date(startDate);
 			const end = new Date(endDate);
@@ -142,12 +151,19 @@ export class BookingService implements IBookingService {
 				console.error("[FCM] Booking notification failed (non-fatal):", fcmErr);
 			}
 
-
 			if (this._chatService) {
 				try {
-					const startStr = start.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-					const endStr = end.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-					const details = `🚗 Rent Request — ${vehicle.brand} ${vehicle.modelName}\n📅 ${startStr} → ${endStr} (${days} day${days > 1 ? "s" : ""})\n💰 Total: ₹${totalAmount.toLocaleString("en-IN")} (20% advance: ₹${advancePaid.toLocaleString("en-IN")})${withFuel ? "\n⛽ With Fuel" : ""}\nBooking ID: ${newBooking.bookingId}`;
+					const startStr = start.toLocaleDateString("en-IN", {
+						day: "2-digit",
+						month: "short",
+						year: "numeric",
+					});
+					const endStr = end.toLocaleDateString("en-IN", {
+						day: "2-digit",
+						month: "short",
+						year: "numeric",
+					});
+					const details = `🚗 Rent Request — ${vehicle.brand} ${vehicle.modelName}\n📅 ${startStr} → ${endStr} (${days} day${days > 1 ? "s" : ""})\n💰 Total: ₹${totalAmount.toLocaleString("en-IN")} (20% advance: ₹${advancePaid.toLocaleString("en-IN")})\n⛽ ${withFuel ? "With Fuel" : "Without Fuel"}\nBooking ID: ${newBooking.bookingId}`;
 					await this._chatService.handleBookingRequest(
 						userId,
 						vehicle.ownerId,
@@ -159,7 +175,6 @@ export class BookingService implements IBookingService {
 					console.error("Chat notification failed (non-fatal):", chatErr);
 				}
 			}
-
 
 			return newBooking;
 		} catch (error) {

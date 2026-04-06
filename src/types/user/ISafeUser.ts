@@ -11,5 +11,5 @@ export interface ISafeUser {
 	createdAt: Date;
 	updatedAt: Date;
 	isBlocked: boolean;
-    profilePhoto?: string;
+	profilePhoto?: string;
 }

@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
-import type { IAdminBookingService } from "../../services/Interfaces/admin.booking.interface.service";
+import type { IAdminBookingService } from "../../services/interfaces/admin.booking.interface.service";
 import { errorResponse, successResponse } from "../../utils/response.util";
 import type { IAdminBookingController } from "../interfaces/iadmin.booking.controller";
 

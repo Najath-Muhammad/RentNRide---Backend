@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import mongoose from "mongoose";
 import { HttpStatus } from "../../constants/enum/statuscode";
-import type { IVehicleService } from "../../services/Interfaces/vehicle.interface.service";
+import type { IVehicleService } from "../../services/interfaces/vehicle.interface.service";
 import { errorResponse, successResponse } from "../../utils/response.util";
 import type { IAdminVehicleController } from "../interfaces/iadmin.vehicle.controller";
 

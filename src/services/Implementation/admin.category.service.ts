@@ -4,7 +4,7 @@ import type { ICategory } from "../../model/category.model";
 import type { IFuelType } from "../../model/fueltype.model";
 import type { ICategoryRepository } from "../../repositories/interfaces/category.interface";
 import type { IFueltypeRepository } from "../../repositories/interfaces/fuletype.interface";
-import type { IAdminCategoryService } from "../Interfaces/admin.category.interface.service";
+import type { IAdminCategoryService } from "../interfaces/admin.category.interface.service";
 
 export class AdminCategoryService implements IAdminCategoryService {
 	constructor(
@@ -69,7 +69,10 @@ export class AdminCategoryService implements IAdminCategoryService {
 		}
 	}
 
-	async updateCategory(id: string, input: Partial<ICategory>): Promise<ICategory> {
+	async updateCategory(
+		id: string,
+		input: Partial<ICategory>,
+	): Promise<ICategory> {
 		try {
 			const updateData: Partial<ICategory> = {};
 
@@ -110,7 +113,9 @@ export class AdminCategoryService implements IAdminCategoryService {
 		} catch (error) {
 			console.error(`Error toggling category status ${id}:`, error);
 			throw new Error(
-				error instanceof Error ? error.message : "Failed to toggle category status",
+				error instanceof Error
+					? error.message
+					: "Failed to toggle category status",
 			);
 		}
 	}
@@ -135,7 +140,10 @@ export class AdminCategoryService implements IAdminCategoryService {
 		}
 	}
 
-	async updateFuelType(id: string, data: Partial<IFuelType>): Promise<IFuelType> {
+	async updateFuelType(
+		id: string,
+		data: Partial<IFuelType>,
+	): Promise<IFuelType> {
 		try {
 			const updated = await this.fuelTypeRepo.updateById(id, data);
 			if (!updated) {
@@ -160,7 +168,9 @@ export class AdminCategoryService implements IAdminCategoryService {
 		} catch (error) {
 			console.error(`Error toggling fuel type status ${id}:`, error);
 			throw new Error(
-				error instanceof Error ? error.message : "Failed to toggle fuel type status",
+				error instanceof Error
+					? error.message
+					: "Failed to toggle fuel type status",
 			);
 		}
 	}

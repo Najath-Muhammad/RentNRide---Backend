@@ -1,13 +1,13 @@
 import type { Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
 import { MESSAGES } from "../../constants/messages/messageConstants";
-import type { IAdminService } from "../../services/Interfaces/admin.interface.service";
+import type { IAdminService } from "../../services/interfaces/admin.interface.service";
 import logger from "../../utils/logger";
 import { errorResponse, successResponse } from "../../utils/response.util";
 import type { IAdminController } from "../interfaces/iadmin.controller";
 
 export class AdminController implements IAdminController {
-	constructor(private _adminService: IAdminService) { }
+	constructor(private _adminService: IAdminService) {}
 
 	async getAllUsers(req: Request, res: Response): Promise<Response> {
 		try {
@@ -72,13 +72,21 @@ export class AdminController implements IAdminController {
 		}
 	}
 
-	async getDashboardStats(req: Request, res: Response): Promise<Response> {
+	async getDashboardStats(_req: Request, res: Response): Promise<Response> {
 		try {
 			const result = await this._adminService.getDashboardStats();
-			return successResponse(res, "Dashboard stats fetched successfully", result.data);
+			return successResponse(
+				res,
+				"Dashboard stats fetched successfully",
+				result.data,
+			);
 		} catch (_error) {
 			logger.error("error in getDashboardStats", _error);
-			return errorResponse(res, "Failed to fetch dashboard stats", HttpStatus.INTERNAL_SERVER_ERROR);
+			return errorResponse(
+				res,
+				"Failed to fetch dashboard stats",
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
 		}
 	}
 }

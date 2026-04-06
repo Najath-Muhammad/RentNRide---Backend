@@ -1,11 +1,12 @@
 import admin from "firebase-admin";
-import { UserModel } from "../model/user.model";
 import { getFirebaseAdmin } from "../config/firebase.config";
+import { NotificationModel } from "../model/notification.model";
+import { UserModel } from "../model/user.model";
 
 export interface NotificationPayload {
-    title: string;
-    body: string;
-    data?: Record<string, string>;
+	title: string;
+	body: string;
+	data?: Record<string, string>;
 }
 
 /**
@@ -14,82 +15,108 @@ export interface NotificationPayload {
  * Silently no-ops if Firebase Admin was not initialized (missing creds).
  */
 export async function sendPushNotification(
-    userId: string,
-    payload: NotificationPayload,
+	userId: string,
+	payload: NotificationPayload,
 ): Promise<void> {
-    // No-op if Firebase isn't configured yet
-    if (!getFirebaseAdmin()) {
-        console.warn("[FCM] Skipped — Firebase not initialized");
-        return;
-    }
+	// 1. Save the notification persistently in the database for the in-app bell menu
+	try {
+		await NotificationModel.create({
+			userId,
+			title: payload.title,
+			message: payload.body,
+			type: payload.data?.type || "system",
+			metadata: payload.data,
+			isRead: false,
+		});
+	} catch (err) {
+		console.error("Failed to save persistent notification to DB:", err);
+	}
 
-    try {
-        console.log(`[FCM] Attempting to send "${payload.title}" to userId: ${userId}`);
-        const user = await UserModel.findById(userId).select("fcmTokens");
+	// 2. Send the actual FCM Push Notification
+	// No-op if Firebase isn't configured yet
+	if (!getFirebaseAdmin()) {
+		console.warn("[FCM] Skipped — Firebase not initialized");
+		return;
+	}
 
-        if (!user) {
-            console.warn(`[FCM] User not found in DB: ${userId}`);
-            return;
-        }
+	try {
+		console.log(
+			`[FCM] Attempting to send "${payload.title}" to userId: ${userId}`,
+		);
+		const user = await UserModel.findById(userId).select("fcmTokens");
 
-        if (!user.fcmTokens || user.fcmTokens.length === 0) {
-            console.warn(`[FCM] User ${userId} has NO fcmTokens — token was never registered`);
-            return;
-        }
+		if (!user) {
+			console.warn(`[FCM] User not found in DB: ${userId}`);
+			return;
+		}
 
-        console.log(`[FCM] Found ${user.fcmTokens.length} token(s) for user ${userId}`);
+		if (!user.fcmTokens || user.fcmTokens.length === 0) {
+			console.warn(
+				`[FCM] User ${userId} has NO fcmTokens — token was never registered`,
+			);
+			return;
+		}
 
-        const tokens: string[] = user.fcmTokens;
+		console.log(
+			`[FCM] Found ${user.fcmTokens.length} token(s) for user ${userId}`,
+		);
 
-        const message: admin.messaging.MulticastMessage = {
-            tokens,
-            notification: {
-                title: payload.title,
-                body: payload.body,
-            },
-            data: payload.data ?? {},
-            // Web push config
-            webpush: {
-                notification: {
-                    icon: "/vite.svg",
-                    badge: "/vite.svg",
-                },
-                fcmOptions: {
-                    link: "/",
-                },
-            },
-        };
+		const tokens: string[] = user.fcmTokens;
 
-        const response = await admin.messaging().sendEachForMulticast(message);
+		const message: admin.messaging.MulticastMessage = {
+			tokens,
+			notification: {
+				title: payload.title,
+				body: payload.body,
+			},
+			data: payload.data ?? {},
+			// Web push config
+			webpush: {
+				notification: {
+					icon: "/vite.svg",
+					badge: "/vite.svg",
+				},
+				fcmOptions: {
+					link: "/",
+				},
+			},
+		};
 
-        // Collect invalid tokens to clean up
-        const invalidTokens: string[] = [];
-        response.responses.forEach((res, idx) => {
-            if (!res.success) {
-                const code = res.error?.code;
-                if (
-                    code === "messaging/invalid-registration-token" ||
-                    code === "messaging/registration-token-not-registered"
-                ) {
-                    invalidTokens.push(tokens[idx]);
-                }
-                console.warn(`[FCM] Failed to send to token[${idx}]:`, res.error?.message);
-            }
-        });
+		const response = await admin.messaging().sendEachForMulticast(message);
 
-        // Remove stale tokens from DB
-        if (invalidTokens.length > 0) {
-            await UserModel.findByIdAndUpdate(userId, {
-                $pull: { fcmTokens: { $in: invalidTokens } },
-            });
-            console.log(`[FCM] Removed ${invalidTokens.length} stale token(s) for user ${userId}`);
-        }
+		// Collect invalid tokens to clean up
+		const invalidTokens: string[] = [];
+		response.responses.forEach((res, idx) => {
+			if (!res.success) {
+				const code = res.error?.code;
+				if (
+					code === "messaging/invalid-registration-token" ||
+					code === "messaging/registration-token-not-registered"
+				) {
+					invalidTokens.push(tokens[idx]);
+				}
+				console.warn(
+					`[FCM] Failed to send to token[${idx}]:`,
+					res.error?.message,
+				);
+			}
+		});
 
-        console.log(
-            `[FCM] Sent to ${response.successCount}/${tokens.length} token(s) for user ${userId}`,
-        );
-    } catch (error) {
-        // Never let a notification failure crash the caller
-        console.error("[FCM] sendPushNotification error:", error);
-    }
+		// Remove stale tokens from DB
+		if (invalidTokens.length > 0) {
+			await UserModel.findByIdAndUpdate(userId, {
+				$pull: { fcmTokens: { $in: invalidTokens } },
+			});
+			console.log(
+				`[FCM] Removed ${invalidTokens.length} stale token(s) for user ${userId}`,
+			);
+		}
+
+		console.log(
+			`[FCM] Sent to ${response.successCount}/${tokens.length} token(s) for user ${userId}`,
+		);
+	} catch (error) {
+		// Never let a notification failure crash the caller
+		console.error("[FCM] sendPushNotification error:", error);
+	}
 }

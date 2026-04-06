@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
-import type { IBookingService } from "../../services/Interfaces/booking.interface.service";
+import type { IBookingService } from "../../services/interfaces/booking.interface.service";
 import { errorResponse, successResponse } from "../../utils/response.util";
 import type { IBookingController } from "../interfaces/ibooking.controller";
 
@@ -93,7 +93,7 @@ export class BookingController implements IBookingController {
 				bookingId,
 				userId,
 				reason,
-			)
+			);
 
 			if (!booking) {
 				errorResponse(
@@ -111,7 +111,7 @@ export class BookingController implements IBookingController {
 				res,
 				error instanceof Error ? error.message : "Internal server error",
 				HttpStatus.INTERNAL_SERVER_ERROR,
-			)
+			);
 		}
 	}
 }

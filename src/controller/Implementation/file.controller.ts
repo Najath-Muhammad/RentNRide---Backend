@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
-import type { IFileService } from "../../services/Interfaces/file.interface.service";
+import type { IFileService } from "../../services/interfaces/file.interface.service";
 import { errorResponse, successResponse } from "../../utils/response.util";
 import type { IFileController } from "../interfaces/ifile.controller";
 

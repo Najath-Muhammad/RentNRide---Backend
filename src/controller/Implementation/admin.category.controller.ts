@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
 import { MESSAGES } from "../../constants/messages/messageConstants";
-import type { IAdminCategoryService } from "../../services/Interfaces/admin.category.interface.service";
+import type { IAdminCategoryService } from "../../services/interfaces/admin.category.interface.service";
 import { errorResponse, successResponse } from "../../utils/response.util";
 import type { IAdminCategoryController } from "../interfaces/iadmin.category.controller";
 

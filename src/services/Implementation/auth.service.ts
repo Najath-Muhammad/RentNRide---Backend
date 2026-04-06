@@ -1,4 +1,5 @@
 import { OAuth2Client } from "google-auth-library";
+import { env } from "../../config/env";
 import redisClient from "../../config/redis.config";
 import type { IUserRepository } from "../../repositories/interfaces/user.interface";
 import type { IAdminToFrontend } from "../../types/admin/IAdmin";
@@ -16,10 +17,10 @@ import {
 import type {
 	IAuthService,
 	UserType,
-} from "../Interfaces/auth.interface.service";
+} from "../interfaces/auth.interface.service";
 
 export class AuthService implements IAuthService {
-	constructor(private _userRepo: IUserRepository) { }
+	constructor(private _userRepo: IUserRepository) {}
 
 	async signup(user: UserType): Promise<{ success: boolean; message: string }> {
 		try {
@@ -97,7 +98,7 @@ export class AuthService implements IAuthService {
 					email: newUser.email,
 					role: newUser.role,
 				},
-				process.env.JWT_SECRET_KEY as string,
+				env.JWT_SECRET_KEY as string,
 				60 * 15,
 			);
 
@@ -108,7 +109,7 @@ export class AuthService implements IAuthService {
 					email: newUser.email,
 					role: newUser.role,
 				},
-				process.env.JWT_REFRESH_SECRET_KEY as string,
+				env.JWT_REFRESH_SECRET_KEY as string,
 				60 * 60 * 24 * 7,
 			);
 
@@ -248,7 +249,7 @@ export class AuthService implements IAuthService {
 				email: user.email,
 				role: user.role,
 			},
-			process.env.JWT_SECRET_KEY as string,
+			env.JWT_SECRET_KEY as string,
 			60 * 15,
 		);
 
@@ -259,7 +260,7 @@ export class AuthService implements IAuthService {
 				email: user.email,
 				role: user.role,
 			},
-			process.env.JWT_REFRESH_SECRET_KEY as string,
+			env.JWT_REFRESH_SECRET_KEY as string,
 			60 * 60 * 24 * 7,
 		);
 
@@ -355,7 +356,7 @@ export class AuthService implements IAuthService {
 				email: admin.email,
 				role: admin.role,
 			},
-			process.env.JWT_SECRET_KEY as string,
+			env.JWT_SECRET_KEY as string,
 			60 * 15,
 		);
 
@@ -366,7 +367,7 @@ export class AuthService implements IAuthService {
 				email: admin.email,
 				role: admin.role,
 			},
-			process.env.JWT_REFRESH_SECRET_KEY as string,
+			env.JWT_REFRESH_SECRET_KEY as string,
 			60 * 60 * 24 * 7,
 		);
 
@@ -387,11 +388,11 @@ export class AuthService implements IAuthService {
 		refreshToken?: string;
 	}> {
 		try {
-			const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+			const client = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 
 			const ticket = await client.verifyIdToken({
 				idToken: credential,
-				audience: process.env.GOOGLE_CLIENT_ID,
+				audience: env.GOOGLE_CLIENT_ID,
 			});
 
 			const payload = ticket.getPayload();
@@ -432,7 +433,7 @@ export class AuthService implements IAuthService {
 					email: user.email,
 					role: user.role,
 				},
-				process.env.JWT_SECRET_KEY as string,
+				env.JWT_SECRET_KEY as string,
 				60 * 15,
 			);
 
@@ -443,7 +444,7 @@ export class AuthService implements IAuthService {
 					email: user.email,
 					role: user.role,
 				},
-				process.env.JWT_REFRESH_SECRET_KEY as string,
+				env.JWT_REFRESH_SECRET_KEY as string,
 				60 * 60 * 24 * 7,
 			);
 
@@ -474,10 +475,7 @@ export class AuthService implements IAuthService {
 			role: string;
 		};
 		try {
-			user = verifyToken(
-				token,
-				process.env.JWT_REFRESH_SECRET_KEY as string,
-			) as {
+			user = verifyToken(token, env.JWT_REFRESH_SECRET_KEY as string) as {
 				userId: string;
 				email: string;
 				role: string;
@@ -493,7 +491,7 @@ export class AuthService implements IAuthService {
 
 		const accessToken = generateToken(
 			user,
-			process.env.JWT_SECRET_KEY as string,
+			env.JWT_SECRET_KEY as string,
 			15 * 60,
 		);
 
@@ -536,7 +534,6 @@ export class AuthService implements IAuthService {
 			}
 			const hashedPassword = await hashPassword(newPassword);
 
-			
 			user.password = hashedPassword;
 			await user.save();
 

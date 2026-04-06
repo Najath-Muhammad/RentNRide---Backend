@@ -15,14 +15,16 @@ import { ROUTES } from "./constants/Routes/routeConstants";
 import adminBookingRouter from "./route/admin.booking.routes";
 
 import bookingRouter from "./route/booking.routes";
-import reviewRouter from "./route/review.routes";
-import userRouter from "./route/user.routes";
-import subscriptionRouter from "./route/subscription.routes";
 import chatRouter from "./route/chat.routes";
-import paymentRouter from "./route/payment.routes";
-import walletRouter from "./route/wallet.routes";
 import chatbotRouter from "./route/chatbot.routes";
 import fcmRouter from "./route/fcm.routes";
+import notificationRouter from "./route/notification.routes";
+import paymentRouter from "./route/payment.routes";
+import reviewRouter from "./route/review.routes";
+import subscriptionRouter from "./route/subscription.routes";
+import userRouter from "./route/user.routes";
+import walletRouter from "./route/wallet.routes";
+
 const app = express();
 
 app.use(
@@ -60,5 +62,6 @@ app.use("/api/payments", paymentRouter);
 app.use("/api/wallet", walletRouter);
 app.use("/api/chatbot", chatbotRouter);
 app.use("/api/fcm", fcmRouter);
+app.use("/api/notifications", notificationRouter);
 
 export { app };

@@ -54,7 +54,9 @@ export class UserRepo extends BaseRepo<Document & IUser> {
 	}
 
 	async findByIdSub(userId: string): Promise<(IUser & Document) | null> {
-		return await this.model.findById(userId).select("_id name email role premiumExpiresAt");
+		return await this.model
+			.findById(userId)
+			.select("_id name email role premiumExpiresAt");
 	}
 
 	/** Add an FCM token (prevents duplicates via $addToSet) */

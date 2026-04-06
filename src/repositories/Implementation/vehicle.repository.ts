@@ -250,6 +250,6 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 		try {
 			const _today = Date.now();
 			const _count = this.model.find({ ownerId: ownerId });
-		} catch (_error) { }
+		} catch (_error) {}
 	}
 }

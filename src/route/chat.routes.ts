@@ -14,10 +14,22 @@ const chatController = new ChatController(chatService);
 
 chatRouter.use(AuthGuard(["user", "premium"]));
 
-chatRouter.post("/conversations", chatController.getOrCreateConversation.bind(chatController));
-chatRouter.get("/conversations", chatController.getConversations.bind(chatController));
-chatRouter.get("/conversations/:conversationId/messages", chatController.getMessages.bind(chatController));
+chatRouter.post(
+	"/conversations",
+	chatController.getOrCreateConversation.bind(chatController),
+);
+chatRouter.get(
+	"/conversations",
+	chatController.getConversations.bind(chatController),
+);
+chatRouter.get(
+	"/conversations/:conversationId/messages",
+	chatController.getMessages.bind(chatController),
+);
 chatRouter.post("/messages", chatController.sendMessage.bind(chatController));
-chatRouter.post("/conversations/:conversationId/booking-action", chatController.handleBookingAction.bind(chatController));
+chatRouter.post(
+	"/conversations/:conversationId/booking-action",
+	chatController.handleBookingAction.bind(chatController),
+);
 
 export default chatRouter;

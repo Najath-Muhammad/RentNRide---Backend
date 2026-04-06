@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { WalletController } from "../controller/Implementation/wallet.controller";
-import { WalletService } from "../services/Implementation/wallet.service";
-import { WalletRepo } from "../repositories/Implementation/wallet.repository";
 import { AuthGuard } from "../middlewares/authGuard";
+import { WalletRepo } from "../repositories/Implementation/wallet.repository";
+import { WalletService } from "../services/Implementation/wallet.service";
 
 const router = Router();
 const walletRepo = new WalletRepo();
@@ -12,6 +12,13 @@ const walletController = new WalletController(walletService);
 router.use(AuthGuard(["user", "premium", "admin"]));
 
 router.get("/", walletController.getWallet.bind(walletController));
-router.post("/fund-intent", walletController.createWalletFundingIntent.bind(walletController));
+router.post(
+	"/fund-intent",
+	walletController.createWalletFundingIntent.bind(walletController),
+);
+router.post(
+	"/verify-funding",
+	walletController.verifyWalletFunding.bind(walletController),
+);
 
 export default router;

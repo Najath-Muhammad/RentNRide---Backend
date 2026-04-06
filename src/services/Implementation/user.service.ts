@@ -4,7 +4,7 @@ import {
 	hashPassword,
 	verifyPassword,
 } from "../../utils/password-service.utils";
-import type { IUserService } from "../Interfaces/user.interface.service";
+import type { IUserService } from "../interfaces/user.interface.service";
 
 export class UserService implements IUserService {
 	constructor(private _userRepo: IUserRepository) {}
@@ -16,7 +16,9 @@ export class UserService implements IUserService {
 				throw new Error("User not found");
 			}
 
-			const { password: _password, ...safeUser } = user.toObject ? user.toObject() : user;
+			const { password: _password, ...safeUser } = user.toObject
+				? user.toObject()
+				: user;
 			return safeUser;
 		} catch (error) {
 			if (error instanceof Error) {

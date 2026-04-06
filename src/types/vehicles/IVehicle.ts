@@ -41,7 +41,6 @@ export interface IVehicleStats {
 	blocked: number;
 }
 
-
 export type PaginatedVehicles = {
 	data: Partial<IVehicle>[];
 	total: number;

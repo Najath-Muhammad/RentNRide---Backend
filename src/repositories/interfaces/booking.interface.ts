@@ -71,8 +71,9 @@ export interface IBookingRepo extends IBaseRepo<IBooking> {
 		limit: number;
 		totalPages: number;
 	}>;
-	expireStaleBookings(
-		userId?: string | Types.ObjectId,
-	): Promise<number>;
-	updateBookingDetails(bookingId: string | Types.ObjectId, updateData: Partial<IBooking>): Promise<IBooking | null>;
+	expireStaleBookings(userId?: string | Types.ObjectId): Promise<number>;
+	updateBookingDetails(
+		bookingId: string | Types.ObjectId,
+		updateData: Partial<IBooking>,
+	): Promise<IBooking | null>;
 }

@@ -20,7 +20,11 @@ const messageRepo = new MessageRepo();
 const conversationRepo = new ConversationRepo();
 
 const chatService = new ChatService(messageRepo, conversationRepo);
-const bookingService = new BookingService(vehicleRepo, bookingRepo, chatService);
+const bookingService = new BookingService(
+	vehicleRepo,
+	bookingRepo,
+	chatService,
+);
 const authService = new AuthService(userRepo);
 const bookingController = new BookingController(bookingService);
 

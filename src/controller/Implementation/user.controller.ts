@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
-import type { IUserService } from "../../services/Interfaces/user.interface.service";
+import type { IUserService } from "../../services/interfaces/user.interface.service";
 import { errorResponse, successResponse } from "../../utils/response.util";
 import type { IuserController } from "../interfaces/iuser.controller";
 

@@ -15,14 +15,14 @@ export interface IBooking extends Document {
 	paymentIntentId?: string;
 	paymentStatus: "pending" | "authorized" | "captured" | "refunded" | "failed";
 	bookingStatus:
-	| "requested"
-	| "approved"
-	| "advance_authorized"
-	| "ride_started"
-	| "payment_captured"
-	| "completed"
-	| "cancelled"
-	| "rejected";
+		| "requested"
+		| "approved"
+		| "advance_authorized"
+		| "ride_started"
+		| "payment_captured"
+		| "completed"
+		| "cancelled"
+		| "rejected";
 	cancellationReason?: string;
 	cancelledBy?: "user" | "owner" | "system";
 	tracking: { isEnabled: boolean };

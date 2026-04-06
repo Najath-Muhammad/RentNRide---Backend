@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import { HttpStatus } from "../../constants/enum/statuscode";
-import type { IVehicleService } from "../../services/Interfaces/vehicle.interface.service";
+import type { IVehicleService } from "../../services/interfaces/vehicle.interface.service";
 import { errorResponse, successResponse } from "../../utils/response.util";
 import type { IVehicleController } from "../interfaces/ivehicle.controller";
 
@@ -192,7 +192,9 @@ export class VehicleController implements IVehicleController {
 				return errorResponse(res, "Invalid vehicle ID", HttpStatus.BAD_REQUEST);
 			}
 
-			const user = req.user ? { userId: req.user.userId, role: req.user.role } : undefined;
+			const user = req.user
+				? { userId: req.user.userId, role: req.user.role }
+				: undefined;
 			const result = await this._vehicleService.getVehicleById(id, user);
 
 			if (!result.success) {
@@ -242,9 +244,11 @@ export class VehicleController implements IVehicleController {
 
 			const filters = {
 				search: req.query.search as string,
-				category: toStringArray(req.query.category || req.query['category[]']),
-				fuelType: toStringArray(req.query.fuelType || req.query['fuelType[]']),
-				transmission: toStringArray(req.query.transmission || req.query['transmission[]']),
+				category: toStringArray(req.query.category || req.query["category[]"]),
+				fuelType: toStringArray(req.query.fuelType || req.query["fuelType[]"]),
+				transmission: toStringArray(
+					req.query.transmission || req.query["transmission[]"],
+				),
 				minPrice: req.query.minPrice
 					? parseInt(req.query.minPrice as string, 10)
 					: undefined,

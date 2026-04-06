@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
-import type { IReviewService } from "../../services/Interfaces/review.service.interface";
+import type { IReviewService } from "../../services/interfaces/review.service.interface";
 import { errorResponse, successResponse } from "../../utils/response.util";
 import type { IReviewController } from "../interfaces/ireview.controller";
 

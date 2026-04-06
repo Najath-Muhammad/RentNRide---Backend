@@ -42,5 +42,5 @@ export interface IAdminService {
 		| { success: boolean; message: string; data?: undefined }
 		| { success: false; message: string }
 	>;
-	getDashboardStats(): Promise<any>;
+	getDashboardStats(): Promise<{ success: boolean; data: unknown }>;
 }
