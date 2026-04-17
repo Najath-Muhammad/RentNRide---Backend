@@ -8,7 +8,7 @@ import { reasonSchema } from "../../validations/commonValidation";
 import type { IAdminBookingController } from "../interfaces/iadmin.booking.controller";
 
 export class AdminBookingController implements IAdminBookingController {
-	constructor(private adminBookingService: IAdminBookingService) {}
+	constructor(private adminBookingService: IAdminBookingService) { }
 
 	async getAllBookings(req: Request, res: Response): Promise<void> {
 		try {
@@ -26,7 +26,7 @@ export class AdminBookingController implements IAdminBookingController {
 
 			const mappedResult = {
 				...result,
-				data: result.data.map((b) => bookingDTO(b as IBooking)),
+				data: result.data.map((b: IBooking) => bookingDTO(b)),
 			};
 			successResponse(res, "All bookings fetched successfully", mappedResult);
 		} catch (error) {

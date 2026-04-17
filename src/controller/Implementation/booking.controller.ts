@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
 import type { IBookingService } from "../../services/interfaces/booking.interface.service";
+import type { IBooking } from "../../types/booking/booking.types";
 import { bookingDTO } from "../../utils/mapper/booking.mapper";
 import { errorResponse, successResponse } from "../../utils/response.util";
 import {
@@ -10,7 +11,7 @@ import {
 import type { IBookingController } from "../interfaces/ibooking.controller";
 
 export class BookingController implements IBookingController {
-	constructor(private _bookingService: IBookingService) {}
+	constructor(private _bookingService: IBookingService) { }
 
 	async createBooking(req: Request, res: Response): Promise<void> {
 		try {
@@ -82,7 +83,7 @@ export class BookingController implements IBookingController {
 
 			const mappedResult = {
 				...result,
-				data: result.data.map((b) => bookingDTO(b)),
+				data: result.data.map((b: IBooking) => bookingDTO(b)),
 			};
 
 			successResponse(res, "User bookings fetched successfully", mappedResult);
