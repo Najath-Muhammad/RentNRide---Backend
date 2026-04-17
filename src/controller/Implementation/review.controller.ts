@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
 import type { IReviewService } from "../../services/interfaces/review.service.interface";
 import { errorResponse, successResponse } from "../../utils/response.util";
+import { reviewSchema } from "../../validations/commonValidation";
 import type { IReviewController } from "../interfaces/ireview.controller";
 
 export class ReviewController implements IReviewController {
@@ -11,7 +12,16 @@ export class ReviewController implements IReviewController {
 		try {
 			const user = (req as Request & { user?: { userId: string } }).user;
 			const userId = user?.userId;
-			const { vehicleId, bookingId, rating, comment } = req.body;
+			const parsed = reviewSchema.safeParse(req.body);
+			if (!parsed.success) {
+				errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
+				return;
+			}
+			const { vehicleId, bookingId, rating, comment } = parsed.data;
 
 			if (!userId) {
 				errorResponse(res, "User not authenticated", HttpStatus.UNAUTHORIZED);

@@ -1,7 +1,16 @@
 import type { Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
 import type { IWalletService } from "../../services/interfaces/wallet.interface.service";
+import type { ITransaction } from "../../types/wallet/wallet.types";
+import {
+	walletDTO,
+	walletTransactionDTO,
+} from "../../utils/mapper/wallet.mapper";
 import { errorResponse, successResponse } from "../../utils/response.util";
+import {
+	fundWalletSchema,
+	verifyPaymentIntentSchema,
+} from "../../validations/commonValidation";
 
 type AuthRequest = Request & { user?: { userId: string; role: string } };
 
@@ -11,8 +20,30 @@ export class WalletController {
 	async getWallet(req: Request, res: Response) {
 		try {
 			const { userId } = (req as AuthRequest).user as { userId: string };
+			const page = Number.parseInt(req.query.page as string, 10) || 1;
+			const limit = Number.parseInt(req.query.limit as string, 10) || 5;
+
 			const wallet = await this._walletService.getWallet(userId);
-			successResponse(res, "Wallet retrieved successfully", wallet);
+			const paginated = await this._walletService.getPaginatedTransactions(
+				userId,
+				page,
+				limit,
+			);
+
+			const dto = wallet ? walletDTO(wallet) : null;
+			if (dto) {
+				dto.transactionHistory = paginated.data.map((t: ITransaction) =>
+					walletTransactionDTO(t),
+				);
+				dto.pagination = {
+					total: paginated.total,
+					page: paginated.page,
+					limit: paginated.limit,
+					totalPages: paginated.totalPages,
+				};
+			}
+
+			successResponse(res, "Wallet retrieved successfully", dto);
 		} catch (error) {
 			errorResponse(
 				res,
@@ -25,16 +56,16 @@ export class WalletController {
 	async createWalletFundingIntent(req: Request, res: Response) {
 		try {
 			const { userId } = (req as AuthRequest).user as { userId: string };
-			const { amount } = req.body;
-
-			if (!amount || amount < 10) {
+			const parsed = fundWalletSchema.safeParse(req.body);
+			if (!parsed.success) {
 				errorResponse(
 					res,
-					"Invalid amount. Must be at least ₹10.",
+					parsed.error.issues[0].message,
 					HttpStatus.BAD_REQUEST,
 				);
 				return;
 			}
+			const { amount } = parsed.data;
 
 			const intent = await this._walletService.createWalletFundingIntent(
 				userId,
@@ -52,15 +83,16 @@ export class WalletController {
 
 	async verifyWalletFunding(req: Request, res: Response) {
 		try {
-			const { paymentIntentId } = req.body;
-			if (!paymentIntentId) {
+			const parsed = verifyPaymentIntentSchema.safeParse(req.body);
+			if (!parsed.success) {
 				errorResponse(
 					res,
-					"Payment Intent ID is required",
+					parsed.error.issues[0].message,
 					HttpStatus.BAD_REQUEST,
 				);
 				return;
 			}
+			const { paymentIntentId } = parsed.data;
 
 			const result =
 				await this._walletService.verifyWalletFunding(paymentIntentId);
@@ -74,4 +106,3 @@ export class WalletController {
 		}
 	}
 }
-

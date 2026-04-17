@@ -1,25 +1,43 @@
-import type { FilterQuery } from "mongoose";
+import mongoose, { type FilterQuery } from "mongoose";
+import { USER_ROLES } from "../../constants/roles";
 import type { IUserRepository } from "../../repositories/interfaces/user.interface";
 import type { IUser } from "../../types/user/IUser";
 import type { IUserToAdmin } from "../../types/user/IUserToAdmin";
 import { adminUserDTO } from "../../utils/mapper/adminService.mapper";
-import type { IAdminService } from "../interfaces/admin.interface.service";
 import { emitToUser } from "../../utils/socket";
+import type { IAdminService } from "../interfaces/admin.interface.service";
 
 export class AdminServices implements IAdminService {
-	constructor(private _userRepo: IUserRepository) { }
+	constructor(private _userRepo: IUserRepository) {}
 
-	async getDashboardStats() {
+	async getDashboardStats(query?: { startDate?: string; endDate?: string }) {
 		try {
-			const mongoose = require("mongoose");
-
 			const User = mongoose.model("User");
 			const Vehicle = mongoose.model("Vehicle");
 			const Booking = mongoose.model("Booking");
+			const UserSubscription = mongoose.model("UserSubscription");
 
 			const now = new Date();
-			const thirtyDaysAgo = new Date();
-			thirtyDaysAgo.setDate(now.getDate() - 30);
+			let startDateFilter: Date;
+			let endDateFilter: Date = now;
+
+			if (query?.startDate) {
+				startDateFilter = new Date(query.startDate);
+				startDateFilter.setHours(0, 0, 0, 0);
+			} else {
+				startDateFilter = new Date();
+				startDateFilter.setDate(now.getDate() - 30);
+				startDateFilter.setHours(0, 0, 0, 0);
+			}
+
+			if (query?.endDate) {
+				endDateFilter = new Date(query.endDate);
+				endDateFilter.setHours(23, 59, 59, 999);
+			}
+
+			const dateQuery = {
+				createdAt: { $gte: startDateFilter, $lte: endDateFilter },
+			};
 
 			const [
 				totalUsers,
@@ -30,12 +48,13 @@ export class AdminServices implements IAdminService {
 				bookingStatusStats,
 				revenueStats,
 				bookingsTrendStats,
+				revenueTrendStats,
 				vehicleUsageStats,
 				recentBookingsRaw,
 			] = await Promise.all([
-				User.countDocuments({ role: "user" }),
-				Vehicle.countDocuments(),
-				Booking.countDocuments(),
+				User.countDocuments({ role: { $in: USER_ROLES }, ...dateQuery }),
+				Vehicle.countDocuments({ ...dateQuery }),
+				Booking.countDocuments({ ...dateQuery }),
 				Vehicle.countDocuments({
 					isActive: true,
 					isApproved: true,
@@ -47,6 +66,7 @@ export class AdminServices implements IAdminService {
 					},
 				}),
 				Booking.aggregate([
+					{ $match: dateQuery },
 					{
 						$group: {
 							_id: "$bookingStatus",
@@ -54,46 +74,41 @@ export class AdminServices implements IAdminService {
 						},
 					},
 				]),
-				Booking.aggregate([
-					{
-						$match: {
-							bookingStatus: { $in: ["completed", "payment_captured"] },
-						},
-					},
+				UserSubscription.aggregate([
+					{ $match: dateQuery },
 					{
 						$group: {
 							_id: null,
-							totalRevenue: { $sum: "$totalAmount" },
+							totalRevenue: { $sum: "$amountPaid" },
 						},
 					},
 				]),
 				Booking.aggregate([
-					{ $match: { createdAt: { $gte: thirtyDaysAgo } } },
+					{ $match: dateQuery },
 					{
 						$group: {
 							_id: {
 								$dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
 							},
 							count: { $sum: 1 },
-							amount: {
-								$sum: {
-									$cond: [
-										{
-											$in: [
-												"$bookingStatus",
-												["completed", "payment_captured"],
-											],
-										},
-										"$totalAmount",
-										0,
-									],
-								},
+						},
+					},
+					{ $sort: { _id: 1 } },
+				]),
+				UserSubscription.aggregate([
+					{ $match: dateQuery },
+					{
+						$group: {
+							_id: {
+								$dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
 							},
+							amount: { $sum: "$amountPaid" },
 						},
 					},
 					{ $sort: { _id: 1 } },
 				]),
 				Booking.aggregate([
+					{ $match: dateQuery },
 					{
 						$group: {
 							_id: "$vehicleId",
@@ -148,40 +163,45 @@ export class AdminServices implements IAdminService {
 			const totalRevenue =
 				revenueStats.length > 0 ? revenueStats[0].totalRevenue : 0;
 
-			// Format trends, ensure they have valid entries
-			const bookingsTrend = bookingsTrendStats.map((item: { _id: string; count: number; amount: number }) => ({
-				date: item._id,
-				count: item.count,
-			}));
+			const bookingsTrend = bookingsTrendStats.map(
+				(item: { _id: string; count: number }) => ({
+					date: item._id,
+					count: item.count,
+				}),
+			);
 
-			const revenueTrend = bookingsTrendStats.map((item: { _id: string; count: number; amount: number }) => ({
-				date: item._id,
-				amount: item.amount,
-			}));
+			const revenueTrend = revenueTrendStats.map(
+				(item: { _id: string; amount: number }) => ({
+					date: item._id,
+					amount: item.amount,
+				}),
+			);
 
 			// Format recent bookings
-			const recentBookings = (recentBookingsRaw as unknown[]).map((rawBooking: unknown) => {
-				const booking = rawBooking as {
-					_id: string;
-					userId: { name: string };
-					vehicleId: { brand: string; modelName: string };
-					createdAt: string;
-					bookingStatus: string;
-					paymentStatus: string;
-				};
-				const user = booking.userId;
-				const vehicle = booking.vehicleId;
-				return {
-					_id: booking._id.toString(),
-					userName: user ? user.name : "Unknown User",
-					vehicleName: vehicle
-						? `${vehicle.brand} ${vehicle.modelName}`
-						: "Unknown Vehicle",
-					date: booking.createdAt,
-					status: booking.bookingStatus,
-					paymentStatus: booking.paymentStatus,
-				};
-			});
+			const recentBookings = (recentBookingsRaw as unknown[]).map(
+				(rawBooking: unknown) => {
+					const booking = rawBooking as {
+						_id: string;
+						userId: { name: string };
+						vehicleId: { brand: string; modelName: string };
+						createdAt: string;
+						bookingStatus: string;
+						paymentStatus: string;
+					};
+					const user = booking.userId;
+					const vehicle = booking.vehicleId;
+					return {
+						_id: booking._id.toString(),
+						userName: user ? user.name : "Unknown User",
+						vehicleName: vehicle
+							? `${vehicle.brand} ${vehicle.modelName}`
+							: "Unknown Vehicle",
+						date: booking.createdAt,
+						status: booking.bookingStatus,
+						paymentStatus: booking.paymentStatus,
+					};
+				},
+			);
 
 			return {
 				success: true,
@@ -216,28 +236,28 @@ export class AdminServices implements IAdminService {
 		status?: string;
 	}): Promise<
 		| {
-			success: true;
-			message?: string;
-			data: {
-				users: IUserToAdmin[];
-				total: number;
-				page: number;
-				limit: number;
-				totalPages: number;
-			};
-		}
+				success: true;
+				message?: string;
+				data: {
+					users: IUserToAdmin[];
+					total: number;
+					page: number;
+					limit: number;
+					totalPages: number;
+				};
+		  }
 		| {
-			success: false;
-			message: string;
-			data: IUserToAdmin[];
-		}
+				success: false;
+				message: string;
+				data: IUserToAdmin[];
+		  }
 	> {
 		try {
 			const page = Number(query.page) || 1;
 			const limit = Number(query.limit) || 10;
 			const { search, status } = query;
 
-			const filters: FilterQuery<IUser> = { role: "user" };
+			const filters: FilterQuery<IUser> = { role: { $in: USER_ROLES } };
 
 			if (search) {
 				filters.$or = [
@@ -288,7 +308,9 @@ export class AdminServices implements IAdminService {
 				isBlocked: true,
 			});
 
-			emitToUser(userId, "user:blocked", { message: "You have been blocked by the admin." });
+			emitToUser(userId, "user:blocked", {
+				message: "You have been blocked by the admin.",
+			});
 
 			return {
 				success: true,

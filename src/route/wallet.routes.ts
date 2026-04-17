@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { ALL_ROLES } from "../constants/roles";
 import { WalletController } from "../controller/Implementation/wallet.controller";
 import { AuthGuard } from "../middlewares/authGuard";
 import { WalletRepo } from "../repositories/Implementation/wallet.repository";
@@ -9,7 +10,7 @@ const walletRepo = new WalletRepo();
 export const walletService = new WalletService(walletRepo); // export so payment.service can use it for webhook
 const walletController = new WalletController(walletService);
 
-router.use(AuthGuard(["user", "premium", "admin"]));
+router.use(AuthGuard(ALL_ROLES));
 
 router.get("/", walletController.getWallet.bind(walletController));
 router.post(

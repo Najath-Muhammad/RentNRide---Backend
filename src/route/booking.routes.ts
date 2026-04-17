@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { ALL_ROLES, USER_ROLES } from "../constants/roles";
 import { BookingController } from "../controller/Implementation/booking.controller";
 import { AuthGuard } from "../middlewares/authGuard";
 import { checkBlocked } from "../middlewares/checkBlocked";
@@ -30,21 +31,21 @@ const bookingController = new BookingController(bookingService);
 
 bookingRouter.post(
 	"/",
-	AuthGuard(["user", "premium", "admin"]),
+	AuthGuard(ALL_ROLES),
 	checkBlocked(authService),
 	bookingController.createBooking.bind(bookingController),
 );
 
 bookingRouter.get(
 	"/user",
-	AuthGuard(["user", "premium"]),
+	AuthGuard(USER_ROLES),
 	checkBlocked(authService),
 	bookingController.getUserBookings.bind(bookingController),
 );
 
 bookingRouter.patch(
 	"/:bookingId/cancel",
-	AuthGuard(["user", "premium"]),
+	AuthGuard(USER_ROLES),
 	checkBlocked(authService),
 	bookingController.cancelBooking.bind(bookingController),
 );

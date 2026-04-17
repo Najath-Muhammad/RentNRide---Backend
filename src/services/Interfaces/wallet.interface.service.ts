@@ -1,5 +1,5 @@
 import type { Types } from "mongoose";
-import type { IWallet } from "../../types/wallet/wallet.types";
+import type { ITransaction, IWallet } from "../../types/wallet/wallet.types";
 
 export interface IWalletService {
 	getWallet(userId: string | Types.ObjectId): Promise<IWallet>;
@@ -16,4 +16,15 @@ export interface IWalletService {
 	verifyWalletFunding(
 		paymentIntentId: string,
 	): Promise<{ success: boolean; message: string }>;
+	getPaginatedTransactions(
+		userId: string | Types.ObjectId,
+		page: number,
+		limit: number,
+	): Promise<{
+		data: ITransaction[];
+		total: number;
+		page: number;
+		limit: number;
+		totalPages: number;
+	}>;
 }

@@ -1,4 +1,5 @@
 import type { Types } from "mongoose";
+
 import type {
 	CreateBookingInput,
 	IBooking,

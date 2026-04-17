@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
 import type { IPaymentService } from "../../services/interfaces/payment.interface.service";
 import { errorResponse, successResponse } from "../../utils/response.util";
+import { bookingIdSchema } from "../../validations/commonValidation";
 
 type AuthRequest = Request & { user?: { userId: string; role: string } };
 
@@ -10,13 +11,17 @@ export class PaymentController {
 
 	async createAdvancePaymentIntent(req: Request, res: Response) {
 		try {
-			const { bookingId } = req.body;
-			const { userId } = (req as AuthRequest).user as { userId: string };
-
-			if (!bookingId) {
-				errorResponse(res, "Booking ID is required", HttpStatus.BAD_REQUEST);
+			const parsed = bookingIdSchema.safeParse(req.body);
+			if (!parsed.success) {
+				errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
 				return;
 			}
+			const { bookingId } = parsed.data;
+			const { userId } = (req as AuthRequest).user as { userId: string };
 
 			const result = await this._paymentService.createAdvancePaymentIntent(
 				bookingId,
@@ -34,12 +39,16 @@ export class PaymentController {
 
 	async capturePayment(req: Request, res: Response) {
 		try {
-			const { bookingId } = req.body;
-
-			if (!bookingId) {
-				errorResponse(res, "Booking ID is required", HttpStatus.BAD_REQUEST);
+			const parsed = bookingIdSchema.safeParse(req.body);
+			if (!parsed.success) {
+				errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
 				return;
 			}
+			const { bookingId } = parsed.data;
 
 			const result = await this._paymentService.capturePayment(bookingId);
 			successResponse(res, "Payment captured successfully", result);
@@ -54,12 +63,16 @@ export class PaymentController {
 
 	async verifyAdvancePayment(req: Request, res: Response) {
 		try {
-			const { bookingId } = req.body;
-
-			if (!bookingId) {
-				errorResponse(res, "Booking ID is required", HttpStatus.BAD_REQUEST);
+			const parsed = bookingIdSchema.safeParse(req.body);
+			if (!parsed.success) {
+				errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
 				return;
 			}
+			const { bookingId } = parsed.data;
 
 			const result = await this._paymentService.verifyAdvancePayment(bookingId);
 			successResponse(res, "Payment verified", result);
@@ -74,12 +87,16 @@ export class PaymentController {
 
 	async cancelPaymentIntent(req: Request, res: Response) {
 		try {
-			const { bookingId } = req.body;
-
-			if (!bookingId) {
-				errorResponse(res, "Booking ID is required", HttpStatus.BAD_REQUEST);
+			const parsed = bookingIdSchema.safeParse(req.body);
+			if (!parsed.success) {
+				errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
 				return;
 			}
+			const { bookingId } = parsed.data;
 
 			const result = await this._paymentService.cancelPaymentIntent(bookingId);
 			successResponse(res, "Payment cancelled successfully", result);
@@ -105,4 +122,3 @@ export class PaymentController {
 		}
 	}
 }
-

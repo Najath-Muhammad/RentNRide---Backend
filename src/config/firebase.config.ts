@@ -1,5 +1,6 @@
 import admin from "firebase-admin";
 import { env } from "../config/env";
+import logger from "../utils/logger";
 
 let firebaseApp: admin.app.App | null = null;
 
@@ -24,7 +25,7 @@ export function initFirebase(): admin.app.App | null {
 		privateKey.includes("YOUR_KEY_HERE");
 
 	if (isPlaceholder) {
-		console.warn(
+		logger.warn(
 			"[Firebase] ⚠️  Credentials not configured — push notifications are DISABLED.\n" +
 				"            Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY in backend/.env",
 		);
@@ -35,9 +36,9 @@ export function initFirebase(): admin.app.App | null {
 		firebaseApp = admin.initializeApp({
 			credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
 		});
-		console.log("[Firebase] ✅ Admin SDK initialized");
+		logger.info("[Firebase] ✅ Admin SDK initialized");
 	} catch (err) {
-		console.error("[Firebase] ❌ Failed to initialize Admin SDK:", err);
+		logger.error("[Firebase] ❌ Failed to initialize Admin SDK:", err);
 		firebaseApp = null;
 	}
 

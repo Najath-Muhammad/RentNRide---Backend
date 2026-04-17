@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { ADMIN_ONLY } from "../constants/roles";
 import { AdminBookingController } from "../controller/Implementation/admin.booking.controller";
 import { AuthGuard } from "../middlewares/authGuard";
 import { BookingRepo } from "../repositories/Implementation/booking.repository";
@@ -13,13 +14,13 @@ const adminBookingController = new AdminBookingController(adminBookingService);
 // Admin Routes
 adminBookingRouter.get(
 	"/",
-	AuthGuard(["admin"]),
+	AuthGuard(ADMIN_ONLY),
 	adminBookingController.getAllBookings.bind(adminBookingController),
 );
 
 adminBookingRouter.patch(
 	"/:bookingId/cancel",
-	AuthGuard(["admin"]),
+	AuthGuard(ADMIN_ONLY),
 	adminBookingController.cancelBooking.bind(adminBookingController),
 );
 

@@ -34,6 +34,7 @@ const UserSubscriptionSchema = new Schema<IUserSubscription>(
 			enum: ["active", "expired", "cancelled"],
 			default: "active",
 		},
+		amountPaid: { type: Number, required: true, default: 0 },
 		cancelledAt: { type: Date },
 		cancelReason: { type: String, trim: true },
 	},

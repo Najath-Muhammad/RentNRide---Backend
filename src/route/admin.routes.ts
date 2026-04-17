@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { ROUTES } from "../constants/Routes/routeConstants";
+import { ADMIN_ONLY } from "../constants/roles";
 import { AdminController } from "../controller/Implementation/admin.controller";
 import { AdminVehicleController } from "../controller/Implementation/admin.vehicle.controller";
 import { AuthController } from "../controller/Implementation/auth.controller";
@@ -34,9 +35,11 @@ adminRouter.post(
 	authController.adminLogout.bind(authController),
 );
 
+// Protected Admin Routes
+adminRouter.use(AuthGuard(ADMIN_ONLY));
+
 adminRouter.get(
 	ROUTES.ADMIN.GET_DASHBOARD,
-	AuthGuard(["admin"]),
 	adminController.getDashboardStats.bind(adminController),
 );
 
@@ -84,7 +87,6 @@ adminRouter.get(
 );
 adminRouter.patch(
 	ROUTES.ADMIN.REJECT_VEHICLE,
-	AuthGuard(["admin"]),
 	adminVehicleController.rejectVehicle.bind(adminVehicleController),
 );
 

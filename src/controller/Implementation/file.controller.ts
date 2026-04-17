@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
 import type { IFileService } from "../../services/interfaces/file.interface.service";
 import { errorResponse, successResponse } from "../../utils/response.util";
+import { fileUploadSchema } from "../../validations/commonValidation";
 import type { IFileController } from "../interfaces/ifile.controller";
 
 export class FileController implements IFileController {
@@ -9,15 +10,15 @@ export class FileController implements IFileController {
 
 	async generateUploadUrl(req: Request, res: Response): Promise<Response> {
 		try {
-			const { fileName, fileType } = req.body;
-
-			if (!fileName || !fileType) {
+			const parsed = fileUploadSchema.safeParse(req.body);
+			if (!parsed.success) {
 				return errorResponse(
 					res,
-					"fileName and fileType required",
+					parsed.error.issues[0].message,
 					HttpStatus.BAD_REQUEST,
 				);
 			}
+			const { fileName, fileType } = parsed.data;
 
 			const response = await this._fileService.generateUploadUrl(
 				fileName,

@@ -5,7 +5,7 @@ import type { ITransaction, IWallet } from "../../types/wallet/wallet.types";
 import type { IWalletService } from "../interfaces/wallet.interface.service";
 
 export class WalletService implements IWalletService {
-	constructor(private _walletRepo: IWalletRepo) { }
+	constructor(private _walletRepo: IWalletRepo) {}
 
 	async getWallet(userId: string | Types.ObjectId): Promise<IWallet> {
 		let wallet = await this._walletRepo.findByUserId(userId);
@@ -85,7 +85,7 @@ export class WalletService implements IWalletService {
 			intent.metadata.purpose === "wallet_funding"
 		) {
 			const userId = intent.metadata.userId;
-			const amount = parseFloat(intent.metadata.amount);
+			const amount = Number.parseFloat(intent.metadata.amount);
 
 			if (userId && amount) {
 				if (intent.metadata.processedLocally === "true") {
@@ -109,6 +109,29 @@ export class WalletService implements IWalletService {
 		return {
 			success: false,
 			message: "Payment not successful or incorrect purpose",
+		};
+	}
+
+	async getPaginatedTransactions(
+		userId: string | Types.ObjectId,
+		page: number,
+		limit: number,
+	): Promise<{
+		data: ITransaction[];
+		total: number;
+		page: number;
+		limit: number;
+		totalPages: number;
+	}> {
+		const { transactions, total } =
+			await this._walletRepo.findPaginatedTransactions(userId, page, limit);
+
+		return {
+			data: transactions,
+			total,
+			page,
+			limit,
+			totalPages: Math.ceil(total / limit),
 		};
 	}
 }

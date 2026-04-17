@@ -1,3 +1,4 @@
+import { ROLES } from "../../constants/roles";
 import type { IUserRepository } from "../../repositories/interfaces/user.interface";
 import type { IUser } from "../../types/user/IUser";
 import {
@@ -111,7 +112,7 @@ export class UserService implements IUserService {
 			if (!user) throw new Error("User not found");
 
 			return {
-				plan: user.role === "premium" ? "premium" : "free",
+				plan: user.role === ROLES.PREMIUM ? "premium" : "free",
 				expiresAt: user.premiumExpiresAt || null,
 			};
 		} catch (error) {
@@ -130,7 +131,7 @@ export class UserService implements IUserService {
 			thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
 			const updated = await this._userRepo.updateById(userId, {
-				role: "premium",
+				role: ROLES.PREMIUM,
 				premiumExpiresAt: thirtyDaysFromNow,
 			});
 

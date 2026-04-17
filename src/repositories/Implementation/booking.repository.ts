@@ -182,7 +182,9 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 			.findOne({
 				userId,
 				vehicleId,
-				bookingStatus: { $in: ["completed", "ride_started", "payment_captured"] },
+				bookingStatus: {
+					$in: ["completed", "ride_started", "payment_captured"],
+				},
 			})
 			.exec();
 	}

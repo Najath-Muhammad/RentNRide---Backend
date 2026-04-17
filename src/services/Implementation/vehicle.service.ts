@@ -18,7 +18,7 @@ import type { IVehicleService } from "../interfaces/vehicle.interface.service";
 import { SubscriptionService } from "./subscription.service";
 
 export class VehicleService implements IVehicleService {
-	constructor(private _vehicleRepo: IVehicleRepository) { }
+	constructor(private _vehicleRepo: IVehicleRepository) {}
 
 	async createVehicle(
 		vehicleData: IVehicle,
@@ -496,6 +496,6 @@ export class VehicleService implements IVehicleService {
 
 	async checkLimit(_userId: string) {
 		try {
-		} catch (_error) { }
+		} catch (_error) {}
 	}
 }

@@ -1,9 +1,12 @@
 import mongoose, { Schema } from "mongoose";
 
 export interface IFuelType {
+	_id: mongoose.Types.ObjectId;
 	name: string;
 	description?: string;
 	isActive: boolean;
+	createdAt: Date;
+	updatedAt: Date;
 }
 
 const FuelTypeSchema = new Schema<IFuelType>(

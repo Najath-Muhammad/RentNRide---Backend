@@ -47,6 +47,7 @@ export interface ISubscriptionService {
 	assignSubscription(
 		userId: string,
 		planId: string,
+		amountOverride?: number,
 	): Promise<IUserSubscription>;
 	cancelUserSubscription(
 		id: string,

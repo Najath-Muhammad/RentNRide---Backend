@@ -8,21 +8,21 @@ export interface IAdminService {
 		status?: string;
 	}): Promise<
 		| {
-			success: boolean;
-			message?: string;
-			data: {
-				users: IUserToAdmin[];
-				total: number;
-				page: number;
-				limit: number;
-				totalPages: number;
-			};
-		}
+				success: boolean;
+				message?: string;
+				data: {
+					users: IUserToAdmin[];
+					total: number;
+					page: number;
+					limit: number;
+					totalPages: number;
+				};
+		  }
 		| {
-			success: boolean;
-			message: string;
-			data: IUserToAdmin[];
-		}
+				success: boolean;
+				message: string;
+				data: IUserToAdmin[];
+		  }
 	>;
 	blockUser(
 		userId: string,
@@ -42,5 +42,8 @@ export interface IAdminService {
 		| { success: boolean; message: string; data?: undefined }
 		| { success: false; message: string }
 	>;
-	getDashboardStats(): Promise<{ success: boolean; data: unknown }>;
+	getDashboardStats(query?: {
+		startDate?: string;
+		endDate?: string;
+	}): Promise<{ success: boolean; data: unknown }>;
 }

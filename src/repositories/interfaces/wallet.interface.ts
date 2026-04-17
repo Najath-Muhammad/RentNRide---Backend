@@ -10,4 +10,9 @@ export interface IWalletRepo extends IBaseRepo<IWallet> {
 		transaction: ITransaction,
 		newBalance: number,
 	): Promise<IWallet | null>;
+	findPaginatedTransactions(
+		userId: string | Types.ObjectId,
+		page: number,
+		limit: number,
+	): Promise<{ transactions: ITransaction[]; total: number }>;
 }

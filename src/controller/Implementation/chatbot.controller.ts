@@ -5,20 +5,22 @@ import { HttpStatus } from "../../constants/enum/statuscode";
 import { Category } from "../../model/category.model";
 import type { IVehicleService } from "../../services/interfaces/vehicle.interface.service";
 import { errorResponse, successResponse } from "../../utils/response.util";
+import { chatMessageSchema } from "../../validations/commonValidation";
 
 export class ChatbotController {
-	constructor(private _vehicleService: IVehicleService) { }
+	constructor(private _vehicleService: IVehicleService) {}
 
 	async handleChat(req: Request, res: Response) {
 		try {
-			const { message } = req.body;
-			if (!message) {
+			const parsed = chatMessageSchema.safeParse(req.body);
+			if (!parsed.success) {
 				return errorResponse(
 					res,
-					"Message is required",
+					parsed.error.issues[0].message,
 					HttpStatus.BAD_REQUEST,
 				);
 			}
+			const { message } = parsed.data;
 
 			const prompt = `You are an AI assistant for a vehicle rental app called RentNride.
 A user asked: "${message}"

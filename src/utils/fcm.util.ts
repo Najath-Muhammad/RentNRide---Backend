@@ -113,7 +113,7 @@ export async function sendPushNotification(
 		}
 
 		console.log(
-			`[FCM] Sent to ${response.successCount}/${tokens.length} token(s) for user ${userId}`,
+			`[FCM] Sent to ${response.successCount}/${tokens.length} token(s) for user ${userId}. Success indices: ${response.responses.map((r) => r.success).join(",")}`,
 		);
 	} catch (error) {
 		// Never let a notification failure crash the caller

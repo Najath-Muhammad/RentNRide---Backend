@@ -7,10 +7,13 @@ export interface ISubCategory {
 }
 
 export interface ICategory {
+	_id: mongoose.Types.ObjectId;
 	name: string;
 	description?: string;
 	subCategories: ISubCategory[];
 	isActive: boolean;
+	createdAt: Date;
+	updatedAt: Date;
 }
 
 const SubCategorySchema = new Schema<ISubCategory>(

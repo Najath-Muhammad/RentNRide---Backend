@@ -7,7 +7,7 @@ import type { IPaymentService } from "../interfaces/payment.interface.service";
 import { WalletService } from "./wallet.service";
 
 export class PaymentService implements IPaymentService {
-	constructor(private _bookingRepo: IBookingRepo) { }
+	constructor(private _bookingRepo: IBookingRepo) {}
 
 	async createAdvancePaymentIntent(
 		bookingId: string | Types.ObjectId,
@@ -195,7 +195,8 @@ export class PaymentService implements IPaymentService {
 
 		switch (event.type) {
 			case "payment_intent.amount_capturable_updated": {
-				const paymentIntent = event.data.object as import("stripe").Stripe.PaymentIntent;
+				const paymentIntent = event.data
+					.object as import("stripe").Stripe.PaymentIntent;
 				const bookingId = paymentIntent.metadata.bookingId;
 				if (bookingId) {
 					await this._bookingRepo.updateBookingDetails(bookingId, {
@@ -206,7 +207,8 @@ export class PaymentService implements IPaymentService {
 				break;
 			}
 			case "payment_intent.succeeded": {
-				const paymentIntent = event.data.object as import("stripe").Stripe.PaymentIntent;
+				const paymentIntent = event.data
+					.object as import("stripe").Stripe.PaymentIntent;
 
 				if (paymentIntent.metadata.purpose === "wallet_funding") {
 					const userId = paymentIntent.metadata.userId;
@@ -236,7 +238,8 @@ export class PaymentService implements IPaymentService {
 				break;
 			}
 			case "payment_intent.payment_failed": {
-				const paymentIntent = event.data.object as import("stripe").Stripe.PaymentIntent;
+				const paymentIntent = event.data
+					.object as import("stripe").Stripe.PaymentIntent;
 				const bookingId = paymentIntent.metadata.bookingId;
 				if (bookingId) {
 					await this._bookingRepo.updateBookingDetails(bookingId, {
@@ -246,7 +249,8 @@ export class PaymentService implements IPaymentService {
 				break;
 			}
 			case "payment_intent.canceled": {
-				const paymentIntent = event.data.object as import("stripe").Stripe.PaymentIntent;
+				const paymentIntent = event.data
+					.object as import("stripe").Stripe.PaymentIntent;
 				const bookingId = paymentIntent.metadata.bookingId;
 				if (bookingId) {
 					await this._bookingRepo.updateBookingDetails(bookingId, {

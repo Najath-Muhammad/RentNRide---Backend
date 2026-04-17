@@ -1,4 +1,5 @@
 import express, { Router } from "express";
+import { ALL_ROLES } from "../constants/roles";
 import { PaymentController } from "../controller/Implementation/payment.controller";
 import { AuthGuard } from "../middlewares/authGuard";
 import { BookingRepo } from "../repositories/Implementation/booking.repository";
@@ -15,7 +16,7 @@ router.post(
 	paymentController.handleWebhook.bind(paymentController),
 );
 
-router.use(AuthGuard(["user", "premium", "admin"]));
+router.use(AuthGuard(ALL_ROLES));
 router.post(
 	"/advance-payment",
 	paymentController.createAdvancePaymentIntent.bind(paymentController),

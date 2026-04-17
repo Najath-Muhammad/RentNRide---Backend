@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { ADMIN_ONLY, ALL_ROLES } from "../constants/roles";
 import { SubscriptionController } from "../controller/Implementation/subscription.controller";
 import { AuthGuard } from "../middlewares/authGuard";
 import {
@@ -23,61 +24,61 @@ const subscriptionController = new SubscriptionController(subscriptionService);
 // ── Admin: Plan Management ─────────────────────────────────────────────────
 subscriptionRouter.get(
 	"/admin/subscription-plans",
-	AuthGuard(["admin"]),
+	AuthGuard(ADMIN_ONLY),
 	subscriptionController.getAllPlans.bind(subscriptionController),
 );
 subscriptionRouter.get(
 	"/admin/subscription-plans/active",
-	AuthGuard(["admin"]),
+	AuthGuard(ADMIN_ONLY),
 	subscriptionController.getActivePlans.bind(subscriptionController),
 );
 subscriptionRouter.get(
 	"/admin/subscription-plans/:id",
-	AuthGuard(["admin"]),
+	AuthGuard(ADMIN_ONLY),
 	subscriptionController.getPlanById.bind(subscriptionController),
 );
 subscriptionRouter.post(
 	"/admin/subscription-plans",
-	AuthGuard(["admin"]),
+	AuthGuard(ADMIN_ONLY),
 	subscriptionController.createPlan.bind(subscriptionController),
 );
 subscriptionRouter.put(
 	"/admin/subscription-plans/:id",
-	AuthGuard(["admin"]),
+	AuthGuard(ADMIN_ONLY),
 	subscriptionController.updatePlan.bind(subscriptionController),
 );
 subscriptionRouter.patch(
 	"/admin/subscription-plans/:id/toggle",
-	AuthGuard(["admin"]),
+	AuthGuard(ADMIN_ONLY),
 	subscriptionController.togglePlanStatus.bind(subscriptionController),
 );
 
 // ── Admin: User Subscription Management ───────────────────────────────────
 subscriptionRouter.get(
 	"/admin/user-subscriptions",
-	AuthGuard(["admin"]),
+	AuthGuard(ADMIN_ONLY),
 	subscriptionController.getAllUserSubscriptions.bind(subscriptionController),
 );
 subscriptionRouter.post(
 	"/admin/user-subscriptions/assign",
-	AuthGuard(["admin"]),
+	AuthGuard(ADMIN_ONLY),
 	subscriptionController.assignSubscription.bind(subscriptionController),
 );
 subscriptionRouter.patch(
 	"/admin/user-subscriptions/:id/cancel",
-	AuthGuard(["admin"]),
+	AuthGuard(ADMIN_ONLY),
 	subscriptionController.cancelUserSubscription.bind(subscriptionController),
 );
 
 // ── User-Facing ────────────────────────────────────────────────────────────
 subscriptionRouter.get(
 	"/subscriptions/my",
-	AuthGuard(["user", "premium", "admin"]),
+	AuthGuard(ALL_ROLES),
 	subscriptionController.getMySubscription.bind(subscriptionController),
 );
 subscriptionRouter.get(
 	"/subscriptions/my/history",
-	AuthGuard(["user", "premium", "admin"]),
+	AuthGuard(ALL_ROLES),
 	subscriptionController.getMySubscriptionHistory.bind(subscriptionController),
 );
 
@@ -90,14 +91,14 @@ subscriptionRouter.get(
 // User-facing: subscribe to a plan (user subscribes themselves)
 subscriptionRouter.post(
 	"/subscriptions/subscribe",
-	AuthGuard(["user", "premium", "admin"]),
+	AuthGuard(ALL_ROLES),
 	subscriptionController.selfSubscribe.bind(subscriptionController),
 );
 
 // User-facing: create Stripe payment intent for subscription purchase
 subscriptionRouter.post(
 	"/subscriptions/payment-intent",
-	AuthGuard(["user", "premium", "admin"]),
+	AuthGuard(ALL_ROLES),
 	subscriptionController.createSubscriptionPaymentIntent.bind(
 		subscriptionController,
 	),
@@ -106,7 +107,7 @@ subscriptionRouter.post(
 // User-facing: verify Stripe payment manually (for local development or if webhook is missed)
 subscriptionRouter.post(
 	"/subscriptions/verify-payment",
-	AuthGuard(["user", "premium", "admin"]),
+	AuthGuard(ALL_ROLES),
 	subscriptionController.verifySubscriptionPayment.bind(subscriptionController),
 );
 

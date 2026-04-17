@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
 import type { IUserRepository } from "../../repositories/interfaces/user.interface";
 import { errorResponse, successResponse } from "../../utils/response.util";
+import { fcmTokenSchema } from "../../validations/commonValidation";
 
 type AuthRequest = Request & { user?: { userId: string; role: string } };
 
@@ -11,12 +12,16 @@ export class FcmController {
 	/** POST /api/fcm/token — register a device token for the authenticated user */
 	async registerToken(req: Request, res: Response): Promise<void> {
 		const { userId } = (req as AuthRequest).user as { userId: string };
-		const { token } = req.body as { token?: string };
-
-		if (!token || typeof token !== "string") {
-			errorResponse(res, "FCM token is required", HttpStatus.BAD_REQUEST);
+		const parsed = fcmTokenSchema.safeParse(req.body);
+		if (!parsed.success) {
+			errorResponse(
+				res,
+				parsed.error.issues[0].message,
+				HttpStatus.BAD_REQUEST,
+			);
 			return;
 		}
+		const { token } = parsed.data;
 
 		await this._userRepo.addFcmToken(userId, token);
 		console.log(
@@ -28,15 +33,18 @@ export class FcmController {
 	/** DELETE /api/fcm/token — remove a device token (on logout / token refresh) */
 	async removeToken(req: Request, res: Response): Promise<void> {
 		const { userId } = (req as AuthRequest).user as { userId: string };
-		const { token } = req.body as { token?: string };
-
-		if (!token || typeof token !== "string") {
-			errorResponse(res, "FCM token is required", HttpStatus.BAD_REQUEST);
+		const parsed = fcmTokenSchema.safeParse(req.body);
+		if (!parsed.success) {
+			errorResponse(
+				res,
+				parsed.error.issues[0].message,
+				HttpStatus.BAD_REQUEST,
+			);
 			return;
 		}
+		const { token } = parsed.data;
 
 		await this._userRepo.removeFcmToken(userId, token);
 		successResponse(res, "FCM token removed");
 	}
 }
-

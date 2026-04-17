@@ -72,9 +72,13 @@ export class AdminController implements IAdminController {
 		}
 	}
 
-	async getDashboardStats(_req: Request, res: Response): Promise<Response> {
+	async getDashboardStats(req: Request, res: Response): Promise<Response> {
 		try {
-			const result = await this._adminService.getDashboardStats();
+			const { startDate, endDate } = req.query;
+			const result = await this._adminService.getDashboardStats({
+				startDate: startDate as string,
+				endDate: endDate as string,
+			});
 			return successResponse(
 				res,
 				"Dashboard stats fetched successfully",

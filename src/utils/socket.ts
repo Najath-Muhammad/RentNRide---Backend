@@ -201,6 +201,34 @@ export function initSocket(server: HttpServer): SocketServer {
 						success: true,
 						message,
 					});
+
+					// FCM push notification for booking action
+					if (conversation) {
+						const renterId = conversation.participants.find(
+							(p) => p.toString() !== userId,
+						);
+						if (renterId) {
+							try {
+								await sendPushNotification(renterId.toString(), {
+									title: `Booking ${data.action.charAt(0).toUpperCase() + data.action.slice(1)}!`,
+									body:
+										data.action === "approved"
+											? "Your car rental request has been approved! Check your booking details."
+											: "Unfortunately, your car rental request was declined.",
+									data: {
+										type: "booking",
+										bookingId: data.bookingId,
+										action: data.action,
+									},
+								});
+							} catch (fcmErr) {
+								console.error(
+									"[FCM] Booking action notification failed:",
+									fcmErr,
+								);
+							}
+						}
+					}
 				} catch (err) {
 					socket.emit("error", {
 						message:

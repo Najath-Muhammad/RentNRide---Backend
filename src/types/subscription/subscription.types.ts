@@ -18,6 +18,7 @@ export interface IUserSubscription extends Document {
 	startDate: Date;
 	endDate: Date;
 	status: "active" | "expired" | "cancelled";
+	amountPaid: number;
 	cancelledAt?: Date;
 	cancelReason?: string;
 	createdAt: Date;

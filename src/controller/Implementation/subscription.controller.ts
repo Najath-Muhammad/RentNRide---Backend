@@ -1,7 +1,23 @@
 import type { NextFunction, Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
 import type { ISubscriptionService } from "../../services/interfaces/subscription.interface.service";
+import type {
+	ISubscriptionPlan,
+	IUserSubscription,
+} from "../../types/subscription/subscription.types";
+import {
+	subscriptionPlanDTO,
+	userSubscriptionDTO,
+} from "../../utils/mapper/subscription.mapper";
 import { errorResponse, successResponse } from "../../utils/response.util";
+import {
+	assignSubscriptionSchema,
+	createPlanSchema,
+	planIdSchema,
+	reasonSchema,
+	updatePlanSchema,
+	verifyPaymentIntentSchema,
+} from "../../validations/commonValidation";
 
 export class SubscriptionController {
 	constructor(private _subscriptionService: ISubscriptionService) {}
@@ -12,18 +28,24 @@ export class SubscriptionController {
 		next: NextFunction,
 	): Promise<Response> {
 		try {
-			const page = parseInt(req.query.page as string, 10) || 1;
-			const limit = parseInt(req.query.limit as string, 10) || 10;
+			const page = Number.parseInt(req.query.page as string, 10) || 1;
+			const limit = Number.parseInt(req.query.limit as string, 10) || 10;
 			const search = req.query.search as string | undefined;
 			const result = await this._subscriptionService.getAllPlans(
 				page,
 				limit,
 				search,
 			);
+			const mappedResult = {
+				...result,
+				data: result.data.map((plan: ISubscriptionPlan) =>
+					subscriptionPlanDTO(plan),
+				),
+			};
 			return successResponse(
 				res,
 				"Subscription plans fetched successfully",
-				result,
+				mappedResult,
 			);
 		} catch (error) {
 			next(error);
@@ -42,7 +64,11 @@ export class SubscriptionController {
 	): Promise<Response> {
 		try {
 			const plans = await this._subscriptionService.getActivePlans();
-			return successResponse(res, "Active plans fetched successfully", plans);
+			return successResponse(
+				res,
+				"Active plans fetched successfully",
+				plans.map((p: ISubscriptionPlan) => subscriptionPlanDTO(p)),
+			);
 		} catch (error) {
 			next(error);
 			return errorResponse(
@@ -60,7 +86,11 @@ export class SubscriptionController {
 	): Promise<Response> {
 		try {
 			const plan = await this._subscriptionService.getPlanById(req.params.id);
-			return successResponse(res, "Plan fetched successfully", plan);
+			return successResponse(
+				res,
+				"Plan fetched successfully",
+				subscriptionPlanDTO(plan),
+			);
 		} catch (error) {
 			next(error);
 			const msg = error instanceof Error ? error.message : "Unknown error";
@@ -80,36 +110,17 @@ export class SubscriptionController {
 		next: NextFunction,
 	): Promise<Response> {
 		try {
+			const parsed = createPlanSchema.safeParse(req.body);
+			if (!parsed.success) {
+				return errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
+			}
 			const { name, description, price, durationDays, vehicleLimit, features } =
-				req.body;
-			if (!name?.trim()) {
-				return errorResponse(
-					res,
-					"Plan name is required",
-					HttpStatus.BAD_REQUEST,
-				);
-			}
-			if (price === undefined || price < 0) {
-				return errorResponse(
-					res,
-					"Valid price is required",
-					HttpStatus.BAD_REQUEST,
-				);
-			}
-			if (!durationDays || durationDays < 1) {
-				return errorResponse(
-					res,
-					"Valid duration is required",
-					HttpStatus.BAD_REQUEST,
-				);
-			}
-			if (!vehicleLimit || vehicleLimit < 1) {
-				return errorResponse(
-					res,
-					"Valid vehicle limit is required",
-					HttpStatus.BAD_REQUEST,
-				);
-			}
+				parsed.data;
+
 			const plan = await this._subscriptionService.createPlan({
 				name,
 				description,
@@ -121,7 +132,7 @@ export class SubscriptionController {
 			return successResponse(
 				res,
 				"Subscription plan created successfully",
-				plan,
+				subscriptionPlanDTO(plan),
 				HttpStatus.CREATED,
 			);
 		} catch (error) {
@@ -140,14 +151,22 @@ export class SubscriptionController {
 		next: NextFunction,
 	): Promise<Response> {
 		try {
+			const parsed = updatePlanSchema.safeParse(req.body);
+			if (!parsed.success) {
+				return errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
+			}
 			const plan = await this._subscriptionService.updatePlan(
 				req.params.id,
-				req.body,
+				parsed.data,
 			);
 			return successResponse(
 				res,
 				"Subscription plan updated successfully",
-				plan,
+				subscriptionPlanDTO(plan),
 			);
 		} catch (error) {
 			next(error);
@@ -171,7 +190,11 @@ export class SubscriptionController {
 			const plan = await this._subscriptionService.togglePlanStatus(
 				req.params.id,
 			);
-			return successResponse(res, "Plan status updated", plan);
+			return successResponse(
+				res,
+				"Plan status updated",
+				subscriptionPlanDTO(plan),
+			);
 		} catch (error) {
 			next(error);
 			const msg = error instanceof Error ? error.message : "Unknown error";
@@ -191,8 +214,8 @@ export class SubscriptionController {
 		next: NextFunction,
 	): Promise<Response> {
 		try {
-			const page = parseInt(req.query.page as string, 10) || 1;
-			const limit = parseInt(req.query.limit as string, 10) || 10;
+			const page = Number.parseInt(req.query.page as string, 10) || 1;
+			const limit = Number.parseInt(req.query.limit as string, 10) || 10;
 			const search = req.query.search as string | undefined;
 			const status = req.query.status as string | undefined;
 			const result = await this._subscriptionService.getAllUserSubscriptions(
@@ -201,10 +224,16 @@ export class SubscriptionController {
 				search,
 				status,
 			);
+			const mappedResult = {
+				...result,
+				data: result.data.map((sub: IUserSubscription) =>
+					userSubscriptionDTO(sub),
+				),
+			};
 			return successResponse(
 				res,
 				"User subscriptions fetched successfully",
-				result,
+				mappedResult,
 			);
 		} catch (error) {
 			next(error);
@@ -224,14 +253,15 @@ export class SubscriptionController {
 		next: NextFunction,
 	): Promise<Response> {
 		try {
-			const { userId, planId } = req.body;
-			if (!userId || !planId) {
+			const parsed = assignSubscriptionSchema.safeParse(req.body);
+			if (!parsed.success) {
 				return errorResponse(
 					res,
-					"userId and planId are required",
+					parsed.error.issues[0].message,
 					HttpStatus.BAD_REQUEST,
 				);
 			}
+			const { userId, planId } = parsed.data;
 			const sub = await this._subscriptionService.assignSubscription(
 				userId,
 				planId,
@@ -239,7 +269,7 @@ export class SubscriptionController {
 			return successResponse(
 				res,
 				"Subscription assigned successfully",
-				sub,
+				userSubscriptionDTO(sub),
 				HttpStatus.CREATED,
 			);
 		} catch (error) {
@@ -260,12 +290,24 @@ export class SubscriptionController {
 		next: NextFunction,
 	): Promise<Response> {
 		try {
-			const { reason } = req.body;
+			const parsed = reasonSchema.safeParse(req.body);
+			if (!parsed.success) {
+				return errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
+			}
+			const { reason } = parsed.data;
 			const sub = await this._subscriptionService.cancelUserSubscription(
 				req.params.id,
 				reason,
 			);
-			return successResponse(res, "Subscription cancelled successfully", sub);
+			return successResponse(
+				res,
+				"Subscription cancelled successfully",
+				userSubscriptionDTO(sub),
+			);
 		} catch (error) {
 			next(error);
 			const msg = error instanceof Error ? error.message : "Unknown error";
@@ -290,7 +332,11 @@ export class SubscriptionController {
 				return errorResponse(res, "Unauthorized", HttpStatus.UNAUTHORIZED);
 			}
 			const sub = await this._subscriptionService.getMySubscription(userId);
-			return successResponse(res, "Subscription fetched successfully", sub);
+			return successResponse(
+				res,
+				"Subscription fetched successfully",
+				sub ? userSubscriptionDTO(sub) : null,
+			);
 		} catch (error) {
 			next(error);
 			return errorResponse(
@@ -311,14 +357,20 @@ export class SubscriptionController {
 			if (!userId) {
 				return errorResponse(res, "Unauthorized", HttpStatus.UNAUTHORIZED);
 			}
-			const page = parseInt(req.query.page as string, 10) || 1;
-			const limit = parseInt(req.query.limit as string, 10) || 10;
+			const page = Number.parseInt(req.query.page as string, 10) || 1;
+			const limit = Number.parseInt(req.query.limit as string, 10) || 10;
 			const result = await this._subscriptionService.getMySubscriptionHistory(
 				userId,
 				page,
 				limit,
 			);
-			return successResponse(res, "Subscription history fetched", result);
+			const mappedResult = {
+				...result,
+				data: result.data.map((sub: IUserSubscription) =>
+					userSubscriptionDTO(sub),
+				),
+			};
+			return successResponse(res, "Subscription history fetched", mappedResult);
 		} catch (error) {
 			next(error);
 			return errorResponse(
@@ -339,10 +391,15 @@ export class SubscriptionController {
 			if (!userId) {
 				return errorResponse(res, "Unauthorized", HttpStatus.UNAUTHORIZED);
 			}
-			const { planId } = req.body;
-			if (!planId) {
-				return errorResponse(res, "planId is required", HttpStatus.BAD_REQUEST);
+			const parsed = planIdSchema.safeParse(req.body);
+			if (!parsed.success) {
+				return errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
 			}
+			const { planId } = parsed.data;
 
 			const existing =
 				await this._subscriptionService.getMySubscription(userId);
@@ -361,7 +418,7 @@ export class SubscriptionController {
 			return successResponse(
 				res,
 				"Subscription activated successfully",
-				sub,
+				userSubscriptionDTO(sub),
 				HttpStatus.CREATED,
 			);
 		} catch (error) {
@@ -384,10 +441,15 @@ export class SubscriptionController {
 			if (!userId) {
 				return errorResponse(res, "Unauthorized", HttpStatus.UNAUTHORIZED);
 			}
-			const { planId } = req.body;
-			if (!planId) {
-				return errorResponse(res, "planId is required", HttpStatus.BAD_REQUEST);
+			const parsed = planIdSchema.safeParse(req.body);
+			if (!parsed.success) {
+				return errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
 			}
+			const { planId } = parsed.data;
 			const result =
 				await this._subscriptionService.createSubscriptionPaymentIntent(
 					userId,
@@ -416,14 +478,15 @@ export class SubscriptionController {
 			if (!userId) {
 				return errorResponse(res, "Unauthorized", HttpStatus.UNAUTHORIZED);
 			}
-			const { paymentIntentId } = req.body;
-			if (!paymentIntentId) {
+			const parsed = verifyPaymentIntentSchema.safeParse(req.body);
+			if (!parsed.success) {
 				return errorResponse(
 					res,
-					"paymentIntentId is required",
+					parsed.error.issues[0].message,
 					HttpStatus.BAD_REQUEST,
 				);
 			}
+			const { paymentIntentId } = parsed.data;
 			const result = await this._subscriptionService.verifySubscriptionPayment(
 				userId,
 				paymentIntentId,
@@ -431,7 +494,7 @@ export class SubscriptionController {
 			return successResponse(
 				res,
 				"Subscription activated successfully",
-				result,
+				userSubscriptionDTO(result),
 			);
 		} catch (error) {
 			next(error);

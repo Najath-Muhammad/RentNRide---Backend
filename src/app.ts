@@ -17,6 +17,7 @@ import adminBookingRouter from "./route/admin.booking.routes";
 import bookingRouter from "./route/booking.routes";
 import chatRouter from "./route/chat.routes";
 import chatbotRouter from "./route/chatbot.routes";
+import contactRouter from "./route/contact.routes";
 import fcmRouter from "./route/fcm.routes";
 import notificationRouter from "./route/notification.routes";
 import paymentRouter from "./route/payment.routes";
@@ -63,5 +64,6 @@ app.use("/api/wallet", walletRouter);
 app.use("/api/chatbot", chatbotRouter);
 app.use("/api/fcm", fcmRouter);
 app.use("/api/notifications", notificationRouter);
+app.use("/api/contact", contactRouter);
 
 export { app };

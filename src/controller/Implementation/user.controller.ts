@@ -1,7 +1,14 @@
 import type { Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
 import type { IUserService } from "../../services/interfaces/user.interface.service";
+import type { IUser } from "../../types/user/IUser";
+import { userDTO } from "../../utils/mapper/authService.mapper";
 import { errorResponse, successResponse } from "../../utils/response.util";
+import {
+	changePasswordSchema,
+	updateProfilePhotoSchema,
+	updateProfileSchema,
+} from "../../validations/commonValidation";
 import type { IuserController } from "../interfaces/iuser.controller";
 
 interface AuthenticatedRequest extends Request {
@@ -21,7 +28,9 @@ export class UserController implements IuserController {
 			const user = await this._userService.getProfile(
 				(req as AuthenticatedRequest).user.userId,
 			);
-			return successResponse(res, "Profile fetched successfully", { user });
+			return successResponse(res, "Profile fetched successfully", {
+				user: userDTO(user as IUser),
+			});
 		} catch (error) {
 			console.log(error);
 			return errorResponse(
@@ -35,9 +44,18 @@ export class UserController implements IuserController {
 
 	updateProfile = async (req: Request, res: Response) => {
 		try {
+			const parsed = updateProfileSchema.safeParse(req.body);
+			if (!parsed.success) {
+				return errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
+			}
+
 			await this._userService.updateProfile(
 				(req as AuthenticatedRequest).user.userId,
-				req.body,
+				parsed.data,
 			);
 			return successResponse(res, "Profile updated successfully");
 		} catch (error) {
@@ -53,7 +71,15 @@ export class UserController implements IuserController {
 
 	updateProfilePhoto = async (req: Request, res: Response) => {
 		try {
-			const { profilePhoto } = req.body;
+			const parsed = updateProfilePhotoSchema.safeParse(req.body);
+			if (!parsed.success) {
+				return errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
+			}
+			const { profilePhoto } = parsed.data;
 			const url = await this._userService.updateProfilePhoto(
 				(req as AuthenticatedRequest).user.userId,
 				profilePhoto,
@@ -74,7 +100,15 @@ export class UserController implements IuserController {
 
 	changePassword = async (req: Request, res: Response) => {
 		try {
-			const { currentPassword, newPassword } = req.body;
+			const parsed = changePasswordSchema.safeParse(req.body);
+			if (!parsed.success) {
+				return errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
+			}
+			const { currentPassword, newPassword } = parsed.data;
 			await this._userService.changePassword(
 				(req as AuthenticatedRequest).user.userId,
 				currentPassword,

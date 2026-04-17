@@ -1,7 +1,12 @@
 import type { Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
 import type { IBookingService } from "../../services/interfaces/booking.interface.service";
+import { bookingDTO } from "../../utils/mapper/booking.mapper";
 import { errorResponse, successResponse } from "../../utils/response.util";
+import {
+	createBookingSchema,
+	reasonSchema,
+} from "../../validations/commonValidation";
 import type { IBookingController } from "../interfaces/ibooking.controller";
 
 export class BookingController implements IBookingController {
@@ -19,7 +24,16 @@ export class BookingController implements IBookingController {
 				return;
 			}
 
-			const bookingData = req.body;
+			const parsed = createBookingSchema.safeParse(req.body);
+			if (!parsed.success) {
+				errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
+				return;
+			}
+			const bookingData = parsed.data;
 			const booking = await this._bookingService.createBooking(
 				userId,
 				bookingData,
@@ -55,8 +69,8 @@ export class BookingController implements IBookingController {
 				return;
 			}
 
-			const page = parseInt(req.query.page as string, 10) || 1;
-			const limit = parseInt(req.query.limit as string, 10) || 10;
+			const page = Number.parseInt(req.query.page as string, 10) || 1;
+			const limit = Number.parseInt(req.query.limit as string, 10) || 10;
 			const status = req.query.status as string;
 
 			const result = await this._bookingService.getUserBookings(
@@ -66,7 +80,12 @@ export class BookingController implements IBookingController {
 				status,
 			);
 
-			successResponse(res, "User bookings fetched successfully", result);
+			const mappedResult = {
+				...result,
+				data: result.data.map((b) => bookingDTO(b)),
+			};
+
+			successResponse(res, "User bookings fetched successfully", mappedResult);
 		} catch (error) {
 			console.error("Error in getUserBookings controller:", error);
 			errorResponse(
@@ -82,7 +101,16 @@ export class BookingController implements IBookingController {
 			const user = (req as Request & { user?: { userId: string } }).user;
 			const userId = user?.userId;
 			const { bookingId } = req.params;
-			const { reason } = req.body;
+			const parsed = reasonSchema.safeParse(req.body);
+			if (!parsed.success) {
+				errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
+				return;
+			}
+			const { reason } = parsed.data;
 
 			if (!userId) {
 				errorResponse(res, "User not authenticated", HttpStatus.UNAUTHORIZED);
@@ -104,7 +132,11 @@ export class BookingController implements IBookingController {
 				return;
 			}
 
-			successResponse(res, "Booking cancelled successfully", booking);
+			successResponse(
+				res,
+				"Booking cancelled successfully",
+				bookingDTO(booking),
+			);
 		} catch (error) {
 			console.error("Error in cancelBooking controller:", error);
 			errorResponse(

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { USER_ROLES } from "../constants/roles";
 import { ChatController } from "../controller/Implementation/chat.controller";
 import { AuthGuard } from "../middlewares/authGuard";
 import { ConversationRepo } from "../repositories/Implementation/conversation.repository";
@@ -12,7 +13,7 @@ const messageRepo = new MessageRepo();
 const chatService = new ChatService(messageRepo, conversationRepo);
 const chatController = new ChatController(chatService);
 
-chatRouter.use(AuthGuard(["user", "premium"]));
+chatRouter.use(AuthGuard(USER_ROLES));
 
 chatRouter.post(
 	"/conversations",

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { ROUTES } from "../constants/Routes/routeConstants";
+import { ALL_ROLES } from "../constants/roles";
 import { AuthController } from "../controller/Implementation/auth.controller";
 import { AuthGuard } from "../middlewares/authGuard";
 import { UserRepo } from "../repositories/Implementation/user.repository";
@@ -44,13 +45,13 @@ router.post(
 
 router.get(
 	ROUTES.AUTH.ME,
-	AuthGuard(["user", "premium", "admin"]),
+	AuthGuard(ALL_ROLES),
 	authController.exampleRoute.bind(authController),
 );
 
 router.patch(
 	ROUTES.AUTH.CHANGE_PASSWORD,
-	AuthGuard(["user", "premium", "admin"]),
+	AuthGuard(ALL_ROLES),
 	authController.changePassword.bind(authController),
 );
 

@@ -1,6 +1,7 @@
 import { OAuth2Client } from "google-auth-library";
 import { env } from "../../config/env";
 import redisClient from "../../config/redis.config";
+import { ROLES } from "../../constants/roles";
 import type { IUserRepository } from "../../repositories/interfaces/user.interface";
 import type { IAdminToFrontend } from "../../types/admin/IAdmin";
 import type { IUserToFrontend } from "../../types/user/IUserToFrontend";
@@ -339,7 +340,7 @@ export class AuthService implements IAuthService {
 			return { success: false, message: "There is no user with this email" };
 		}
 
-		if (admin.role !== "admin") {
+		if (admin.role !== ROLES.ADMIN) {
 			return { success: false, message: "You are not an admin" };
 		}
 
@@ -490,7 +491,12 @@ export class AuthService implements IAuthService {
 		if (!userData) throw new Error("User not found");
 
 		const accessToken = generateToken(
-			user,
+			{
+				userId: userData._id,
+				email: userData.email,
+				role: userData.role, // ✅ always fresh from DB
+				name: userData.name,
+			},
 			env.JWT_SECRET_KEY as string,
 			15 * 60,
 		);

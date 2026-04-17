@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { ROLES } from "../../constants/roles";
 import type { IBookingRepo } from "../../repositories/interfaces/booking.interface";
 import type { IVehicleRepository } from "../../repositories/interfaces/vehicle.interface";
 import type {
@@ -15,19 +16,19 @@ export class BookingService implements IBookingService {
 		private _vehicleRepo: IVehicleRepository,
 		private _bookingRepo: IBookingRepo,
 		private _chatService?: IChatService,
-	) { }
+	) {}
 
 	async getBookingById(
 		bookingId: string,
 		requesterId: string | Types.ObjectId,
-		role: "user" | "owner" | "admin",
+		role: typeof ROLES.USER | "owner" | typeof ROLES.ADMIN,
 	): Promise<IBooking | null> {
 		try {
 			const booking = await this._bookingRepo.findById(bookingId);
 			if (!booking) return null;
-			if (role === "admin") return booking;
+			if (role === ROLES.ADMIN) return booking;
 			if (
-				role === "user" &&
+				role === ROLES.USER &&
 				booking.userId.toString() === requesterId.toString()
 			) {
 				return booking;
@@ -206,7 +207,11 @@ export class BookingService implements IBookingService {
 				throw new Error("Cannot cancel a completed booking");
 			}
 
-			return await this._bookingRepo.cancelBooking(bookingId, "user", reason);
+			return await this._bookingRepo.cancelBooking(
+				bookingId,
+				ROLES.USER,
+				reason,
+			);
 		} catch (error) {
 			console.error("Error in cancelBooking:", error);
 			throw error;

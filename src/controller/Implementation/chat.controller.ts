@@ -2,6 +2,11 @@ import type { Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
 import type { IChatService } from "../../services/interfaces/chat.interface.service";
 import { errorResponse, successResponse } from "../../utils/response.util";
+import {
+	bookingActionSchema,
+	initiateChatSchema,
+	sendMessageSchema,
+} from "../../validations/commonValidation";
 import type { IChatController } from "../interfaces/ichat.controller";
 
 type AuthRequest = Request & { user?: { userId: string; role: string } };
@@ -12,12 +17,16 @@ export class ChatController implements IChatController {
 	async getOrCreateConversation(req: Request, res: Response): Promise<void> {
 		try {
 			const { userId } = (req as AuthRequest).user as { userId: string };
-			const { otherUserId, vehicleId } = req.body;
-
-			if (!otherUserId) {
-				errorResponse(res, "otherUserId is required", HttpStatus.BAD_REQUEST);
+			const parsed = initiateChatSchema.safeParse(req.body);
+			if (!parsed.success) {
+				errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
 				return;
 			}
+			const { otherUserId, vehicleId } = parsed.data;
 
 			const conversation = await this._chatService.getOrCreateConversation(
 				userId,
@@ -88,6 +97,15 @@ export class ChatController implements IChatController {
 	async sendMessage(req: Request, res: Response): Promise<void> {
 		try {
 			const { userId } = (req as AuthRequest).user as { userId: string };
+			const parsed = sendMessageSchema.safeParse(req.body);
+			if (!parsed.success) {
+				errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
+				return;
+			}
 			const {
 				conversationId,
 				receiverId,
@@ -95,16 +113,7 @@ export class ChatController implements IChatController {
 				content,
 				messageType,
 				bookingId,
-			} = req.body;
-
-			if (!receiverId || !content) {
-				errorResponse(
-					res,
-					"receiverId and content are required",
-					HttpStatus.BAD_REQUEST,
-				);
-				return;
-			}
+			} = parsed.data;
 
 			const message = await this._chatService.sendMessage(userId, {
 				conversationId,
@@ -130,25 +139,16 @@ export class ChatController implements IChatController {
 		try {
 			const { userId } = (req as AuthRequest).user as { userId: string };
 			const { conversationId } = req.params;
-			const { bookingId, action } = req.body;
-
-			if (!bookingId || !action) {
+			const parsed = bookingActionSchema.safeParse(req.body);
+			if (!parsed.success) {
 				errorResponse(
 					res,
-					"bookingId and action are required",
+					parsed.error.issues[0].message,
 					HttpStatus.BAD_REQUEST,
 				);
 				return;
 			}
-
-			if (action !== "approved" && action !== "rejected") {
-				errorResponse(
-					res,
-					"action must be 'approved' or 'rejected'",
-					HttpStatus.BAD_REQUEST,
-				);
-				return;
-			}
+			const { bookingId, action } = parsed.data;
 
 			const message = await this._chatService.handleBookingAction(
 				userId,
@@ -168,4 +168,3 @@ export class ChatController implements IChatController {
 		}
 	}
 }
-

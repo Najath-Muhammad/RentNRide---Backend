@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { ALL_ROLES } from "../constants/roles";
 import { NotificationController } from "../controller/Implementation/notification.controller";
 import { AuthGuard } from "../middlewares/authGuard";
 import { NotificationRepository } from "../repositories/Implementation/notification.repository";
@@ -11,7 +12,7 @@ const notificationService = new NotificationService(notificationRepo);
 const notificationController = new NotificationController(notificationService);
 
 // Apply AuthGuard to all notification routes
-notificationRouter.use(AuthGuard(["user", "premium", "admin"]));
+notificationRouter.use(AuthGuard(ALL_ROLES));
 
 notificationRouter.get(
 	"/",

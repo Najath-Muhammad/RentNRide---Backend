@@ -1,5 +1,6 @@
 import type { Types } from "mongoose";
 import { stripe } from "../../config/stripe.config";
+import { ROLES } from "../../constants/roles";
 
 import type {
 	ISubscriptionPlanRepo,
@@ -132,6 +133,7 @@ export class SubscriptionService implements ISubscriptionService {
 	async assignSubscription(
 		userId: string,
 		planId: string,
+		amountOverride?: number,
 	): Promise<IUserSubscription> {
 		try {
 			const plan = await this._planRepo.findById(planId);
@@ -156,10 +158,11 @@ export class SubscriptionService implements ISubscriptionService {
 				startDate,
 				endDate,
 				status: "active",
+				amountPaid: amountOverride ?? plan.price,
 			});
 
 			await this._userRepo.updateById(userId, {
-				role: "premium",
+				role: ROLES.PREMIUM,
 				premiumExpiresAt: endDate,
 			});
 
@@ -185,7 +188,7 @@ export class SubscriptionService implements ISubscriptionService {
 
 			const userId = (sub.userId as Types.ObjectId).toString();
 			await this._userRepo.updateById(userId, {
-				role: "user",
+				role: ROLES.USER,
 				premiumExpiresAt: undefined,
 			});
 
@@ -206,7 +209,7 @@ export class SubscriptionService implements ISubscriptionService {
 			// If no active subscription, ensure user role is reset (handles auto-expiry)
 			if (!active) {
 				await this._userRepo.updateById(userId.toString(), {
-					role: "user",
+					role: ROLES.USER,
 					premiumExpiresAt: undefined,
 				});
 			}
@@ -261,9 +264,29 @@ export class SubscriptionService implements ISubscriptionService {
 				throw new Error("This plan is free — no payment needed");
 
 			const existing = await this._userSubRepo.findActiveByUser(userId);
-			if (existing) throw new Error("You already have an active subscription");
+			let displayPrice = plan.price;
 
-			const amountInPaise = Math.round(plan.price * 100);
+			if (existing) {
+				if (existing.planId.toString() === planId) {
+					throw new Error("You already have this plan active");
+				}
+
+				// Proration logic: Calculate credit from the remaining time on current plan
+				const now = new Date();
+				const totalDuration =
+					existing.endDate.getTime() - existing.startDate.getTime();
+				const remainingDuration = existing.endDate.getTime() - now.getTime();
+
+				if (remainingDuration > 0 && totalDuration > 0) {
+					const credit =
+						(remainingDuration / totalDuration) * (existing.amountPaid || 0);
+					displayPrice = Math.max(0, plan.price - credit);
+				}
+			}
+
+			// Ensure a minimum charge for Stripe (at least 1 INR)
+			const finalAmount = Math.max(1, displayPrice);
+			const amountInPaise = Math.round(finalAmount * 100);
 
 			const paymentIntent = await stripe.paymentIntents.create({
 				amount: amountInPaise,
@@ -278,7 +301,7 @@ export class SubscriptionService implements ISubscriptionService {
 
 			return {
 				clientSecret: paymentIntent.client_secret as string,
-				amount: plan.price,
+				amount: finalAmount,
 				planName: plan.name,
 			};
 		} catch (error) {
@@ -323,7 +346,7 @@ export class SubscriptionService implements ISubscriptionService {
 				return existing;
 			}
 
-			return await this.assignSubscription(userId, planId);
+			return await this.assignSubscription(userId, planId, intent.amount / 100);
 		} catch (error) {
 			console.error("Error verifying subscription payment:", error);
 			throw error;

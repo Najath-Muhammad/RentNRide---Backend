@@ -15,7 +15,7 @@ import {
 import type { IAuthController } from "../interfaces/iauth.controller";
 
 export class AuthController implements IAuthController {
-	constructor(private _authService: IAuthService) { }
+	constructor(private _authService: IAuthService) {}
 
 	async signup(
 		req: Request,
@@ -182,18 +182,19 @@ export class AuthController implements IAuthController {
 
 			res.cookie("accessToken", result.accessToken, {
 				httpOnly: true,
-				sameSite: "strict",
+				sameSite: "lax",
 				maxAge: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 
 			res.cookie("refreshToken", result.refreshToken, {
 				httpOnly: true,
-				sameSite: "strict",
+				sameSite: "lax",
 				maxAge: Number(env.REFRESH_TOKEN_MAXAGE),
 			});
 
 			return successResponse(res, MESSAGES.AUTH.LOGIN_SUCCESS, {
 				user: result.user,
+				expiresIn: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 		} catch (error) {
 			next(error);
@@ -250,18 +251,19 @@ export class AuthController implements IAuthController {
 
 			res.cookie("accessToken", result.accessToken, {
 				httpOnly: true,
-				sameSite: "strict",
+				sameSite: "lax",
 				maxAge: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 
 			res.cookie("refreshToken", result.refreshToken, {
 				httpOnly: true,
-				sameSite: "strict",
+				sameSite: "lax",
 				maxAge: Number(env.REFRESH_TOKEN_MAXAGE),
 			});
 
 			return successResponse(res, MESSAGES.AUTH.LOGIN_SUCCESS, {
 				user: result.user,
+				expiresIn: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 		} catch (error) {
 			next(error);
@@ -322,11 +324,13 @@ export class AuthController implements IAuthController {
 
 			res.cookie("accessToken", accessToken, {
 				httpOnly: true,
-				sameSite: "strict",
+				sameSite: "lax",
 				maxAge: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 
-			return successResponse(res, MESSAGES.AUTH.REFRESH_TOKEN_SUCCESS);
+			return successResponse(res, MESSAGES.AUTH.REFRESH_TOKEN_SUCCESS, {
+				expiresIn: Number(env.ACCESS_TOKEN_MAXAGE),
+			});
 		} catch (error) {
 			next(error);
 			console.error("Refresh token error:", error);
@@ -362,20 +366,21 @@ export class AuthController implements IAuthController {
 
 			res.cookie("accessToken", result.accessToken, {
 				httpOnly: true,
-				sameSite: "strict",
+				sameSite: "lax",
 				secure: env.NODE_ENV === "production",
 				maxAge: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 
 			res.cookie("refreshToken", result.refreshToken, {
 				httpOnly: true,
-				sameSite: "strict",
+				sameSite: "lax",
 				secure: env.NODE_ENV === "production",
 				maxAge: Number(env.REFRESH_TOKEN_MAXAGE),
 			});
 
 			return successResponse(res, MESSAGES.AUTH.GOOGLE_LOGIN_SUCCESS, {
 				user: result.user,
+				expiresIn: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 		} catch (error) {
 			next(error);

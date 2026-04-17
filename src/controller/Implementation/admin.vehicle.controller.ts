@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { HttpStatus } from "../../constants/enum/statuscode";
 import type { IVehicleService } from "../../services/interfaces/vehicle.interface.service";
 import { errorResponse, successResponse } from "../../utils/response.util";
+import { rejectReasonSchema } from "../../validations/commonValidation";
 import type { IAdminVehicleController } from "../interfaces/iadmin.vehicle.controller";
 
 export class AdminVehicleController implements IAdminVehicleController {
@@ -171,15 +172,15 @@ export class AdminVehicleController implements IAdminVehicleController {
 	async rejectVehicle(req: Request, res: Response): Promise<Response> {
 		try {
 			const { id } = req.params;
-			const { reason } = req.body;
-
-			if (!reason || typeof reason !== "string" || reason.trim().length < 10) {
+			const parsed = rejectReasonSchema.safeParse(req.body);
+			if (!parsed.success) {
 				return errorResponse(
 					res,
-					"Rejection reason is required and should be at least 10 characters",
+					parsed.error.issues[0].message,
 					HttpStatus.BAD_REQUEST,
 				);
 			}
+			const { reason } = parsed.data;
 
 			const result = await this._vehicleService.rejectVehicle(
 				id,
