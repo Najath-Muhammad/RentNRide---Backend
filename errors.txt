@@ -1,4 +1,0 @@
-﻿src/services/Implementation/booking.service.ts(124,5): error TS2322: Type '"pending"' is not assignable to type '"approved" | "cancelled" | "requested" | "advance_authorized" | "ride_started" | "payment_captured" | "completed" | "rejected" | undefined'.
-src/services/Implementation/chat.service.ts(228,17): error TS2367: This comparison appears to be unintentional because the types '"approved" | "cancelled" | "requested" | "advance_authorized" | "ride_started" | "payment_captured" | "completed" | "rejected"' and '"pending"' have no overlap.
-src/services/Implementation/chat.service.ts(259,13): error TS2322: Type '"rejected" | "confirmed"' is not assignable to type '"approved" | "cancelled" | "requested" | "advance_authorized" | "ride_started" | "payment_captured" | "completed" | "rejected"'.
-  Type '"confirmed"' is not assignable to type '"approved" | "cancelled" | "requested" | "advance_authorized" | "ride_started" | "payment_captured" | "completed" | "rejected"'.

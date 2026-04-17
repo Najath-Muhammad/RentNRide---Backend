@@ -54,10 +54,10 @@ export interface ISubscriptionService {
 		reason?: string,
 	): Promise<IUserSubscription>;
 
-	// User-facing
 	getMySubscription(
 		userId: string | Types.ObjectId,
 	): Promise<IUserSubscription | null>;
+
 	getMySubscriptionHistory(
 		userId: string | Types.ObjectId,
 		page?: number,
