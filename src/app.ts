@@ -35,7 +35,6 @@ app.use(
 	}),
 );
 
-// We need raw body for stripe webhook, json parser for everything else.
 app.use((req, res, next) => {
 	if (req.originalUrl.includes("/webhook")) {
 		express.raw({ type: "application/json" })(req, res, next);

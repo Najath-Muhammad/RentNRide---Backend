@@ -1,8 +1,5 @@
-import { config } from "dotenv";
 import Stripe from "stripe";
 import { env } from "../config/env";
-
-config();
 
 if (!env.STRIPE_SECRET_KEY) {
 	console.warn("STRIPE_SECRET_KEY is missing in env variables.");

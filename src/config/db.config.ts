@@ -1,8 +1,6 @@
-import { config } from "dotenv";
 import mongoose from "mongoose";
 import { env } from "../config/env";
 
-config();
 const mongoURI = env.MONGODB_URI;
 
 if (!mongoURI) {
