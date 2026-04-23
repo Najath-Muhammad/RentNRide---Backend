@@ -11,7 +11,7 @@ import {
 import type { IBookingController } from "../interfaces/ibooking.controller";
 
 export class BookingController implements IBookingController {
-	constructor(private _bookingService: IBookingService) { }
+	constructor(private _bookingService: IBookingService) {}
 
 	async createBooking(req: Request, res: Response): Promise<void> {
 		try {
