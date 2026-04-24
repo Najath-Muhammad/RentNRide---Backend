@@ -1,0 +1,37 @@
+name: Backend Continuous Deployment (CD)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH and Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          # You will need to add these 3 variables to your GitHub Repository Secrets
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Navigate to the code directory
+            cd RentNRide---Backend
+            
+            # Pull the newest code you just pushed
+            git pull origin main
+            
+            # Build the new Docker image
+            docker build -t rentnride-backend .
+            
+            # Remove the old backend container
+            docker rm -f backend || true
+            
+            # Run the new backend container attached to the Redis network
+            docker run -d -p 80:5000 --name backend --network rentnride-net \
+              -e DOPPLER_TOKEN=${{ secrets.DOPPLER_TOKEN }} \
+              rentnride-backend
