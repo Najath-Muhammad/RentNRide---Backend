@@ -8,7 +8,7 @@ import { emitToUser } from "../../utils/socket";
 import type { IAdminService } from "../interfaces/admin.interface.service";
 
 export class AdminServices implements IAdminService {
-	constructor(private _userRepo: IUserRepository) {}
+	constructor(private _userRepo: IUserRepository) { }
 
 	async getDashboardStats(query?: { startDate?: string; endDate?: string }) {
 		try {
@@ -236,21 +236,21 @@ export class AdminServices implements IAdminService {
 		status?: string;
 	}): Promise<
 		| {
-				success: true;
-				message?: string;
-				data: {
-					users: IUserToAdmin[];
-					total: number;
-					page: number;
-					limit: number;
-					totalPages: number;
-				};
-		  }
+			success: true;
+			message?: string;
+			data: {
+				users: IUserToAdmin[];
+				total: number;
+				page: number;
+				limit: number;
+				totalPages: number;
+			};
+		}
 		| {
-				success: false;
-				message: string;
-				data: IUserToAdmin[];
-		  }
+			success: false;
+			message: string;
+			data: IUserToAdmin[];
+		}
 	> {
 		try {
 			const page = Number(query.page) || 1;
@@ -348,6 +348,36 @@ export class AdminServices implements IAdminService {
 		} catch (error) {
 			console.error("Unblock user service error:", error);
 			return { success: false, message: "Failed to unblock user" };
+		}
+	}
+
+	async makePremium(
+		userId: string,
+	): Promise<{ success: boolean; message: string; data?: null }> {
+		try {
+			const user = await this._userRepo.findById(userId);
+			if (!user) return { success: false, message: "User not found" };
+
+			await this._userRepo.updateById(userId, { role: "premium" });
+			return { success: true, message: "User is now Premium" };
+		} catch (error) {
+			console.error(error);
+			return { success: false, message: "Failed to upgrade user" };
+		}
+	}
+
+	async makeNormal(
+		userId: string,
+	): Promise<{ success: boolean; message: string; data?: null }> {
+		try {
+			const user = await this._userRepo.findById(userId);
+			if (!user) return { success: false, message: "User not found" };
+
+			await this._userRepo.updateById(userId, { role: "user" });
+			return { success: true, message: "User is now Normal" };
+		} catch (error) {
+			console.error(error);
+			return { success: false, message: "Failed to downgrade user" };
 		}
 	}
 

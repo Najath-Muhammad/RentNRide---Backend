@@ -63,6 +63,14 @@ adminRouter.delete(
 	ROUTES.ADMIN.DELETE_USER,
 	adminController.deleteUser.bind(adminController),
 );
+adminRouter.patch(
+	"/users/:userId/premium",
+	adminController.makePremium.bind(adminController),
+);
+adminRouter.patch(
+	"/users/:userId/normal",
+	adminController.makeNormal.bind(adminController),
+);
 
 adminRouter.get(
 	ROUTES.ADMIN.GET_VEHICLES,
