@@ -1,0 +1,40 @@
+name: Backend CI
+
+on:
+  push:
+    branches: ["dev", "main"]
+  pull_request:
+    branches: ["dev", "main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Lint Check
+        run: npm run lint
+
+      - name: Type Check
+        run: npm run type-check
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Check Server Starts
+        run: doppler run -- node dist/src/server.js & sleep 5
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}

@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 import type { IReview } from "../../model/review.model";
 import type { BookingRepo } from "../../repositories/Implementation/booking.repository";
 import type { ReviewRepo } from "../../repositories/Implementation/review.repository";
-import type { IReviewService } from "../Interfaces/review.service.interface";
+import type { IReviewService } from "../interfaces/review.service.interface";
 
 export class ReviewService implements IReviewService {
 	constructor(

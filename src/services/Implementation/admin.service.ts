@@ -1,29 +1,44 @@
-import type { FilterQuery } from "mongoose";
+import mongoose, { type FilterQuery } from "mongoose";
+import { USER_ROLES } from "../../constants/roles";
 import type { IUserRepository } from "../../repositories/interfaces/user.interface";
 import type { IUser } from "../../types/user/IUser";
 import type { IUserToAdmin } from "../../types/user/IUserToAdmin";
 import { adminUserDTO } from "../../utils/mapper/adminService.mapper";
-import type { IAdminService } from "../Interfaces/admin.interface.service";
+import { emitToUser } from "../../utils/socket";
+import type { IAdminService } from "../interfaces/admin.interface.service";
 
 export class AdminServices implements IAdminService {
-	constructor(private _userRepo: IUserRepository) { }
+	constructor(private _userRepo: IUserRepository) {}
 
-	async getDashboardStats() {
+	async getDashboardStats(query?: { startDate?: string; endDate?: string }) {
 		try {
-			// Using the injected UserRepo. To access other models natively via mongoose,
-			// we can use mongoose.model directly, or inject those repos as well. 
-			// For simplicity since admin service is used globally, we'll query mongoose models directly for Stats.
-			const mongoose = require('mongoose');
-
-			const User = mongoose.model('User');
-			const Vehicle = mongoose.model('Vehicle');
-			const Booking = mongoose.model('Booking');
+			const User = mongoose.model("User");
+			const Vehicle = mongoose.model("Vehicle");
+			const Booking = mongoose.model("Booking");
+			const UserSubscription = mongoose.model("UserSubscription");
 
 			const now = new Date();
-			const thirtyDaysAgo = new Date();
-			thirtyDaysAgo.setDate(now.getDate() - 30);
+			let startDateFilter: Date;
+			let endDateFilter: Date = now;
 
-			// Run all expensive aggregations and queries in parallel
+			if (query?.startDate) {
+				startDateFilter = new Date(query.startDate);
+				startDateFilter.setHours(0, 0, 0, 0);
+			} else {
+				startDateFilter = new Date();
+				startDateFilter.setDate(now.getDate() - 30);
+				startDateFilter.setHours(0, 0, 0, 0);
+			}
+
+			if (query?.endDate) {
+				endDateFilter = new Date(query.endDate);
+				endDateFilter.setHours(23, 59, 59, 999);
+			}
+
+			const dateQuery = {
+				createdAt: { $gte: startDateFilter, $lte: endDateFilter },
+			};
+
 			const [
 				totalUsers,
 				totalVehicles,
@@ -33,82 +48,98 @@ export class AdminServices implements IAdminService {
 				bookingStatusStats,
 				revenueStats,
 				bookingsTrendStats,
+				revenueTrendStats,
 				vehicleUsageStats,
-				recentBookingsRaw
+				recentBookingsRaw,
 			] = await Promise.all([
-				User.countDocuments({ role: 'user' }),
-				Vehicle.countDocuments(),
-				Booking.countDocuments(),
-				Vehicle.countDocuments({ isActive: true, isApproved: true, isBlocked: false }),
-				Booking.countDocuments({ bookingStatus: { $in: ['approved', 'advance_authorized', 'ride_started'] } }),
+				User.countDocuments({ role: { $in: USER_ROLES }, ...dateQuery }),
+				Vehicle.countDocuments({ ...dateQuery }),
+				Booking.countDocuments({ ...dateQuery }),
+				Vehicle.countDocuments({
+					isActive: true,
+					isApproved: true,
+					isBlocked: false,
+				}),
+				Booking.countDocuments({
+					bookingStatus: {
+						$in: ["approved", "advance_authorized", "ride_started"],
+					},
+				}),
 				Booking.aggregate([
+					{ $match: dateQuery },
 					{
 						$group: {
 							_id: "$bookingStatus",
-							count: { $sum: 1 }
-						}
-					}
+							count: { $sum: 1 },
+						},
+					},
 				]),
-				Booking.aggregate([
-					{ $match: { bookingStatus: { $in: ['completed', 'payment_captured'] } } },
+				UserSubscription.aggregate([
+					{ $match: dateQuery },
 					{
 						$group: {
 							_id: null,
-							totalRevenue: { $sum: "$totalAmount" }
-						}
-					}
+							totalRevenue: { $sum: "$amountPaid" },
+						},
+					},
 				]),
 				Booking.aggregate([
-					{ $match: { createdAt: { $gte: thirtyDaysAgo } } },
+					{ $match: dateQuery },
 					{
 						$group: {
-							_id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+							_id: {
+								$dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+							},
 							count: { $sum: 1 },
-							amount: {
-								$sum: {
-									$cond: [
-										{ $in: ["$bookingStatus", ["completed", "payment_captured"]] },
-										"$totalAmount",
-										0
-									]
-								}
-							}
-						}
+						},
 					},
-					{ $sort: { "_id": 1 } }
+					{ $sort: { _id: 1 } },
+				]),
+				UserSubscription.aggregate([
+					{ $match: dateQuery },
+					{
+						$group: {
+							_id: {
+								$dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+							},
+							amount: { $sum: "$amountPaid" },
+						},
+					},
+					{ $sort: { _id: 1 } },
 				]),
 				Booking.aggregate([
+					{ $match: dateQuery },
 					{
 						$group: {
 							_id: "$vehicleId",
-							count: { $sum: 1 }
-						}
+							count: { $sum: 1 },
+						},
 					},
 					{ $sort: { count: -1 } },
 					{ $limit: 4 },
 					{
 						$lookup: {
-							from: 'vehicles',
-							localField: '_id',
-							foreignField: '_id',
-							as: 'vehicle'
-						}
+							from: "vehicles",
+							localField: "_id",
+							foreignField: "_id",
+							as: "vehicle",
+						},
 					},
 					{ $unwind: "$vehicle" },
 					{
 						$project: {
 							name: { $concat: ["$vehicle.brand", " ", "$vehicle.modelName"] },
 							count: 1,
-							_id: 0
-						}
-					}
+							_id: 0,
+						},
+					},
 				]),
 				Booking.find()
 					.sort({ createdAt: -1 })
 					.limit(5)
-					.populate('userId', 'name')
-					.populate('vehicleId', 'brand modelName')
-					.lean()
+					.populate("userId", "name")
+					.populate("vehicleId", "brand modelName")
+					.lean(),
 			]);
 
 			// Format booking status object
@@ -116,38 +147,61 @@ export class AdminServices implements IAdminService {
 			let pendingCount = 0;
 			let cancelledCount = 0;
 
-			bookingStatusStats.forEach((stat: any) => {
-				if (['completed', 'payment_captured'].includes(stat._id)) completedCount += stat.count;
-				else if (['requested', 'pending', 'approved', 'advance_authorized'].includes(stat._id)) pendingCount += stat.count;
-				else if (['cancelled', 'rejected'].includes(stat._id)) cancelledCount += stat.count;
+			bookingStatusStats.forEach((stat: { _id: string; count: number }) => {
+				if (["completed", "payment_captured"].includes(stat._id))
+					completedCount += stat.count;
+				else if (
+					["requested", "pending", "approved", "advance_authorized"].includes(
+						stat._id,
+					)
+				)
+					pendingCount += stat.count;
+				else if (["cancelled", "rejected"].includes(stat._id))
+					cancelledCount += stat.count;
 			});
 
-			const totalRevenue = revenueStats.length > 0 ? revenueStats[0].totalRevenue : 0;
+			const totalRevenue =
+				revenueStats.length > 0 ? revenueStats[0].totalRevenue : 0;
 
-			// Format trends, ensure they have valid entries
-			const bookingsTrend = bookingsTrendStats.map((item: any) => ({
-				date: item._id,
-				count: item.count
-			}));
+			const bookingsTrend = bookingsTrendStats.map(
+				(item: { _id: string; count: number }) => ({
+					date: item._id,
+					count: item.count,
+				}),
+			);
 
-			const revenueTrend = bookingsTrendStats.map((item: any) => ({
-				date: item._id,
-				amount: item.amount
-			}));
+			const revenueTrend = revenueTrendStats.map(
+				(item: { _id: string; amount: number }) => ({
+					date: item._id,
+					amount: item.amount,
+				}),
+			);
 
 			// Format recent bookings
-			const recentBookings = recentBookingsRaw.map((booking: any) => {
-				const user = booking.userId as any;
-				const vehicle = booking.vehicleId as any;
-				return {
-					_id: booking._id.toString(),
-					userName: user ? user.name : 'Unknown User',
-					vehicleName: vehicle ? `${vehicle.brand} ${vehicle.modelName}` : 'Unknown Vehicle',
-					date: booking.createdAt,
-					status: booking.bookingStatus,
-					paymentStatus: booking.paymentStatus
-				};
-			});
+			const recentBookings = (recentBookingsRaw as unknown[]).map(
+				(rawBooking: unknown) => {
+					const booking = rawBooking as {
+						_id: string;
+						userId: { name: string };
+						vehicleId: { brand: string; modelName: string };
+						createdAt: string;
+						bookingStatus: string;
+						paymentStatus: string;
+					};
+					const user = booking.userId;
+					const vehicle = booking.vehicleId;
+					return {
+						_id: booking._id.toString(),
+						userName: user ? user.name : "Unknown User",
+						vehicleName: vehicle
+							? `${vehicle.brand} ${vehicle.modelName}`
+							: "Unknown Vehicle",
+						date: booking.createdAt,
+						status: booking.bookingStatus,
+						paymentStatus: booking.paymentStatus,
+					};
+				},
+			);
 
 			return {
 				success: true,
@@ -164,12 +218,11 @@ export class AdminServices implements IAdminService {
 					bookingStatus: {
 						completed: completedCount,
 						pending: pendingCount,
-						cancelled: cancelledCount
+						cancelled: cancelledCount,
 					},
-					recentBookings
-				}
+					recentBookings,
+				},
 			};
-
 		} catch (error) {
 			console.error("Error in admin dashboard stats:", error);
 			throw error;
@@ -183,28 +236,28 @@ export class AdminServices implements IAdminService {
 		status?: string;
 	}): Promise<
 		| {
-			success: true;
-			message?: string;
-			data: {
-				users: IUserToAdmin[];
-				total: number;
-				page: number;
-				limit: number;
-				totalPages: number;
-			};
-		}
+				success: true;
+				message?: string;
+				data: {
+					users: IUserToAdmin[];
+					total: number;
+					page: number;
+					limit: number;
+					totalPages: number;
+				};
+		  }
 		| {
-			success: false;
-			message: string;
-			data: IUserToAdmin[];
-		}
+				success: false;
+				message: string;
+				data: IUserToAdmin[];
+		  }
 	> {
 		try {
 			const page = Number(query.page) || 1;
 			const limit = Number(query.limit) || 10;
 			const { search, status } = query;
 
-			const filters: FilterQuery<IUser> = { role: "user" };
+			const filters: FilterQuery<IUser> = { role: { $in: USER_ROLES } };
 
 			if (search) {
 				filters.$or = [
@@ -253,6 +306,10 @@ export class AdminServices implements IAdminService {
 			const result = await this._userRepo.updateById(userId, {
 				status: "Blocked",
 				isBlocked: true,
+			});
+
+			emitToUser(userId, "user:blocked", {
+				message: "You have been blocked by the admin.",
 			});
 
 			return {

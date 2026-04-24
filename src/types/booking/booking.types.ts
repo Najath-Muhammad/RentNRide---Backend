@@ -12,11 +12,14 @@ export interface IBooking extends Document {
 	pricePerDay: number;
 	totalAmount: number;
 	advancePaid: number;
-	paymentStatus: "pending" | "partial" | "paid" | "refunded";
+	paymentIntentId?: string;
+	paymentStatus: "pending" | "authorized" | "captured" | "refunded" | "failed";
 	bookingStatus:
-		| "pending"
-		| "confirmed"
-		| "ongoing"
+		| "requested"
+		| "approved"
+		| "advance_authorized"
+		| "ride_started"
+		| "payment_captured"
 		| "completed"
 		| "cancelled"
 		| "rejected";

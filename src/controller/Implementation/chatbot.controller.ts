@@ -1,204 +1,166 @@
 import type { Request, Response } from "express";
 import { Groq } from "groq-sdk";
-import type { IVehicleService } from "../../services/Interfaces/vehicle.interface.service";
-import { errorResponse, successResponse } from "../../utils/response.util";
+import { env } from "../../config/env";
 import { HttpStatus } from "../../constants/enum/statuscode";
 import { Category } from "../../model/category.model";
-import { FuelType } from "../../model/fueltype.model";
+import type { IVehicleService } from "../../services/interfaces/vehicle.interface.service";
+import { errorResponse, successResponse } from "../../utils/response.util";
+import { chatMessageSchema } from "../../validations/commonValidation";
 
 export class ChatbotController {
-    constructor(private _vehicleService: IVehicleService) { }
+	constructor(private _vehicleService: IVehicleService) {}
 
-    async handleChat(req: Request, res: Response) {
-        try {
-            const { message } = req.body;
-            if (!message) {
-                return errorResponse(res, "Message is required", HttpStatus.BAD_REQUEST);
-            }
+	async handleChat(req: Request, res: Response) {
+		try {
+			const parsed = chatMessageSchema.safeParse(req.body);
+			if (!parsed.success) {
+				return errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
+			}
+			const { message } = parsed.data;
 
-            const prompt = `You are an AI assistant for a vehicle rental platform called RentNride.
-A user sent this message: "${message}"
+			const prompt = `You are an AI assistant for a vehicle rental app called RentNride.
+A user asked: "${message}"
 
-Your job:
-1. Determine the INTENT of the message.
-2. If it is casual conversation (greetings, questions about the app, general chat), set intent to "chat" and write a friendly, short reply in the "reply" field.
-3. If the user is looking for a vehicle to rent, set intent to "search" and extract as many filters as possible from this list.
-
-Return ONLY a valid JSON object (no markdown, no explanation):
+If the user is ONLY having a general conversation or asking a generic question (like "hello", "how are you", "what is this app"), return strictly:
 {
-  "intent": "chat" | "search",
-  "reply": "string (only when intent is chat, else null)",
-  "vehicleType": "car" | "bike" | "scooter" | null,
-  "subType": "SUV" | "Sedan" | "Hatchback" | "MUV" | "Coupe" | "Sports" | "Standard" | null,
-  "brand": "string or null (e.g. BMW, Honda, Royal Enfield, Swift)",
-  "location": "string or null (city or area the user wants to rent from)",
-  "fuelType": "Petrol" | "Diesel" | "Electric" | "CNG" | "Hybrid" | null,
-  "transmission": "Manual" | "Automatic" | null,
-  "minSeats": number or null (minimum passengers, e.g. 5, 7),
-  "doors": number or null (number of doors, e.g. 2, 4),
-  "minPrice": number or null (minimum price per day in INR),
-  "maxPrice": number or null (maximum price per day in INR)
+  "intent": "chat",
+  "reply": "your helpful and polite reply here"
 }
 
-Rules:
-- vehicleType: use "car" for cars/SUVs/sedans, "bike" for motorcycles/bikes, "scooter" for scooters
-- subType: body style only, null if not mentioned
-- brand: vehicle make/model (BMW, Honda City, Royal Enfield Bullet), null if not mentioned
-- location: the city/area for pickup, null if not mentioned
-- fuelType: fuel source, null if not mentioned
-- transmission: gearbox type, null if not mentioned
-- minSeats: extract from phrases like "7 seater", "family car for 6", null if not mentioned
-- doors: null unless explicitly stated
-- minPrice/maxPrice: extract from price/budget mentions (e.g. "under 1000" → maxPrice: 1000), null if not mentioned
-- All numeric fields must be numbers, not strings`;
+If the user is expressing an interest or intent to search for a vehicle to rent (e.g., "I need a car", "show me bikes in kochi", "do you have BMWs?", "i want to rent an SUV"), extract the search criteria and return strictly:
+{
+  "intent": "search",
+  "filters": {
+    "vehicleType": "bike" | "car" | "scooter" | null,
+    "location": "string or null",
+    "brand": "string or null",
+    "name": "string (like Himalayan, R15) or null",
+    "maxPrice": number or null
+  }
+}
+Return ONLY JSON matching one of the two formats. Do not return markdown formatted text or explanations.`;
 
-            let groqResult: {
-                intent: "chat" | "search";
-                reply?: string;
-                vehicleType?: string;
-                subType?: string;
-                brand?: string;
-                location?: string;
-                fuelType?: string;
-                transmission?: string;
-                minSeats?: number;
-                doors?: number;
-                minPrice?: number;
-                maxPrice?: number;
-            };
+			interface ChatbotIntent {
+				intent: string;
+				reply?: string;
+				filters?: {
+					vehicleType?: string | null;
+					location?: string | null;
+					brand?: string | null;
+					name?: string | null;
+					maxPrice?: number | null;
+				};
+			}
+			let responseJSON: ChatbotIntent;
 
-            try {
-                const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-                const completion = await groq.chat.completions.create({
-                    messages: [{ role: "user", content: prompt }],
-                    model: "llama-3.3-70b-versatile",
-                    temperature: 0.1,
-                });
+			try {
+				const groq = new Groq({ apiKey: env.GROQ_API_KEY });
+				const completion = await groq.chat.completions.create({
+					messages: [{ role: "user", content: prompt }],
+					model: "llama-3.3-70b-versatile",
+					temperature: 0.1,
+				});
 
-                let content = (completion.choices[0]?.message?.content || "{}").trim();
-                // Strip markdown code fences if present
-                if (content.startsWith("```json")) content = content.replace(/```json/i, "").replace(/```/g, "").trim();
-                else if (content.startsWith("```")) content = content.replace(/```/g, "").trim();
+				const content = completion.choices[0]?.message?.content || "{}";
 
-                groqResult = JSON.parse(content);
-                console.log("[Chatbot] Groq result:", groqResult);
-            } catch (err) {
-                console.error("[Chatbot] Failed to parse Groq response:", err);
-                return errorResponse(res, "Could not understand your message. Please try rephrasing.", HttpStatus.BAD_REQUEST);
-            }
+				// Strip possible markdown wrapping if the AI decides to add it
+				let cleanedContent = content.trim();
+				if (cleanedContent.startsWith("```json")) {
+					cleanedContent = cleanedContent
+						.replace(/```json/i, "")
+						.replace(/```/i, "")
+						.trim();
+				} else if (cleanedContent.startsWith("```")) {
+					cleanedContent = cleanedContent.replace(/```/g, "").trim();
+				}
 
-            if (groqResult.intent === "chat") {
-                return successResponse(res, "Chat reply", {
-                    intent: "chat",
-                    reply: groqResult.reply || "I'm here to help you find vehicles on RentNride! Try asking something like 'I need an SUV in Kochi under ₹2000'.",
-                    vehicles: [],
-                    total: 0,
-                });
-            }
+				responseJSON = JSON.parse(cleanedContent);
+			} catch (err) {
+				console.error("Failed to fetch or parse LLM JSON:", err);
+				return errorResponse(
+					res,
+					"Could not understand your request. Please try rewriting it.",
+					HttpStatus.BAD_REQUEST,
+				);
+			}
 
-            const parsedFilters: {
-                search?: string;
-                category?: string[];
-                category2?: string;
-                fuelType?: string[];
-                transmission?: string[];
-                minPrice?: number;
-                maxPrice?: number;
-                minSeats?: number;
-                doors?: number;
-            } = {};
+			if (responseJSON.intent === "chat") {
+				return successResponse(res, "Chat reply", {
+					intent: "chat",
+					reply: responseJSON.reply,
+					vehicles: [],
+				});
+			}
 
-            if (groqResult.vehicleType) {
-                const categoryMatch = await Category.findOne({
-                    name: { $regex: new RegExp(`\\b${groqResult.vehicleType}s?\\b`, "i") },
-                    isActive: true,
-                });
-                if (categoryMatch) {
-                    parsedFilters.category = [categoryMatch._id.toString()];
-                    console.log(`[Chatbot] Category matched: "${categoryMatch.name}"`);
+			// Map extracted filters to the actual parameters expected by getPublicVehicles
+			const parsedFilters: {
+				search?: string;
+				category?: string[];
+				maxPrice?: number;
+			} = {};
+			const searchTerms = [];
 
-                    if (groqResult.subType && typeof groqResult.subType === "string") {
-                        const subCat = categoryMatch.subCategories?.find(
-                            (sc) => sc.name.toLowerCase() === groqResult.subType!.toLowerCase()
-                        );
-                        if (subCat?._id) {
-                            parsedFilters.category2 = subCat._id.toString();
-                            console.log(`[Chatbot] SubCategory matched: "${subCat.name}"`);
-                        } else {
-                            console.warn(`[Chatbot] No subCategory found for: "${groqResult.subType}"`);
-                        }
-                    }
-                } else {
-                    console.warn(`[Chatbot] No category found for vehicleType: "${groqResult.vehicleType}"`);
-                }
-            }
+			if (responseJSON.filters?.vehicleType) {
+				// Find matching category ID since repo requires ObjectId
+				const categoryMatch = await Category.findOne({
+					name: {
+						$regex: new RegExp(`^${responseJSON.filters.vehicleType}$`, "i"),
+					},
+				});
+				if (categoryMatch) {
+					parsedFilters.category = [categoryMatch._id.toString()];
+				}
+			}
 
-            // 3c. Resolve fuelType name → FuelType ObjectId
-            if (groqResult.fuelType && typeof groqResult.fuelType === "string") {
-                const fuelMatch = await FuelType.findOne({
-                    name: { $regex: new RegExp(`^${groqResult.fuelType}$`, "i") },
-                    isActive: true,
-                });
-                if (fuelMatch) {
-                    parsedFilters.fuelType = [fuelMatch._id.toString()];
-                    console.log(`[Chatbot] FuelType matched: "${fuelMatch.name}"`);
-                } else {
-                    console.warn(`[Chatbot] No fuelType found for: "${groqResult.fuelType}"`);
-                }
-            }
+			if (responseJSON.filters?.location)
+				searchTerms.push(responseJSON.filters.location);
+			if (responseJSON.filters?.brand)
+				searchTerms.push(responseJSON.filters.brand);
+			if (responseJSON.filters?.name)
+				searchTerms.push(responseJSON.filters.name);
 
-            if (groqResult.transmission && typeof groqResult.transmission === "string") {
-                parsedFilters.transmission = [groqResult.transmission];
-            }
+			if (searchTerms.length > 0) {
+				parsedFilters.search = searchTerms.join(" ");
+			}
 
-            const searchTerms: string[] = [];
-            if (groqResult.brand?.trim()) searchTerms.push(groqResult.brand.trim());
-            if (groqResult.location?.trim()) searchTerms.push(groqResult.location.trim());
-            if (searchTerms.length > 0) parsedFilters.search = searchTerms.join(" ");
+			if (responseJSON.filters?.maxPrice)
+				parsedFilters.maxPrice = responseJSON.filters.maxPrice;
 
-            if (typeof groqResult.minPrice === "number" && groqResult.minPrice > 0) parsedFilters.minPrice = groqResult.minPrice;
-            if (typeof groqResult.maxPrice === "number" && groqResult.maxPrice > 0) parsedFilters.maxPrice = groqResult.maxPrice;
+			// Call the existing public search API logic
+			// page=1, limit=10, lat/lon=undefined, range=undefined, minRange=undefined
+			const result = await this._vehicleService.getPublicVehicles(
+				1,
+				10,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+				parsedFilters,
+			);
 
-            if (typeof groqResult.minSeats === "number" && groqResult.minSeats > 0) parsedFilters.minSeats = groqResult.minSeats;
-            if (typeof groqResult.doors === "number" && groqResult.doors > 0) parsedFilters.doors = groqResult.doors;
+			if (!result.success) {
+				return errorResponse(res, result.message, HttpStatus.BAD_REQUEST);
+			}
 
-            console.log("[Chatbot] Parsed filters:", parsedFilters);
+			const payloadData = result.data ? result.data.data : [];
 
-            const hasFilters = parsedFilters.category || parsedFilters.category2 || parsedFilters.search ||
-                parsedFilters.fuelType || parsedFilters.transmission ||
-                parsedFilters.minPrice !== undefined || parsedFilters.maxPrice !== undefined ||
-                parsedFilters.minSeats !== undefined || parsedFilters.doors !== undefined;
-
-            if (!hasFilters) {
-                return successResponse(res, "No filters extracted", {
-                    intent: "chat",
-                    reply: "I'm not sure what vehicle you're looking for. Try something like: \"I need a 7-seater SUV in Kochi under ₹2000\" or \"Show me electric bikes\".",
-                    vehicles: [],
-                    total: 0,
-                });
-            }
-
-            // ─── STEP 5: Query vehicles ───────────────────────────────────────────────
-            const result = await this._vehicleService.getPublicVehicles(
-                1, 10,
-                undefined, undefined, undefined, undefined,
-                parsedFilters
-            );
-
-            if (!result.success) {
-                return errorResponse(res, result.message, HttpStatus.BAD_REQUEST);
-            }
-
-            return successResponse(res, "Found vehicles", {
-                intent: "search",
-                filters: parsedFilters,
-                vehicles: result.data?.data ?? [],
-                total: result.data?.total ?? 0,
-            });
-
-        } catch (error) {
-            console.error("[Chatbot] Error:", error);
-            return errorResponse(res, "Internal AI server error", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+			return successResponse(res, "Found vehicles", {
+				intent: "search",
+				filters: parsedFilters,
+				vehicles: payloadData,
+				total: result.data ? result.data.total : 0,
+			});
+		} catch (error) {
+			console.error("Chatbot Error:", error);
+			return errorResponse(
+				res,
+				"Internal AI server error",
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
 }

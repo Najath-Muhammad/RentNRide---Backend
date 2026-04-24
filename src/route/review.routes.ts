@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { ALL_ROLES } from "../constants/roles";
 import { ReviewController } from "../controller/Implementation/review.controller";
 import { AuthGuard } from "../middlewares/authGuard";
 import { BookingRepo } from "../repositories/Implementation/booking.repository";
@@ -14,7 +15,7 @@ const reviewController = new ReviewController(reviewService);
 
 reviewRouter.post(
 	"/",
-	AuthGuard(["user", "premium", "admin"]),
+	AuthGuard(ALL_ROLES),
 	reviewController.createReview.bind(reviewController),
 );
 reviewRouter.get(
@@ -23,7 +24,7 @@ reviewRouter.get(
 );
 reviewRouter.get(
 	"/eligibility/:vehicleId",
-	AuthGuard(["user", "premium", "admin"]),
+	AuthGuard(ALL_ROLES),
 	reviewController.checkReviewEligibility.bind(reviewController),
 );
 

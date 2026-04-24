@@ -1,12 +1,13 @@
 import type { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 import { HttpStatus } from "../../constants/enum/statuscode";
-import type { IVehicleService } from "../../services/Interfaces/vehicle.interface.service";
+import type { IVehicleService } from "../../services/interfaces/vehicle.interface.service";
 import { errorResponse, successResponse } from "../../utils/response.util";
+import { rejectReasonSchema } from "../../validations/commonValidation";
 import type { IVehicleController } from "../interfaces/ivehicle.controller";
 
 export class VehicleController implements IVehicleController {
-	constructor(private _vehicleService: IVehicleService) { }
+	constructor(private _vehicleService: IVehicleService) {}
 
 	async createVehicle(
 		req: Request,
@@ -192,7 +193,9 @@ export class VehicleController implements IVehicleController {
 				return errorResponse(res, "Invalid vehicle ID", HttpStatus.BAD_REQUEST);
 			}
 
-			const user = req.user ? { userId: req.user.userId, role: req.user.role } : undefined;
+			const user = req.user
+				? { userId: req.user.userId, role: req.user.role }
+				: undefined;
 			const result = await this._vehicleService.getVehicleById(id, user);
 
 			if (!result.success) {
@@ -242,9 +245,11 @@ export class VehicleController implements IVehicleController {
 
 			const filters = {
 				search: req.query.search as string,
-				category: toStringArray(req.query.category || req.query['category[]']),
-				fuelType: toStringArray(req.query.fuelType || req.query['fuelType[]']),
-				transmission: toStringArray(req.query.transmission || req.query['transmission[]']),
+				category: toStringArray(req.query.category || req.query["category[]"]),
+				fuelType: toStringArray(req.query.fuelType || req.query["fuelType[]"]),
+				transmission: toStringArray(
+					req.query.transmission || req.query["transmission[]"],
+				),
 				minPrice: req.query.minPrice
 					? parseInt(req.query.minPrice as string, 10)
 					: undefined,
@@ -330,15 +335,15 @@ export class VehicleController implements IVehicleController {
 	async rejectVehicle(req: Request, res: Response): Promise<Response> {
 		try {
 			const { id } = req.params;
-			const { reason } = req.body;
-
-			if (!reason || typeof reason !== "string" || reason.trim().length < 10) {
+			const parsed = rejectReasonSchema.safeParse(req.body);
+			if (!parsed.success) {
 				return errorResponse(
 					res,
-					"Rejection reason is required and should be at least 10 characters",
+					parsed.error.issues[0].message,
 					HttpStatus.BAD_REQUEST,
 				);
 			}
+			const { reason } = parsed.data;
 
 			const result = await this._vehicleService.rejectVehicle(
 				id,

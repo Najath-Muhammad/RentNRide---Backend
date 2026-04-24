@@ -1,7 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
+import { env } from "../../config/env";
 import { HttpStatus } from "../../constants/enum/statuscode";
 import { MESSAGES } from "../../constants/messages/messageConstants";
-import type { IAuthService } from "../../services/Interfaces/auth.interface.service";
+import type { IAuthService } from "../../services/interfaces/auth.interface.service";
 import { errorResponse, successResponse } from "../../utils/response.util";
 import {
 	changePasswordSchema,
@@ -73,13 +74,13 @@ export class AuthController implements IAuthController {
 			res.cookie("accessToken", result.accessToken, {
 				httpOnly: true,
 				sameSite: "strict",
-				maxAge: Number(process.env.ACCESS_TOKEN_MAXAGE),
+				maxAge: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 
 			res.cookie("refreshToken", result.refreshToken, {
 				httpOnly: true,
 				sameSite: "strict",
-				maxAge: Number(process.env.REFRESH_TOKEN_MAXAGE),
+				maxAge: Number(env.REFRESH_TOKEN_MAXAGE),
 			});
 
 			return successResponse(
@@ -181,18 +182,19 @@ export class AuthController implements IAuthController {
 
 			res.cookie("accessToken", result.accessToken, {
 				httpOnly: true,
-				sameSite: "strict",
-				maxAge: Number(process.env.ACCESS_TOKEN_MAXAGE),
+				sameSite: "lax",
+				maxAge: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 
 			res.cookie("refreshToken", result.refreshToken, {
 				httpOnly: true,
-				sameSite: "strict",
-				maxAge: Number(process.env.REFRESH_TOKEN_MAXAGE),
+				sameSite: "lax",
+				maxAge: Number(env.REFRESH_TOKEN_MAXAGE),
 			});
 
 			return successResponse(res, MESSAGES.AUTH.LOGIN_SUCCESS, {
 				user: result.user,
+				expiresIn: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 		} catch (error) {
 			next(error);
@@ -211,7 +213,7 @@ export class AuthController implements IAuthController {
 		next: NextFunction,
 	): Promise<Response> {
 		try {
-			const isProduction = process.env.NODE_ENV === "production";
+			const isProduction = env.NODE_ENV === "production";
 
 			const cookieOptions = {
 				httpOnly: true,
@@ -249,18 +251,19 @@ export class AuthController implements IAuthController {
 
 			res.cookie("accessToken", result.accessToken, {
 				httpOnly: true,
-				sameSite: "strict",
-				maxAge: Number(process.env.ACCESS_TOKEN_MAXAGE),
+				sameSite: "lax",
+				maxAge: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 
 			res.cookie("refreshToken", result.refreshToken, {
 				httpOnly: true,
-				sameSite: "strict",
-				maxAge: Number(process.env.REFRESH_TOKEN_MAXAGE),
+				sameSite: "lax",
+				maxAge: Number(env.REFRESH_TOKEN_MAXAGE),
 			});
 
 			return successResponse(res, MESSAGES.AUTH.LOGIN_SUCCESS, {
 				user: result.user,
+				expiresIn: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 		} catch (error) {
 			next(error);
@@ -279,7 +282,7 @@ export class AuthController implements IAuthController {
 		next: NextFunction,
 	): Promise<Response> {
 		try {
-			const isProduction = process.env.NODE_ENV === "production";
+			const isProduction = env.NODE_ENV === "production";
 
 			const cookieOptions = {
 				httpOnly: true,
@@ -321,11 +324,13 @@ export class AuthController implements IAuthController {
 
 			res.cookie("accessToken", accessToken, {
 				httpOnly: true,
-				sameSite: "strict",
-				maxAge: Number(process.env.ACCESS_TOKEN_MAXAGE),
+				sameSite: "lax",
+				maxAge: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 
-			return successResponse(res, MESSAGES.AUTH.REFRESH_TOKEN_SUCCESS);
+			return successResponse(res, MESSAGES.AUTH.REFRESH_TOKEN_SUCCESS, {
+				expiresIn: Number(env.ACCESS_TOKEN_MAXAGE),
+			});
 		} catch (error) {
 			next(error);
 			console.error("Refresh token error:", error);
@@ -361,20 +366,21 @@ export class AuthController implements IAuthController {
 
 			res.cookie("accessToken", result.accessToken, {
 				httpOnly: true,
-				sameSite: "strict",
-				secure: process.env.NODE_ENV === "production",
-				maxAge: Number(process.env.ACCESS_TOKEN_MAXAGE),
+				sameSite: "lax",
+				secure: env.NODE_ENV === "production",
+				maxAge: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 
 			res.cookie("refreshToken", result.refreshToken, {
 				httpOnly: true,
-				sameSite: "strict",
-				secure: process.env.NODE_ENV === "production",
-				maxAge: Number(process.env.REFRESH_TOKEN_MAXAGE),
+				sameSite: "lax",
+				secure: env.NODE_ENV === "production",
+				maxAge: Number(env.REFRESH_TOKEN_MAXAGE),
 			});
 
 			return successResponse(res, MESSAGES.AUTH.GOOGLE_LOGIN_SUCCESS, {
 				user: result.user,
+				expiresIn: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 		} catch (error) {
 			next(error);
@@ -402,6 +408,17 @@ export class AuthController implements IAuthController {
 					HttpStatus.UNAUTHORIZED,
 				);
 			}
+
+			const isBlockedCheck = await this._authService.checkBlocked(user.email);
+			if (!isBlockedCheck.success) {
+				return res.status(403).json({
+					success: false,
+					message: isBlockedCheck.message || "Your account has been blocked.",
+					blocked: true,
+					logout: true,
+				});
+			}
+
 			return successResponse(res, "Token verification successful", {
 				user: {
 					id: user.userId,

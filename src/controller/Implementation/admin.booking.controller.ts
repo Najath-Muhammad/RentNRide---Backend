@@ -1,7 +1,10 @@
 import type { Request, Response } from "express";
 import { HttpStatus } from "../../constants/enum/statuscode";
-import type { IAdminBookingService } from "../../services/Interfaces/admin.booking.interface.service";
+import type { IAdminBookingService } from "../../services/interfaces/admin.booking.interface.service";
+import type { IBooking } from "../../types/booking/booking.types";
+import { bookingDTO } from "../../utils/mapper/booking.mapper";
 import { errorResponse, successResponse } from "../../utils/response.util";
+import { reasonSchema } from "../../validations/commonValidation";
 import type { IAdminBookingController } from "../interfaces/iadmin.booking.controller";
 
 export class AdminBookingController implements IAdminBookingController {
@@ -9,8 +12,8 @@ export class AdminBookingController implements IAdminBookingController {
 
 	async getAllBookings(req: Request, res: Response): Promise<void> {
 		try {
-			const page = parseInt(req.query.page as string, 10) || 1;
-			const limit = parseInt(req.query.limit as string, 10) || 10;
+			const page = Number.parseInt(req.query.page as string, 10) || 1;
+			const limit = Number.parseInt(req.query.limit as string, 10) || 10;
 			const status = req.query.status as string;
 			const search = req.query.search as string;
 
@@ -20,7 +23,12 @@ export class AdminBookingController implements IAdminBookingController {
 				status,
 				search,
 			);
-			successResponse(res, "All bookings fetched successfully", result);
+
+			const mappedResult = {
+				...result,
+				data: result.data.map((b: IBooking) => bookingDTO(b)),
+			};
+			successResponse(res, "All bookings fetched successfully", mappedResult);
 		} catch (error) {
 			console.error("Error in AdminBookingController.getAllBookings:", error);
 			errorResponse(
@@ -34,7 +42,16 @@ export class AdminBookingController implements IAdminBookingController {
 	async cancelBooking(req: Request, res: Response): Promise<void> {
 		try {
 			const { bookingId } = req.params;
-			const { reason } = req.body;
+			const parsed = reasonSchema.safeParse(req.body);
+			if (!parsed.success) {
+				errorResponse(
+					res,
+					parsed.error.issues[0].message,
+					HttpStatus.BAD_REQUEST,
+				);
+				return;
+			}
+			const { reason } = parsed.data;
 
 			const booking = await this.adminBookingService.cancelBooking(
 				bookingId,
@@ -50,7 +67,11 @@ export class AdminBookingController implements IAdminBookingController {
 				return;
 			}
 
-			successResponse(res, "Booking cancelled successfully", booking);
+			successResponse(
+				res,
+				"Booking cancelled successfully",
+				bookingDTO(booking as IBooking),
+			);
 		} catch (error) {
 			console.error("Error in AdminBookingController.cancelBooking:", error);
 			errorResponse(

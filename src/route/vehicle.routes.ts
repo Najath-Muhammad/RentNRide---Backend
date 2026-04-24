@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { ROUTES } from "../constants/Routes/routeConstants";
+import { ALL_ROLES } from "../constants/roles";
 import { VehicleController } from "../controller/Implementation/vehicle.controller";
 import { AuthGuard } from "../middlewares/authGuard";
 import { SoftAuth } from "../middlewares/softAuth";
@@ -14,12 +15,12 @@ const vehicleController = new VehicleController(vehicleService);
 
 vehicleRouter.post(
 	ROUTES.VEHICLE.CREATE_VEHICLE,
-	AuthGuard(["user", "premium", "admin"]),
+	AuthGuard(ALL_ROLES),
 	vehicleController.createVehicle.bind(vehicleController),
 );
 vehicleRouter.get(
 	ROUTES.VEHICLE.MY_VEHICLES,
-	AuthGuard(["user", "premium", "admin"]),
+	AuthGuard(ALL_ROLES),
 	vehicleController.getMyVehicles.bind(vehicleController),
 );
 vehicleRouter.get(
@@ -34,12 +35,12 @@ vehicleRouter.get(
 );
 vehicleRouter.patch(
 	ROUTES.VEHICLE.UPDATE_VEHICLE,
-	AuthGuard(["user", "premium", "admin"]),
+	AuthGuard(ALL_ROLES),
 	vehicleController.updateVehicle.bind(vehicleController),
 );
 vehicleRouter.delete(
 	ROUTES.VEHICLE.DELETE_VEHICLE,
-	AuthGuard(["user", "premium", "admin"]),
+	AuthGuard(ALL_ROLES),
 	vehicleController.deleteVehicle.bind(vehicleController),
 );
 

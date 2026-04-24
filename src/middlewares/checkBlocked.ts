@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import type { IAuthService } from "../services/Interfaces/auth.interface.service";
+import type { IAuthService } from "../services/interfaces/auth.interface.service";
 import logger from "../utils/logger";
 
 export const checkBlocked = (userService: IAuthService) => {

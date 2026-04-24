@@ -1,10 +1,11 @@
+import { ROLES } from "../../constants/roles";
 import type { IUserRepository } from "../../repositories/interfaces/user.interface";
 import type { IUser } from "../../types/user/IUser";
 import {
 	hashPassword,
 	verifyPassword,
 } from "../../utils/password-service.utils";
-import type { IUserService } from "../Interfaces/user.interface.service";
+import type { IUserService } from "../interfaces/user.interface.service";
 
 export class UserService implements IUserService {
 	constructor(private _userRepo: IUserRepository) {}
@@ -16,7 +17,9 @@ export class UserService implements IUserService {
 				throw new Error("User not found");
 			}
 
-			const { password: _password, ...safeUser } = user.toObject ? user.toObject() : user;
+			const { password: _password, ...safeUser } = user.toObject
+				? user.toObject()
+				: user;
 			return safeUser;
 		} catch (error) {
 			if (error instanceof Error) {
@@ -109,7 +112,7 @@ export class UserService implements IUserService {
 			if (!user) throw new Error("User not found");
 
 			return {
-				plan: user.role === "premium" ? "premium" : "free",
+				plan: user.role === ROLES.PREMIUM ? "premium" : "free",
 				expiresAt: user.premiumExpiresAt || null,
 			};
 		} catch (error) {
@@ -128,7 +131,7 @@ export class UserService implements IUserService {
 			thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
 
 			const updated = await this._userRepo.updateById(userId, {
-				role: "premium",
+				role: ROLES.PREMIUM,
 				premiumExpiresAt: thirtyDaysFromNow,
 			});
 

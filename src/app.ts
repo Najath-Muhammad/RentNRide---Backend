@@ -15,9 +15,16 @@ import { ROUTES } from "./constants/Routes/routeConstants";
 import adminBookingRouter from "./route/admin.booking.routes";
 
 import bookingRouter from "./route/booking.routes";
+import chatRouter from "./route/chat.routes";
+import chatbotRouter from "./route/chatbot.routes";
+import contactRouter from "./route/contact.routes";
+import fcmRouter from "./route/fcm.routes";
+import notificationRouter from "./route/notification.routes";
+import paymentRouter from "./route/payment.routes";
 import reviewRouter from "./route/review.routes";
-import userRouter from "./route/user.routes";
 import subscriptionRouter from "./route/subscription.routes";
+import userRouter from "./route/user.routes";
+import walletRouter from "./route/wallet.routes";
 
 const app = express();
 
@@ -27,7 +34,15 @@ app.use(
 		credentials: true,
 	}),
 );
-app.use(express.json({ limit: "10mb" }));
+
+app.use((req, res, next) => {
+	if (req.originalUrl.includes("/webhook")) {
+		express.raw({ type: "application/json" })(req, res, next);
+	} else {
+		express.json({ limit: "10mb" })(req, res, next);
+	}
+});
+
 app.use(cookieParser());
 app.use(errorMiddleware);
 
@@ -42,5 +57,12 @@ app.use(ROUTES.ADMIN.BASE, adminRouter);
 app.use("/api/reviews", reviewRouter);
 app.use("/api/admin/bookings", adminBookingRouter);
 app.use("/api", subscriptionRouter);
+app.use("/api/chat", chatRouter);
+app.use("/api/payments", paymentRouter);
+app.use("/api/wallet", walletRouter);
+app.use("/api/chatbot", chatbotRouter);
+app.use("/api/fcm", fcmRouter);
+app.use("/api/notifications", notificationRouter);
+app.use("/api/contact", contactRouter);
 
 export { app };

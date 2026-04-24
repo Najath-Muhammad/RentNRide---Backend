@@ -137,6 +137,7 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 				filter.$or = [
 					{ brand: { $regex: filters.search, $options: "i" } },
 					{ modelName: { $regex: filters.search, $options: "i" } },
+					{ pickupAddress: { $regex: filters.search, $options: "i" } },
 				];
 			}
 			if (filters.category && filters.category.length > 0) {
@@ -249,6 +250,6 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 		try {
 			const _today = Date.now();
 			const _count = this.model.find({ ownerId: ownerId });
-		} catch (_error) { }
+		} catch (_error) {}
 	}
 }

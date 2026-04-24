@@ -1,5 +1,5 @@
 import { generateUploadUrl } from "../../utils/s3";
-import type { IFileService } from "../Interfaces/file.interface.service";
+import type { IFileService } from "../interfaces/file.interface.service";
 
 export class FileService implements IFileService {
 	async generateUploadUrl(

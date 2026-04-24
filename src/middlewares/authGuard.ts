@@ -1,9 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
+import { env } from "../config/env";
+import { ROLES } from "../constants/roles";
+import { UserModel } from "../model/user.model";
 import { verifyToken } from "../utils/jwt-service.utils";
 
 export const AuthGuard =
 	(roles: Array<string>) =>
-	(req: Request, res: Response, next: NextFunction) => {
+	async (req: Request, res: Response, next: NextFunction) => {
 		try {
 			const token = req.cookies?.accessToken;
 			if (!token) {
@@ -13,7 +16,7 @@ export const AuthGuard =
 				});
 			}
 
-			const jwtSecret = process.env.JWT_SECRET_KEY;
+			const jwtSecret = env.JWT_SECRET_KEY;
 			if (!jwtSecret) {
 				return res.status(500).json({
 					success: false,
@@ -40,6 +43,18 @@ export const AuthGuard =
 					success: false,
 					message: "You don't have permission to access this resource",
 				});
+			}
+
+			if (verify.role === ROLES.USER || verify.role === ROLES.PREMIUM) {
+				const user = await UserModel.findById(verify.userId);
+				if (user?.isBlocked) {
+					return res.status(403).json({
+						success: false,
+						message: "Your account has been blocked by admin.",
+						blocked: true,
+						logout: true,
+					});
+				}
 			}
 
 			req.user = verify;

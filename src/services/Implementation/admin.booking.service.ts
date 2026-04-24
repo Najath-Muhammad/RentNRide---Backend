@@ -1,6 +1,6 @@
 import type { BookingRepo } from "../../repositories/Implementation/booking.repository";
 import type { IBooking } from "../../types/booking/booking.types";
-import type { IAdminBookingService } from "../Interfaces/admin.booking.interface.service";
+import type { IAdminBookingService } from "../interfaces/admin.booking.interface.service";
 
 export class AdminBookingService implements IAdminBookingService {
 	constructor(private bookingRepo: BookingRepo) {}

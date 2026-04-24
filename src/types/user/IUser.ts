@@ -1,6 +1,8 @@
 import type mongoose from "mongoose";
 import type { Document } from "mongoose";
 
+import type { Role } from "../../constants/roles";
+
 export interface IUser extends Document {
 	_id: mongoose.Types.ObjectId;
 	name: string;
@@ -9,7 +11,8 @@ export interface IUser extends Document {
 	phone: number;
 	profilePhoto?: string;
 	googleId?: string;
-	role: "admin" | "user" | "premium";
+	role: Role;
+
 	address?: mongoose.Types.ObjectId;
 	subscription?: mongoose.Types.ObjectId;
 	wallet?: mongoose.Types.ObjectId;
@@ -21,6 +24,7 @@ export interface IUser extends Document {
 	notifications?: mongoose.Types.ObjectId;
 	status: string;
 	premiumExpiresAt?: Date;
+	fcmTokens?: string[];
 	createdAt: Date;
 	updatedAt: Date;
 	isBlocked: boolean;
