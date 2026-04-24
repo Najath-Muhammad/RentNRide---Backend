@@ -28,9 +28,15 @@ import walletRouter from "./route/wallet.routes";
 
 const app = express();
 
+const allowedOrigins = [
+	"http://localhost:3000",
+	"https://master.dce6adyzplih9.amplifyapp.com",
+	"https://rentnride.ddns.net"
+];
+
 app.use(
 	cors({
-		origin: "http://localhost:3000",
+		origin: allowedOrigins,
 		credentials: true,
 	}),
 );

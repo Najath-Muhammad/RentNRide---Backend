@@ -17,7 +17,11 @@ const onlineUsers = new Map<string, Set<string>>();
 export function initSocket(server: HttpServer): SocketServer {
 	io = new Server(server, {
 		cors: {
-			origin: "http://localhost:3000",
+			origin: [
+				"http://localhost:3000",
+				"https://master.dce6adyzplih9.amplifyapp.com",
+				"https://rentnride.ddns.net"
+			],
 			credentials: true,
 		},
 	});
