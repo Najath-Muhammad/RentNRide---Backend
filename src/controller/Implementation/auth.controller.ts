@@ -203,14 +203,13 @@ export class AuthController implements IAuthController {
 				expiresIn: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 		} catch (error) {
-			next(error);
-			console.log("Login Error", error);
-			return errorResponse(
+            next(error);
+            return errorResponse(
 				res,
 				MESSAGES.ERRORS.SERVER_ERROR,
 				HttpStatus.INTERNAL_SERVER_ERROR,
 			);
-		}
+        }
 	}
 
 	async logout(
@@ -275,14 +274,13 @@ export class AuthController implements IAuthController {
 				expiresIn: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 		} catch (error) {
-			next(error);
-			console.log("Admin Login Error", error);
-			return errorResponse(
+            next(error);
+            return errorResponse(
 				res,
 				MESSAGES.ERRORS.SERVER_ERROR,
 				HttpStatus.INTERNAL_SERVER_ERROR,
 			);
-		}
+        }
 	}
 
 	async adminLogout(
@@ -412,7 +410,6 @@ export class AuthController implements IAuthController {
 	): Promise<Response> {
 		try {
 			const user = req.user;
-			//console.log('user is the one: ',user)
 			if (!user) {
 				return errorResponse(
 					res,
@@ -459,7 +456,6 @@ export class AuthController implements IAuthController {
 				req.body,
 			);
 
-			// Assume user ID is available in req.user due to auth middleware
 			const user = (req as Request & { user?: { userId: string } }).user;
 			if (!user || !user.userId) {
 				return errorResponse(
@@ -481,13 +477,12 @@ export class AuthController implements IAuthController {
 
 			return successResponse(res, result.message);
 		} catch (error) {
-			next(error);
-			console.log("change password error: ", error);
-			return errorResponse(
+            next(error);
+            return errorResponse(
 				res,
 				MESSAGES.ERRORS.SERVER_ERROR,
 				HttpStatus.INTERNAL_SERVER_ERROR,
 			);
-		}
+        }
 	}
 }

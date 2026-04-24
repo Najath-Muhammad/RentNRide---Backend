@@ -21,7 +21,6 @@ const subscriptionService = new SubscriptionService(
 );
 const subscriptionController = new SubscriptionController(subscriptionService);
 
-// ── Admin: Plan Management ─────────────────────────────────────────────────
 subscriptionRouter.get(
 	"/admin/subscription-plans",
 	AuthGuard(ADMIN_ONLY),
@@ -53,7 +52,6 @@ subscriptionRouter.patch(
 	subscriptionController.togglePlanStatus.bind(subscriptionController),
 );
 
-// ── Admin: User Subscription Management ───────────────────────────────────
 subscriptionRouter.get(
 	"/admin/user-subscriptions",
 	AuthGuard(ADMIN_ONLY),
@@ -70,7 +68,6 @@ subscriptionRouter.patch(
 	subscriptionController.cancelUserSubscription.bind(subscriptionController),
 );
 
-// ── User-Facing ────────────────────────────────────────────────────────────
 subscriptionRouter.get(
 	"/subscriptions/my",
 	AuthGuard(ALL_ROLES),
@@ -82,20 +79,17 @@ subscriptionRouter.get(
 	subscriptionController.getMySubscriptionHistory.bind(subscriptionController),
 );
 
-// Public: active plans (for users to browse)
 subscriptionRouter.get(
 	"/subscriptions/plans",
 	subscriptionController.getActivePlans.bind(subscriptionController),
 );
 
-// User-facing: subscribe to a plan (user subscribes themselves)
 subscriptionRouter.post(
 	"/subscriptions/subscribe",
 	AuthGuard(ALL_ROLES),
 	subscriptionController.selfSubscribe.bind(subscriptionController),
 );
 
-// User-facing: create Stripe payment intent for subscription purchase
 subscriptionRouter.post(
 	"/subscriptions/payment-intent",
 	AuthGuard(ALL_ROLES),
@@ -104,7 +98,6 @@ subscriptionRouter.post(
 	),
 );
 
-// User-facing: verify Stripe payment manually (for local development or if webhook is missed)
 subscriptionRouter.post(
 	"/subscriptions/verify-payment",
 	AuthGuard(ALL_ROLES),

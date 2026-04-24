@@ -206,7 +206,6 @@ export class SubscriptionService implements ISubscriptionService {
 			await this._userSubRepo.expireStaleSubscriptions();
 			const active = await this._userSubRepo.findActiveByUser(userId);
 
-			// If no active subscription, ensure user role is reset (handles auto-expiry)
 			if (!active) {
 				await this._userRepo.updateById(userId.toString(), {
 					role: ROLES.USER,
@@ -271,7 +270,6 @@ export class SubscriptionService implements ISubscriptionService {
 					throw new Error("You already have this plan active");
 				}
 
-				// Proration logic: Calculate credit from the remaining time on current plan
 				const now = new Date();
 				const totalDuration =
 					existing.endDate.getTime() - existing.startDate.getTime();
@@ -284,7 +282,6 @@ export class SubscriptionService implements ISubscriptionService {
 				}
 			}
 
-			// Ensure a minimum charge for Stripe (at least 1 INR)
 			const finalAmount = Math.max(1, displayPrice);
 			const amountInPaise = Math.round(finalAmount * 100);
 
@@ -341,7 +338,6 @@ export class SubscriptionService implements ISubscriptionService {
 			const planId = intent.metadata.planId;
 			const existing = await this._userSubRepo.findActiveByUser(userId);
 
-			// If the webhook already processed this, don't do it again
 			if (existing && existing.planId.toString() === planId) {
 				return existing;
 			}

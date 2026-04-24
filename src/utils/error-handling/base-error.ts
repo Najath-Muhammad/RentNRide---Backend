@@ -1,9 +1,4 @@
 import { HttpStatus } from "../../constants/enum/statuscode";
-/**
- * The base class for all application and domain-level errors.
- * Every custom error should extend this.
- */
-
 export class BaseError extends Error {
 	public readonly name: string;
 	public readonly statusCode: number;
@@ -18,7 +13,7 @@ export class BaseError extends Error {
 	) {
 		super(description);
 
-		Object.setPrototypeOf(this, new.target.prototype); // restore prototype chain
+		Object.setPrototypeOf(this, new.target.prototype);
 		this.name = name;
 		this.statusCode = statusCode;
 		this.isOperational = isOperational;

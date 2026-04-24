@@ -9,7 +9,6 @@ import { initSocket } from "./utils/socket";
 
 const PORT = env.PORT || 5000;
 
-console.log("✅ Server started successfully");
 logger.info("Server started...");
 
 async function bootstrap() {

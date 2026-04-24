@@ -15,18 +15,16 @@ export class BookingController implements IBookingController {
 
 	async createBooking(req: Request, res: Response): Promise<void> {
 		try {
-			console.log("Booking controller reached");
+            const user = (req as Request & { user?: { userId: string } }).user;
+            const userId = user?.userId;
 
-			const user = (req as Request & { user?: { userId: string } }).user;
-			const userId = user?.userId;
-
-			if (!userId) {
+            if (!userId) {
 				errorResponse(res, "User not authenticated", HttpStatus.UNAUTHORIZED);
 				return;
 			}
 
-			const parsed = createBookingSchema.safeParse(req.body);
-			if (!parsed.success) {
+            const parsed = createBookingSchema.safeParse(req.body);
+            if (!parsed.success) {
 				errorResponse(
 					res,
 					parsed.error.issues[0].message,
@@ -34,13 +32,13 @@ export class BookingController implements IBookingController {
 				);
 				return;
 			}
-			const bookingData = parsed.data;
-			const booking = await this._bookingService.createBooking(
+            const bookingData = parsed.data;
+            const booking = await this._bookingService.createBooking(
 				userId,
 				bookingData,
 			);
 
-			successResponse(
+            successResponse(
 				res,
 				"Booking created successfully. Awaiting owner confirmation.",
 				{
@@ -50,7 +48,7 @@ export class BookingController implements IBookingController {
 					status: booking.bookingStatus,
 				},
 			);
-		} catch (error) {
+        } catch (error) {
 			console.error("Error in createBooking controller:", error);
 			errorResponse(
 				res,

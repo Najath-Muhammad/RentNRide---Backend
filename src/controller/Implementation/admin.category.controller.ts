@@ -168,15 +168,7 @@ export class AdminCategoryController implements IAdminCategoryController {
 		}
 	}
 
-	// ────────────────────────────────────────────────
-	// Fuel Types
-	// ────────────────────────────────────────────────
-
-	async getAllFuelTypes(
-		_req: Request,
-		res: Response,
-		next: NextFunction,
-	): Promise<Response> {
+	async getAllFuelTypes(_req: Request, res: Response, next: NextFunction): Promise<Response> {
 		try {
 			const fuelTypes = await this.adminService.getAllFuelTypes();
 			return successResponse(

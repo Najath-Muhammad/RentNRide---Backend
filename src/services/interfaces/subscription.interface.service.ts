@@ -5,17 +5,12 @@ import type {
 } from "../../types/subscription/subscription.types";
 
 export interface ISubscriptionService {
-	// Plan management (admin)
-	getAllPlans(
-		page?: number,
-		limit?: number,
-		search?: string,
-	): Promise<{
+	getAllPlans(page?: number, limit?: number, search?: string): Promise<{
 		data: ISubscriptionPlan[];
 		total: number;
 		page: number;
 		totalPages: number;
-	}>;
+	}>
 	getActivePlans(): Promise<ISubscriptionPlan[]>;
 	getPlanById(id: string): Promise<ISubscriptionPlan>;
 	createPlan(data: {
@@ -32,18 +27,12 @@ export interface ISubscriptionService {
 	): Promise<ISubscriptionPlan>;
 	togglePlanStatus(id: string): Promise<ISubscriptionPlan>;
 
-	// User subscription management (admin)
-	getAllUserSubscriptions(
-		page?: number,
-		limit?: number,
-		search?: string,
-		status?: string,
-	): Promise<{
+	getAllUserSubscriptions(page?: number, limit?: number, search?: string, status?: string): Promise<{
 		data: IUserSubscription[];
 		total: number;
 		page: number;
 		totalPages: number;
-	}>;
+	}>
 	assignSubscription(
 		userId: string,
 		planId: string,

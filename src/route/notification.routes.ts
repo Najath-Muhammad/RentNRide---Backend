@@ -11,7 +11,6 @@ const notificationRepo = new NotificationRepository();
 const notificationService = new NotificationService(notificationRepo);
 const notificationController = new NotificationController(notificationService);
 
-// Apply AuthGuard to all notification routes
 notificationRouter.use(AuthGuard(ALL_ROLES));
 
 notificationRouter.get(

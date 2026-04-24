@@ -25,25 +25,23 @@ export class VehicleService implements IVehicleService {
 		user: { userId: string; role: string },
 	) {
 		try {
-			// Enforce subscription vehicle limit
-			const subService = new SubscriptionService(
+            const subService = new SubscriptionService(
 				new SubscriptionPlanRepo(),
 				new UserSubscriptionRepo(),
 				new UserRepo(),
 			);
-			const vehicleLimit = await subService.getUserVehicleLimit(user.userId);
-			const vehicles = await this._vehicleRepo.getVehiclesByOwner(user.userId);
-			if (vehicles && vehicles.length >= vehicleLimit) {
+            const vehicleLimit = await subService.getUserVehicleLimit(user.userId);
+            const vehicles = await this._vehicleRepo.getVehiclesByOwner(user.userId);
+            if (vehicles && vehicles.length >= vehicleLimit) {
 				return {
 					success: false,
 					message: `Limit exceeded. Your current plan allows up to ${vehicleLimit} vehicle listing${vehicleLimit !== 1 ? "s" : ""}. Please upgrade your subscription to add more.`,
 				};
 			}
 
-			const res = await this._vehicleRepo.create(vehicleData);
-			console.log("response from the repo", res);
-			return { success: true, message: "Vehicle created successfully" };
-		} catch (error) {
+            const res = await this._vehicleRepo.create(vehicleData);
+            return { success: true, message: "Vehicle created successfully" };
+        } catch (error) {
 			console.error("Error creating vehicle in service:", error);
 			const message =
 				error instanceof Error
@@ -66,25 +64,24 @@ export class VehicleService implements IVehicleService {
 		data?: PaginatedVehicles;
 	}> {
 		try {
-			const response = await this._vehicleRepo.findAllVehicles(
+            const response = await this._vehicleRepo.findAllVehicles(
 				filters,
 				page,
 				limit,
 			);
-			console.log("this is the response in the service", response);
 
-			if (response.total === 0) {
+            if (response.total === 0) {
 				return {
 					success: false,
 					message: "There are no vehicles matching the criteria",
 				};
 			}
 
-			const mappedVehicles = response.data.map((vehicle) =>
+            const mappedVehicles = response.data.map((vehicle) =>
 				mapVehicleToDTO(vehicle),
 			);
 
-			return {
+            return {
 				success: true,
 				message: "Vehicles retrieved successfully",
 				data: {
@@ -92,7 +89,7 @@ export class VehicleService implements IVehicleService {
 					data: mappedVehicles,
 				},
 			};
-		} catch (error) {
+        } catch (error) {
 			console.error("Error fetching vehicles:", error);
 			return {
 				success: false,
@@ -193,7 +190,6 @@ export class VehicleService implements IVehicleService {
 				if (user.role === "admin") {
 					isOwnerOrAdmin = true;
 				} else {
-					// Check ownerId
 					let vehicleOwnerIdStr: string;
 					const ownerIdValue = vehicle.ownerId as unknown as
 						| Types.ObjectId
@@ -381,7 +377,6 @@ export class VehicleService implements IVehicleService {
 				return { success: false, message: "Vehicle not found" };
 			}
 
-			// Handle both populated (user object) and non-populated (ObjectId) cases
 			let vehicleOwnerIdStr: string;
 			const ownerIdValue = vehicle.ownerId as unknown as
 				| Types.ObjectId
@@ -391,10 +386,8 @@ export class VehicleService implements IVehicleService {
 				ownerIdValue !== null &&
 				"_id" in ownerIdValue
 			) {
-				// ownerId is populated with user object, extract the _id
 				vehicleOwnerIdStr = ownerIdValue._id.toString();
 			} else {
-				// ownerId is just an ObjectId
 				vehicleOwnerIdStr = String(ownerIdValue);
 			}
 
@@ -404,8 +397,6 @@ export class VehicleService implements IVehicleService {
 					message: "Unauthorized: You can only edit your own vehicles",
 				};
 			}
-			// Whenever a vehicle is updated by the owner (e.g. updating expired documents)
-			// Reset its approval to false so the admin must re-verify the new details
 			updates.isApproved = false;
 			updates.isRejected = false;
 			updates.rejectionReason = "";
@@ -432,63 +423,38 @@ export class VehicleService implements IVehicleService {
 		ownerId: string,
 	): Promise<{ success: boolean; message: string }> {
 		try {
-			console.log("Delete vehicle request - ID:", id, "Owner ID:", ownerId);
-			const vehicle = await this._vehicleRepo.findById(id);
+            const vehicle = await this._vehicleRepo.findById(id);
 
-			if (!vehicle) {
-				console.log("Vehicle not found with ID:", id);
-				return { success: false, message: "Vehicle not found" };
-			}
+            if (!vehicle) {
+                return { success: false, message: "Vehicle not found" };
+            }
 
-			console.log(
-				"Vehicle found - Vehicle ownerId:",
-				vehicle.ownerId,
-				"Token ownerId:",
-				ownerId,
-			);
-			console.log(
-				"Vehicle ownerId type:",
-				typeof vehicle.ownerId,
-				"Token ownerId type:",
-				typeof ownerId,
-			);
-
-			// Handle both populated (user object) and non-populated (ObjectId) cases
-			let vehicleOwnerIdStr: string;
-			const ownerIdValue = vehicle.ownerId as unknown as
+            let vehicleOwnerIdStr: string;
+            const ownerIdValue = vehicle.ownerId as unknown as
 				| Types.ObjectId
 				| { _id: Types.ObjectId };
-			if (
+            if (
 				typeof ownerIdValue === "object" &&
 				ownerIdValue !== null &&
 				"_id" in ownerIdValue
 			) {
-				// ownerId is populated with user object, extract the _id
 				vehicleOwnerIdStr = ownerIdValue._id.toString();
 			} else {
-				// ownerId is just an ObjectId
 				vehicleOwnerIdStr = String(ownerIdValue);
 			}
 
-			const tokenOwnerIdStr = ownerId.toString();
+            const tokenOwnerIdStr = ownerId.toString();
 
-			if (vehicleOwnerIdStr !== tokenOwnerIdStr) {
-				console.log(
-					"Owner mismatch - Vehicle owner:",
-					vehicleOwnerIdStr,
-					"Token owner:",
-					tokenOwnerIdStr,
-				);
-				return {
+            if (vehicleOwnerIdStr !== tokenOwnerIdStr) {
+                return {
 					success: false,
 					message: "Unauthorized: You can only delete your own vehicles",
 				};
-			}
-			await this._vehicleRepo.deleteById(id);
-			console.log("Vehicle deleted successfully:", id);
+            }
+            await this._vehicleRepo.deleteById(id);
 
-			return { success: true, message: "Vehicle deleted successfully" };
-		} catch (error) {
+            return { success: true, message: "Vehicle deleted successfully" };
+        } catch (error) {
 			console.error("Error deleting vehicle:", error);
 			return { success: false, message: "Server error" };
 		}

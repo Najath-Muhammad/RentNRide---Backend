@@ -25,32 +25,31 @@ export class AuthService implements IAuthService {
 
 	async signup(user: UserType): Promise<{ success: boolean; message: string }> {
 		try {
-			const existingUser = await this._userRepo.findByEmail(user.email);
-			if (existingUser) {
+            const existingUser = await this._userRepo.findByEmail(user.email);
+            if (existingUser) {
 				throw new Error("User already exists");
 			}
 
-			const userData = {
+            const userData = {
 				name: user.name,
 				email: user.email,
 				password: await hashPassword(user.password),
 			};
 
-			await redisClient.setEx(
+            await redisClient.setEx(
 				`user:${user.email}`,
 				600,
 				JSON.stringify(userData),
 			);
 
-			const otp = generateOtp();
-			console.log(otp);
+            const otp = generateOtp();
 
-			await redisClient.setEx(`otp:${user.email}`, 300, otp);
+            await redisClient.setEx(`otp:${user.email}`, 300, otp);
 
-			await sendOtpMail(user.email, otp);
+            await sendOtpMail(user.email, otp);
 
-			return { success: true, message: "OTP sent successfully" };
-		} catch (error) {
+            return { success: true, message: "OTP sent successfully" };
+        } catch (error) {
 			console.error("Signup error:", error);
 			throw error;
 		}
@@ -67,32 +66,29 @@ export class AuthService implements IAuthService {
 		refreshToken: string;
 	}> {
 		try {
-			console.log(`Verifying OTP for email: ${email}`);
-
-			if (!otp || !email) {
+            if (!otp || !email) {
 				throw new Error("OTP and email are required");
 			}
 
-			const storedOtp = await redisClient.get(`otp:${email}`);
-			console.log(`Stored OTP: ${storedOtp}, Received OTP: ${otp}`);
+            const storedOtp = await redisClient.get(`otp:${email}`);
 
-			if (!storedOtp) {
+            if (!storedOtp) {
 				throw new Error("OTP has expired. Please request a new one.");
 			}
 
-			if (storedOtp !== otp) {
+            if (storedOtp !== otp) {
 				throw new Error("Invalid OTP. Please try again.");
 			}
 
-			const userDataString = await redisClient.get(`user:${email}`);
-			if (!userDataString) {
+            const userDataString = await redisClient.get(`user:${email}`);
+            if (!userDataString) {
 				throw new Error("User data not found. Please sign up again.");
 			}
 
-			const userData = JSON.parse(userDataString);
+            const userData = JSON.parse(userDataString);
 
-			const newUser = await this._userRepo.create(userData);
-			const accessToken = generateToken(
+            const newUser = await this._userRepo.create(userData);
+            const accessToken = generateToken(
 				{
 					userId: newUser._id,
 					name: newUser.name,
@@ -103,7 +99,7 @@ export class AuthService implements IAuthService {
 				60 * 15,
 			);
 
-			const refreshToken = generateToken(
+            const refreshToken = generateToken(
 				{
 					newUserId: newUser._id,
 					name: newUser.name,
@@ -114,17 +110,17 @@ export class AuthService implements IAuthService {
 				60 * 60 * 24 * 7,
 			);
 
-			await redisClient.del(`otp:${email}`);
-			await redisClient.del(`user:${email}`);
+            await redisClient.del(`otp:${email}`);
+            await redisClient.del(`user:${email}`);
 
-			return {
+            return {
 				success: true,
 				message: "User created successfully",
 				user: userToToken(newUser),
 				accessToken: accessToken,
 				refreshToken: refreshToken,
 			};
-		} catch (error) {
+        } catch (error) {
 			console.error("Verify OTP error:", error);
 			throw error;
 		}
@@ -135,27 +131,24 @@ export class AuthService implements IAuthService {
 		email: string,
 	): Promise<{ success: boolean; message: string }> {
 		try {
-			console.log(`Verifying OTP for email: ${email}`);
-
-			if (!otp || !email) {
+            if (!otp || !email) {
 				throw new Error("OTP and email are required");
 			}
 
-			const storedOtp = await redisClient.get(`otp:${email}`);
-			console.log(`Stored OTP: ${storedOtp}, Received OTP: ${otp}`);
+            const storedOtp = await redisClient.get(`otp:${email}`);
 
-			if (!storedOtp) {
+            if (!storedOtp) {
 				throw new Error("OTP has expired. Please request a new one.");
 			}
 
-			if (storedOtp !== otp) {
+            if (storedOtp !== otp) {
 				throw new Error("Invalid OTP. Please try again.");
 			}
 
-			await redisClient.del(`otp:${email}`);
+            await redisClient.del(`otp:${email}`);
 
-			return { success: true, message: "otp validation is successful" };
-		} catch (_error) {
+            return { success: true, message: "otp validation is successful" };
+        } catch (_error) {
 			return { success: false, message: "otp validation is failed" };
 		}
 	}
@@ -199,20 +192,19 @@ export class AuthService implements IAuthService {
 		email: string,
 	): Promise<{ success: boolean; message: string }> {
 		try {
-			const userData = await redisClient.get(`user:${email}`);
-			if (!userData) {
+            const userData = await redisClient.get(`user:${email}`);
+            if (!userData) {
 				throw new Error("User data not found. Please sign up again.");
 			}
 
-			const newOtp = generateOtp();
-			console.log("new otp generated is:", newOtp);
+            const newOtp = generateOtp();
 
-			await redisClient.setEx(`otp:${email}`, 300, newOtp);
+            await redisClient.setEx(`otp:${email}`, 300, newOtp);
 
-			await sendOtpMail(email, newOtp);
+            await sendOtpMail(email, newOtp);
 
-			return { success: true, message: "New OTP sent successfully" };
-		} catch (error) {
+            return { success: true, message: "New OTP sent successfully" };
+        } catch (error) {
 			console.error("Resend OTP error:", error);
 			throw error;
 		}
@@ -305,20 +297,19 @@ export class AuthService implements IAuthService {
 		email: string,
 	): Promise<{ success: boolean; message: string }> {
 		try {
-			const user = this._userRepo.findByEmail(email);
-			if (!user) {
+            const user = this._userRepo.findByEmail(email);
+            if (!user) {
 				return { success: false, message: "user no existed" };
 			}
 
-			const otp = generateOtp();
-			console.log(otp);
+            const otp = generateOtp();
 
-			await redisClient.setEx(`otp:${email}`, 300, otp);
+            await redisClient.setEx(`otp:${email}`, 300, otp);
 
-			await sendOtpMail(email, otp);
+            await sendOtpMail(email, otp);
 
-			return { success: true, message: "OTP sent successfully" };
-		} catch (_error) {
+            return { success: true, message: "OTP sent successfully" };
+        } catch (_error) {
 			return { success: false, message: "error in verifyin otp" };
 		}
 	}
@@ -333,24 +324,23 @@ export class AuthService implements IAuthService {
 		accessToken?: string;
 		refreshToken?: string;
 	}> {
-		const admin = await this._userRepo.findByEmail(email);
-		console.log("admin is: ", admin);
+        const admin = await this._userRepo.findByEmail(email);
 
-		if (!admin) {
+        if (!admin) {
 			return { success: false, message: "There is no user with this email" };
 		}
 
-		if (admin.role !== ROLES.ADMIN) {
+        if (admin.role !== ROLES.ADMIN) {
 			return { success: false, message: "You are not an admin" };
 		}
 
-		const passVer = await verifyPassword(admin.password, password);
+        const passVer = await verifyPassword(admin.password, password);
 
-		if (!passVer) {
+        if (!passVer) {
 			return { success: false, message: "Invalid password" };
 		}
 
-		const accessToken = generateToken(
+        const accessToken = generateToken(
 			{
 				adminId: admin._id,
 				name: admin.name,
@@ -361,7 +351,7 @@ export class AuthService implements IAuthService {
 			60 * 15,
 		);
 
-		const refresToken = generateToken(
+        const refresToken = generateToken(
 			{
 				adminId: admin._id,
 				name: admin.name,
@@ -372,14 +362,14 @@ export class AuthService implements IAuthService {
 			60 * 60 * 24 * 7,
 		);
 
-		return {
+        return {
 			success: true,
 			message: "Login successful",
 			user: adminToToken(admin),
 			accessToken: accessToken,
 			refreshToken: refresToken,
 		};
-	}
+    }
 
 	async googleAuth(credential: string): Promise<{
 		success: boolean;
@@ -470,39 +460,37 @@ export class AuthService implements IAuthService {
 	}
 
 	async refreshToken(token: string): Promise<{ accessToken: string }> {
-		let user: {
+        let user: {
 			userId: string;
 			email: string;
 			role: string;
 		};
-		try {
-			user = verifyToken(token, env.JWT_REFRESH_SECRET_KEY as string) as {
+        try {
+            user = verifyToken(token, env.JWT_REFRESH_SECRET_KEY as string) as {
 				userId: string;
 				email: string;
 				role: string;
 			};
-			console.log("verified user is: ", user);
-		} catch (_err) {
+        } catch (_err) {
 			throw new Error("Invalid or expired refresh token");
 		}
 
-		const userData = await this._userRepo.findById(user.userId);
-		console.log("after data fetch time: ", userData);
-		if (!userData) throw new Error("User not found");
+        const userData = await this._userRepo.findById(user.userId);
+        if (!userData) throw new Error("User not found");
 
-		const accessToken = generateToken(
+        const accessToken = generateToken(
 			{
 				userId: userData._id,
 				email: userData.email,
-				role: userData.role, // ✅ always fresh from DB
+				role: userData.role,
 				name: userData.name,
 			},
 			env.JWT_SECRET_KEY as string,
 			15 * 60,
 		);
 
-		return { accessToken };
-	}
+        return { accessToken };
+    }
 
 	async checkBlocked(
 		email: string,
@@ -518,9 +506,8 @@ export class AuthService implements IAuthService {
 			}
 			return { success: true, message: "user is not blocked" };
 		} catch (error) {
-			console.log(error);
-			return { success: false, message: "something went wrong" };
-		}
+            return { success: false, message: "something went wrong" };
+        }
 	}
 
 	async changePassword(
@@ -545,8 +532,7 @@ export class AuthService implements IAuthService {
 
 			return { success: true, message: "Password changed successfully" };
 		} catch (error) {
-			console.log("changePassword error:", error);
-			throw error;
-		}
+            throw error;
+        }
 	}
 }

@@ -67,7 +67,6 @@ Return ONLY JSON matching one of the two formats. Do not return markdown formatt
 
 				const content = completion.choices[0]?.message?.content || "{}";
 
-				// Strip possible markdown wrapping if the AI decides to add it
 				let cleanedContent = content.trim();
 				if (cleanedContent.startsWith("```json")) {
 					cleanedContent = cleanedContent
@@ -96,7 +95,6 @@ Return ONLY JSON matching one of the two formats. Do not return markdown formatt
 				});
 			}
 
-			// Map extracted filters to the actual parameters expected by getPublicVehicles
 			const parsedFilters: {
 				search?: string;
 				category?: string[];
@@ -105,7 +103,6 @@ Return ONLY JSON matching one of the two formats. Do not return markdown formatt
 			const searchTerms = [];
 
 			if (responseJSON.filters?.vehicleType) {
-				// Find matching category ID since repo requires ObjectId
 				const categoryMatch = await Category.findOne({
 					name: {
 						$regex: new RegExp(`^${responseJSON.filters.vehicleType}$`, "i"),
@@ -130,8 +127,6 @@ Return ONLY JSON matching one of the two formats. Do not return markdown formatt
 			if (responseJSON.filters?.maxPrice)
 				parsedFilters.maxPrice = responseJSON.filters.maxPrice;
 
-			// Call the existing public search API logic
-			// page=1, limit=10, lat/lon=undefined, range=undefined, minRange=undefined
 			const result = await this._vehicleService.getPublicVehicles(
 				1,
 				10,

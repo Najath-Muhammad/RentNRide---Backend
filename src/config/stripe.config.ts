@@ -6,5 +6,5 @@ if (!env.STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(env.STRIPE_SECRET_KEY || "sk_test_dummy", {
-	apiVersion: "2026-02-25.clover", // or your default version
+	apiVersion: "2026-02-25.clover",
 });

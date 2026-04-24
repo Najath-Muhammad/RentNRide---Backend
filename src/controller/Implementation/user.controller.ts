@@ -32,14 +32,13 @@ export class UserController implements IuserController {
 				user: userDTO(user as IUser),
 			});
 		} catch (error) {
-			console.log(error);
-			return errorResponse(
+            return errorResponse(
 				res,
 				"Failed to fetch profile",
 				HttpStatus.INTERNAL_SERVER_ERROR,
 				error,
 			);
-		}
+        }
 	};
 
 	updateProfile = async (req: Request, res: Response) => {
@@ -59,14 +58,13 @@ export class UserController implements IuserController {
 			);
 			return successResponse(res, "Profile updated successfully");
 		} catch (error) {
-			console.log(error);
-			return errorResponse(
+            return errorResponse(
 				res,
 				"Failed to update profile",
 				HttpStatus.BAD_REQUEST,
 				error,
 			);
-		}
+        }
 	};
 
 	updateProfilePhoto = async (req: Request, res: Response) => {
@@ -88,14 +86,13 @@ export class UserController implements IuserController {
 				profilePhoto: url,
 			});
 		} catch (error) {
-			console.log(error);
-			return errorResponse(
+            return errorResponse(
 				res,
 				"Failed to update profile photo",
 				HttpStatus.BAD_REQUEST,
 				error,
 			);
-		}
+        }
 	};
 
 	changePassword = async (req: Request, res: Response) => {
@@ -116,14 +113,13 @@ export class UserController implements IuserController {
 			);
 			return successResponse(res, "Password updated successfully");
 		} catch (error) {
-			console.log(error);
-			return errorResponse(
+            return errorResponse(
 				res,
 				"Failed to change password",
 				HttpStatus.BAD_REQUEST,
 				error,
 			);
-		}
+        }
 	};
 
 	getSubscription = async (req: Request, res: Response) => {
@@ -135,14 +131,13 @@ export class UserController implements IuserController {
 				subscription: sub,
 			});
 		} catch (error) {
-			console.log(error);
-			return errorResponse(
+            return errorResponse(
 				res,
 				"Failed to fetch subscription status",
 				HttpStatus.INTERNAL_SERVER_ERROR,
 				error,
 			);
-		}
+        }
 	};
 
 	upgradePremium = async (req: Request, res: Response) => {
@@ -154,13 +149,12 @@ export class UserController implements IuserController {
 				subscription: sub,
 			});
 		} catch (error) {
-			console.log(error);
-			return errorResponse(
+            return errorResponse(
 				res,
 				"Failed to upgrade to premium",
 				HttpStatus.BAD_REQUEST,
 				error,
 			);
-		}
+        }
 	};
 }
