@@ -15,7 +15,7 @@ import {
 import type { IAuthController } from "../interfaces/iauth.controller";
 
 export class AuthController implements IAuthController {
-	constructor(private _authService: IAuthService) {}
+	constructor(private _authService: IAuthService) { }
 
 	async signup(
 		req: Request,
@@ -71,15 +71,18 @@ export class AuthController implements IAuthController {
 
 			const result = await this._authService.verifyOtp(otp, email);
 
+			const isProd = env.NODE_ENV === "production";
 			res.cookie("accessToken", result.accessToken, {
 				httpOnly: true,
-				sameSite: "strict",
+				sameSite: isProd ? "none" : "lax",
+				secure: isProd,
 				maxAge: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 
 			res.cookie("refreshToken", result.refreshToken, {
 				httpOnly: true,
-				sameSite: "strict",
+				sameSite: isProd ? "none" : "lax",
+				secure: isProd,
 				maxAge: Number(env.REFRESH_TOKEN_MAXAGE),
 			});
 
@@ -180,15 +183,18 @@ export class AuthController implements IAuthController {
 				return errorResponse(res, result.message, HttpStatus.OK);
 			}
 
+			const isProd = env.NODE_ENV === "production";
 			res.cookie("accessToken", result.accessToken, {
 				httpOnly: true,
-				sameSite: "lax",
+				sameSite: isProd ? "none" : "lax",
+				secure: isProd,
 				maxAge: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 
 			res.cookie("refreshToken", result.refreshToken, {
 				httpOnly: true,
-				sameSite: "lax",
+				sameSite: isProd ? "none" : "lax",
+				secure: isProd,
 				maxAge: Number(env.REFRESH_TOKEN_MAXAGE),
 			});
 
@@ -249,15 +255,18 @@ export class AuthController implements IAuthController {
 				return errorResponse(res, result.message, HttpStatus.OK);
 			}
 
+			const isProd = env.NODE_ENV === "production";
 			res.cookie("accessToken", result.accessToken, {
 				httpOnly: true,
-				sameSite: "lax",
+				sameSite: isProd ? "none" : "lax",
+				secure: isProd,
 				maxAge: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 
 			res.cookie("refreshToken", result.refreshToken, {
 				httpOnly: true,
-				sameSite: "lax",
+				sameSite: isProd ? "none" : "lax",
+				secure: isProd,
 				maxAge: Number(env.REFRESH_TOKEN_MAXAGE),
 			});
 
@@ -322,9 +331,11 @@ export class AuthController implements IAuthController {
 
 			const { accessToken } = await this._authService.refreshToken(token);
 
+			const isProd = env.NODE_ENV === "production";
 			res.cookie("accessToken", accessToken, {
 				httpOnly: true,
-				sameSite: "lax",
+				sameSite: isProd ? "none" : "lax",
+				secure: isProd,
 				maxAge: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 
@@ -364,17 +375,18 @@ export class AuthController implements IAuthController {
 				return errorResponse(res, result.message, HttpStatus.BAD_REQUEST);
 			}
 
+			const isProd = env.NODE_ENV === "production";
 			res.cookie("accessToken", result.accessToken, {
 				httpOnly: true,
-				sameSite: "lax",
-				secure: env.NODE_ENV === "production",
+				sameSite: isProd ? "none" : "lax",
+				secure: isProd,
 				maxAge: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 
 			res.cookie("refreshToken", result.refreshToken, {
 				httpOnly: true,
-				sameSite: "lax",
-				secure: env.NODE_ENV === "production",
+				sameSite: isProd ? "none" : "lax",
+				secure: isProd,
 				maxAge: Number(env.REFRESH_TOKEN_MAXAGE),
 			});
 
