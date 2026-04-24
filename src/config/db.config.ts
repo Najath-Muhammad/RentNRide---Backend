@@ -9,11 +9,12 @@ if (!mongoURI) {
 
 const connectDB = async () => {
 	try {
-        await mongoose.connect(mongoURI, {
+		await mongoose.connect(mongoURI, {
 			maxConnecting: 100,
 			minPoolSize: 10,
 		});
-    } catch (error) {
+		console.log("connected to MongoDB");
+	} catch (error) {
 		console.error("error connecting :", error);
 		process.exit(1);
 	}

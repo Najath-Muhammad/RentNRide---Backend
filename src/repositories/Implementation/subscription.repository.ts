@@ -13,7 +13,11 @@ import type {
 } from "../interfaces/subscription.interface";
 import { BaseRepo } from "./base.repository";
 
-export class SubscriptionPlanRepo extends BaseRepo<ISubscriptionPlan> implements ISubscriptionPlanRepo {
+// ── Plan Repository ────────────────────────────────────────────────────────
+export class SubscriptionPlanRepo
+	extends BaseRepo<ISubscriptionPlan>
+	implements ISubscriptionPlanRepo
+{
 	constructor() {
 		super(SubscriptionPlanModel);
 	}
@@ -57,7 +61,11 @@ export class SubscriptionPlanRepo extends BaseRepo<ISubscriptionPlan> implements
 	}
 }
 
-export class UserSubscriptionRepo extends BaseRepo<IUserSubscription> implements IUserSubscriptionRepo {
+// ── User Subscription Repository ───────────────────────────────────────────
+export class UserSubscriptionRepo
+	extends BaseRepo<IUserSubscription>
+	implements IUserSubscriptionRepo
+{
 	constructor() {
 		super(UserSubscriptionModel);
 	}
@@ -88,6 +96,7 @@ export class UserSubscriptionRepo extends BaseRepo<IUserSubscription> implements
 		if (status) filter.status = status;
 
 		if (search) {
+			// Post-populate in-memory search (Mongoose doesn't support searching populated fields in DB)
 			const all = await this.model
 				.find(filter)
 				.populate("userId", "name email")

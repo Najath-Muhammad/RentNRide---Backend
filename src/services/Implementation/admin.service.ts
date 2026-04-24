@@ -142,6 +142,7 @@ export class AdminServices implements IAdminService {
 					.lean(),
 			]);
 
+			// Format booking status object
 			let completedCount = 0;
 			let pendingCount = 0;
 			let cancelledCount = 0;
@@ -176,6 +177,7 @@ export class AdminServices implements IAdminService {
 				}),
 			);
 
+			// Format recent bookings
 			const recentBookings = (recentBookingsRaw as unknown[]).map(
 				(rawBooking: unknown) => {
 					const booking = rawBooking as {

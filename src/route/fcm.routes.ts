@@ -8,6 +8,7 @@ const fcmRouter = Router();
 const userRepo = new UserRepo();
 const fcmController = new FcmController(userRepo);
 
+// All endpoints require an authenticated user
 fcmRouter.use(AuthGuard(USER_ROLES));
 
 fcmRouter.post("/token", fcmController.registerToken.bind(fcmController));

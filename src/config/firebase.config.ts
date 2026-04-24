@@ -4,6 +4,7 @@ import logger from "../utils/logger";
 
 let firebaseApp: admin.app.App | null = null;
 
+// Sentinel: has initialization been attempted yet?
 let initAttempted = false;
 
 export function initFirebase(): admin.app.App | null {
@@ -12,8 +13,10 @@ export function initFirebase(): admin.app.App | null {
 
 	const projectId = env.FIREBASE_PROJECT_ID;
 	const clientEmail = env.FIREBASE_CLIENT_EMAIL;
+	// The private key is stored in .env with escaped \n — unescape them
 	const privateKey = env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
 
+	// Skip gracefully if placeholder / missing values
 	const isPlaceholder =
 		!projectId ||
 		!clientEmail ||

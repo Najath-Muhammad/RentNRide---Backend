@@ -26,6 +26,7 @@ export const SoftAuth = (req: Request, _res: Response, next: NextFunction) => {
 		}
 		next();
 	} catch (_error) {
+		// Silent fail - public routes should still work
 		next();
 	}
 };

@@ -10,26 +10,28 @@ export class FileController implements IFileController {
 
 	async generateUploadUrl(req: Request, res: Response): Promise<Response> {
 		try {
-            const parsed = fileUploadSchema.safeParse(req.body);
-            if (!parsed.success) {
+			const parsed = fileUploadSchema.safeParse(req.body);
+			if (!parsed.success) {
 				return errorResponse(
 					res,
 					parsed.error.issues[0].message,
 					HttpStatus.BAD_REQUEST,
 				);
 			}
-            const { fileName, fileType } = parsed.data;
+			const { fileName, fileType } = parsed.data;
 
-            const response = await this._fileService.generateUploadUrl(
+			const response = await this._fileService.generateUploadUrl(
 				fileName,
 				fileType,
 			);
 
-            return successResponse(res, "Upload URL generated", {
+			console.log("upload url", response.uploadUrl);
+
+			return successResponse(res, "Upload URL generated", {
 				uploadUrl: response.uploadUrl,
 				publicUrl: response.publicUrl,
 			});
-        } catch (error) {
+		} catch (error) {
 			console.error("Generate upload URL error:", error);
 			return errorResponse(
 				res,

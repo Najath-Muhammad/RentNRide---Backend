@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+// Wallet
 export const fundWalletSchema = z.object({
 	amount: z.coerce.number().min(10, "Invalid amount. Must be at least ₹10."),
 });
@@ -7,6 +8,7 @@ export const verifyPaymentIntentSchema = z.object({
 	paymentIntentId: z.string().min(1, "Payment Intent ID is required"),
 });
 
+// Booking
 export const createBookingSchema = z.object({
 	vehicleId: z.string().min(1, "Vehicle ID is required"),
 	ownerId: z.string().min(1, "Owner ID is required"),
@@ -44,6 +46,7 @@ export const changePasswordSchema = z.object({
 	newPassword: z.string().min(6, "New password must be at least 6 characters"),
 });
 
+// Subscription
 export const createPlanSchema = z.object({
 	name: z.string().min(1, "Plan name is required"),
 	description: z.string().optional(),
@@ -74,6 +77,7 @@ export const planIdSchema = z.object({
 	planId: z.string().min(1, "planId is required"),
 });
 
+// Review
 export const reviewSchema = z.object({
 	vehicleId: z.string().min(1, "vehicleId is required"),
 	bookingId: z.string().min(1, "bookingId is required"),

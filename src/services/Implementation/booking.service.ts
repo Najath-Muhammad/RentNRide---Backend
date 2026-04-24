@@ -59,6 +59,7 @@ export class BookingService implements IBookingService {
 		totalPages: number;
 	}> {
 		try {
+			// Auto-expire stale bookings for this user before returning the list
 			await this._bookingRepo.expireStaleBookings(userId);
 
 			return await this._bookingRepo.findBookingsByUser(
@@ -137,6 +138,7 @@ export class BookingService implements IBookingService {
 
 			const newBooking = await this._bookingRepo.create(bookingData);
 
+			// Notify the vehicle owner via FCM push notification
 			try {
 				await sendPushNotification(vehicle.ownerId.toString(), {
 					title: "Car Booked 🚗",

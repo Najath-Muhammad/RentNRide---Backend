@@ -7,7 +7,7 @@ import { WalletService } from "../services/Implementation/wallet.service";
 
 const router = Router();
 const walletRepo = new WalletRepo();
-export const walletService = new WalletService(walletRepo);
+export const walletService = new WalletService(walletRepo); // export so payment.service can use it for webhook
 const walletController = new WalletController(walletService);
 
 router.use(AuthGuard(ALL_ROLES));

@@ -11,6 +11,7 @@ import { sendPushNotification } from "./fcm.util";
 
 let io: SocketServer;
 
+// Track online users: userId -> Set of socketIds
 const onlineUsers = new Map<string, Set<string>>();
 
 export function initSocket(server: HttpServer): SocketServer {
@@ -25,16 +26,19 @@ export function initSocket(server: HttpServer): SocketServer {
 		},
 	});
 
+	// Set up chat service
 	const messageRepo = new MessageRepo();
 	const conversationRepo = new ConversationRepo();
 	const chatService = new ChatService(messageRepo, conversationRepo);
 
+	// Authentication middleware
 	io.use((socket, next) => {
 		try {
 			const token =
 				socket.handshake.auth.token ||
 				socket.handshake.headers.authorization?.replace("Bearer ", "");
 
+			// Also try from cookie
 			const cookieHeader = socket.handshake.headers.cookie || "";
 			const cookieToken = cookieHeader
 				.split(";")
@@ -71,29 +75,37 @@ export function initSocket(server: HttpServer): SocketServer {
 	});
 
 	io.on("connection", (socket) => {
-        const userId: string = socket.data.user.userId;
-        if (!onlineUsers.has(userId)) {
+		const userId: string = socket.data.user.userId;
+		console.log(`[Socket] User connected: ${userId} (${socket.id})`);
+
+		// Track online users
+		if (!onlineUsers.has(userId)) {
 			onlineUsers.set(userId, new Set());
 		}
-        onlineUsers.get(userId)?.add(socket.id);
+		onlineUsers.get(userId)?.add(socket.id);
 
-        socket.join(`user:${userId}`);
+		// Join personal room to receive direct messages
+		socket.join(`user:${userId}`);
 
-        socket.broadcast.emit("user:online", { userId });
+		// Broadcast online status
+		socket.broadcast.emit("user:online", { userId });
 
-        socket.join(`user:${userId}`);
+		// ─── Room: join a conversation ─────────────────────────────
+		socket.join(`user:${userId}`);
 
-        socket.broadcast.emit("user:online", { userId });
+		socket.broadcast.emit("user:online", { userId });
 
-        socket.on("conversation:join", (conversationId: string) => {
-            socket.join(`conversation:${conversationId}`);
-        });
+		socket.on("conversation:join", (conversationId: string) => {
+			socket.join(`conversation:${conversationId}`);
+			console.log(`[Socket] ${userId} joined conversation: ${conversationId}`);
+		});
 
-        socket.on("conversation:leave", (conversationId: string) => {
+		socket.on("conversation:leave", (conversationId: string) => {
 			socket.leave(`conversation:${conversationId}`);
 		});
 
-        socket.on(
+		// ─── Send message ──────────────────────────────────────────
+		socket.on(
 			"message:send",
 			async (data: {
 				conversationId?: string;
@@ -113,6 +125,7 @@ export function initSocket(server: HttpServer): SocketServer {
 						bookingId: data.bookingId,
 					});
 
+					// Emit to conversation room
 					if (data.conversationId) {
 						io.to(`conversation:${data.conversationId}`).emit(
 							"message:new",
@@ -120,10 +133,12 @@ export function initSocket(server: HttpServer): SocketServer {
 						);
 					}
 
+					// Emit to receiver's personal room
 					io.to(`user:${data.receiverId}`).emit("message:new", message);
 
 					socket.emit("message:sent", message);
 
+					// FCM push notification (works even when receiver is in background / offline)
 					try {
 						const senderUser = await UserModel.findById(userId).select("name");
 						const senderName = senderUser?.name ?? "Someone";
@@ -147,7 +162,8 @@ export function initSocket(server: HttpServer): SocketServer {
 			},
 		);
 
-        socket.on(
+		// ─── Booking action (approve/reject) ───────────────────────
+		socket.on(
 			"booking:action",
 			async (data: {
 				conversationId: string;
@@ -162,11 +178,13 @@ export function initSocket(server: HttpServer): SocketServer {
 						data.action,
 					);
 
+					// Emit to the conversation room
 					io.to(`conversation:${data.conversationId}`).emit(
 						"message:new",
 						message,
 					);
 
+					// Also emit directly to the renter
 					const conversation = await conversationRepo.findById(
 						data.conversationId,
 					);
@@ -188,6 +206,7 @@ export function initSocket(server: HttpServer): SocketServer {
 						message,
 					});
 
+					// FCM push notification for booking action
 					if (conversation) {
 						const renterId = conversation.participants.find(
 							(p) => p.toString() !== userId,
@@ -225,7 +244,8 @@ export function initSocket(server: HttpServer): SocketServer {
 			},
 		);
 
-        socket.on(
+		// ─── Typing indicators ─────────────────────────────────────
+		socket.on(
 			"typing:start",
 			(data: { conversationId: string; receiverId: string }) => {
 				socket.to(`conversation:${data.conversationId}`).emit("typing:start", {
@@ -239,7 +259,7 @@ export function initSocket(server: HttpServer): SocketServer {
 			},
 		);
 
-        socket.on(
+		socket.on(
 			"typing:stop",
 			(data: { conversationId: string; receiverId: string }) => {
 				socket
@@ -252,17 +272,19 @@ export function initSocket(server: HttpServer): SocketServer {
 			},
 		);
 
-        socket.on("disconnect", () => {
-            const userSockets = onlineUsers.get(userId);
-            if (userSockets) {
+		// ─── Disconnect ────────────────────────────────────────────
+		socket.on("disconnect", () => {
+			const userSockets = onlineUsers.get(userId);
+			if (userSockets) {
 				userSockets.delete(socket.id);
 				if (userSockets.size === 0) {
 					onlineUsers.delete(userId);
 					socket.broadcast.emit("user:offline", { userId });
 				}
 			}
-        });
-    });
+			console.log(`[Socket] User disconnected: ${userId} (${socket.id})`);
+		});
+	});
 
 	return io;
 }

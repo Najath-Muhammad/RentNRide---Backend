@@ -1,3 +1,5 @@
+// src/services/admin.service.ts
+
 import type { ICategory } from "../../model/category.model";
 import type { IFuelType } from "../../model/fueltype.model";
 import type { ICategoryRepository } from "../../repositories/interfaces/category.interface";

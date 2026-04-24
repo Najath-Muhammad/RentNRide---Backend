@@ -4,6 +4,7 @@ import type {
 	IUserSubscription,
 } from "../types/subscription/subscription.types";
 
+// ── Subscription Plan ──────────────────────────────────────────────────────
 const SubscriptionPlanSchema = new Schema<ISubscriptionPlan>(
 	{
 		name: { type: String, required: true, unique: true, trim: true },
@@ -17,6 +18,7 @@ const SubscriptionPlanSchema = new Schema<ISubscriptionPlan>(
 	{ timestamps: true },
 );
 
+// ── User Subscription ──────────────────────────────────────────────────────
 const UserSubscriptionSchema = new Schema<IUserSubscription>(
 	{
 		userId: { type: Schema.Types.ObjectId, ref: "User", required: true },

@@ -5,9 +5,10 @@ import logger from "../utils/logger";
 export const checkBlocked = (userService: IAuthService) => {
 	return async (req: Request, res: Response, next: NextFunction) => {
 		try {
-            const email = req.user?.email;
+			const email = req.user?.email;
+			console.log(email);
 
-            if (!email) {
+			if (!email) {
 				return res.status(401).json({
 					success: false,
 					message: "Unauthorized: No user email found",
@@ -15,8 +16,9 @@ export const checkBlocked = (userService: IAuthService) => {
 				});
 			}
 
-            const response = await userService.checkBlocked(email);
-            if (!response.success) {
+			const response = await userService.checkBlocked(email);
+			console.log("this is the res", response);
+			if (!response.success) {
 				return res.status(403).json({
 					success: false,
 					message: response.message || "Your account has been blocked.",
@@ -25,8 +27,8 @@ export const checkBlocked = (userService: IAuthService) => {
 				});
 			}
 
-            next();
-        } catch (error) {
+			next();
+		} catch (error) {
 			logger.error("checkBlocked middleware error:", error);
 			return res.status(500).json({
 				success: false,

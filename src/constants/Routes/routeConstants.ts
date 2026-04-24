@@ -29,6 +29,7 @@ export const ROUTES = {
 		UNBLOCK_USER: "/users/:userId/unblock",
 		DELETE_USER: "/users/delete/:userId",
 
+		// Vehicle Management
 		GET_VEHICLES: "/vehicles",
 		GET_VEHICLE_STATS: "/vehicles/stats",
 		APPROVE_VEHICLE: "/vehicles/:id/approve",

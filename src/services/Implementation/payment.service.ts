@@ -25,6 +25,7 @@ export class PaymentService implements IPaymentService {
 		}
 
 		if (booking.paymentIntentId) {
+			// Return existing intent if already created, but ONLY if it still needs payment
 			const existingIntent = await stripe.paymentIntents.retrieve(
 				booking.paymentIntentId,
 			);
@@ -46,6 +47,7 @@ export class PaymentService implements IPaymentService {
 			}
 		}
 
+		// Amount must be in cents/paise for Stripe
 		const amountInSmallestUnit = Math.round(booking.advancePaid * 100);
 
 		const paymentIntent = await stripe.paymentIntents.create({
@@ -91,11 +93,13 @@ export class PaymentService implements IPaymentService {
 
 		try {
 			await stripe.paymentIntents.capture(booking.paymentIntentId);
+			// The webhook will update the db, but we can also optimally update it here.
 			await this._bookingRepo.updateBookingDetails(bookingId, {
 				paymentStatus: "captured",
-				bookingStatus: "payment_captured",
+				bookingStatus: "payment_captured", // or you can keep ride_started if you want that as the primary status
 			});
 
+			// Add the captured advance to the owner's wallet
 			const walletRepo = new WalletRepo();
 			const walletService = new WalletService(walletRepo);
 			await walletService.addTransaction(
@@ -256,6 +260,7 @@ export class PaymentService implements IPaymentService {
 				break;
 			}
 			default:
+				console.log(`Unhandled event type ${event.type}`);
 		}
 	}
 }

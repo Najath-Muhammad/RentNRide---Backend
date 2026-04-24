@@ -11,7 +11,7 @@ export class AdminVehicleController implements IAdminVehicleController {
 
 	async getAllVehicles(req: Request, res: Response): Promise<Response> {
 		try {
-            const {
+			const {
 				page = 1,
 				limit = 10,
 				search = "",
@@ -21,36 +21,38 @@ export class AdminVehicleController implements IAdminVehicleController {
 				owner,
 			} = req.query;
 
-            const filters: Record<string, string> = {};
+			console.log("controller is working", req.query);
 
-            if (search && String(search).trim() !== "") {
+			const filters: Record<string, string> = {};
+
+			if (search && String(search).trim() !== "") {
 				filters.search = String(search).trim();
 			}
-            if (category && String(category).trim() !== "") {
+			if (category && String(category).trim() !== "") {
 				filters.category = String(category).trim();
 			}
-            if (status && String(status).trim() !== "") {
+			if (status && String(status).trim() !== "") {
 				filters.status = String(status).trim();
 			}
-            if (fuelType && String(fuelType).trim() !== "") {
+			if (fuelType && String(fuelType).trim() !== "") {
 				filters.fuelType = String(fuelType).trim();
 			}
-            if (owner && String(owner).trim() !== "") {
+			if (owner && String(owner).trim() !== "") {
 				filters.owner = String(owner).trim();
 			}
 
-            const response = await this._vehicleService.getAllVehicles(
+			const response = await this._vehicleService.getAllVehicles(
 				filters,
 				Number(page),
 				Number(limit),
 			);
 
-            if (!response.success) {
+			if (!response.success) {
 				return errorResponse(res, response.message, HttpStatus.OK);
 			}
 
-            return successResponse(res, response.message, response.data);
-        } catch (error) {
+			return successResponse(res, response.message, response.data);
+		} catch (error) {
 			console.error("Error in getAllVehicles:", error);
 			return errorResponse(
 				res,

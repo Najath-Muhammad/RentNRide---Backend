@@ -270,6 +270,7 @@ export class ChatService implements IChatService {
 			const message = await this._messageRepo.create(messageData);
 			await this._conversationRepo.updateLastMessage(convObjId, message._id);
 
+			// Update booking status
 			booking.bookingStatus = action === "approved" ? "approved" : "rejected";
 			await booking.save();
 			const populated = await this.populateMessage(message._id);

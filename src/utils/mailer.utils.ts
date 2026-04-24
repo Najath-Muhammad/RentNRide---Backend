@@ -15,9 +15,9 @@ export const sendOtpMail = async (
 	otp: string,
 ): Promise<boolean> => {
 	try {
-        const transporter = createTransporter();
-        const adminEmail = env.NODEMAILER_EMAIL as string;
-        const mailOptions = {
+		const transporter = createTransporter();
+		const adminEmail = env.NODEMAILER_EMAIL as string;
+		const mailOptions = {
 			from: `"RentNRide" <${adminEmail}>`,
 			to: email,
 			subject: "Your OTP Verification Code",
@@ -43,10 +43,13 @@ export const sendOtpMail = async (
 			`,
 		};
 
-        const info = await transporter.sendMail(mailOptions);
+		const info = await transporter.sendMail(mailOptions);
 
-        return true;
-    } catch (error) {
+		console.log("Email sent:", info.messageId);
+		console.log("Email response:", info.response);
+
+		return true;
+	} catch (error) {
 		console.error("Failed to send email:", error);
 		return false;
 	}
@@ -64,6 +67,7 @@ export const sendContactMail = async (data: {
 		const adminEmail = env.NODEMAILER_EMAIL as string;
 		const fullName = `${data.firstName} ${data.lastName}`;
 
+		// 1. Notify admin of new contact submission
 		await transporter.sendMail({
 			from: `"RentNRide" <${adminEmail}>`,
 			to: adminEmail,
@@ -81,6 +85,7 @@ export const sendContactMail = async (data: {
 			`,
 		});
 
+		// 2. Send confirmation email to the user
 		await transporter.sendMail({
 			from: `"RentNRide Support" <${adminEmail}>`,
 			to: data.email,

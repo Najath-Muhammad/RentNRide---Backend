@@ -11,6 +11,7 @@ const bookingRepo = new BookingRepo();
 const adminBookingService = new AdminBookingService(bookingRepo);
 const adminBookingController = new AdminBookingController(adminBookingService);
 
+// Admin Routes
 adminBookingRouter.get(
 	"/",
 	AuthGuard(ADMIN_ONLY),

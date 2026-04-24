@@ -15,13 +15,14 @@ export class VehicleController implements IVehicleController {
 		_next: NextFunction,
 	): Promise<Response> {
 		try {
-            const user = req.user;
-            if (!user) {
+			const user = req.user;
+			console.log("user in the create controller is: ", user);
+			if (!user) {
 				return errorResponse(res, "Unauthorized", HttpStatus.UNAUTHORIZED);
 			}
-            const VehicleData = req.body;
+			const VehicleData = req.body;
 
-            const _response = await this._vehicleService.createVehicle(
+			const _response = await this._vehicleService.createVehicle(
 				{
 					ownerId: user.userId,
 					...VehicleData,
@@ -29,17 +30,19 @@ export class VehicleController implements IVehicleController {
 				user,
 			);
 
-            if (!_response.success) {
+			console.log("Response from vehicle service in controller:", _response);
+
+			if (!_response.success) {
 				return errorResponse(res, _response.message, HttpStatus.BAD_REQUEST);
 			}
 
-            return successResponse(
+			return successResponse(
 				res,
 				"Vehicle Created Successfully, Waiting for admins Approval",
 				undefined,
 				HttpStatus.OK,
 			);
-        } catch (error) {
+		} catch (error) {
 			console.error("Error in createVehicle controller:", error);
 			return errorResponse(
 				res,
@@ -293,13 +296,16 @@ export class VehicleController implements IVehicleController {
 	}
 
 	async getMyVehicles(req: Request, res: Response): Promise<Response> {
-        try {
-            const ownerId = req.user;
-            if (!ownerId) {
+		console.log("this controller is working");
+		try {
+			const ownerId = req.user;
+			console.log("owner id is: ", ownerId);
+			if (!ownerId) {
 				return errorResponse(res, "Unauthorized", HttpStatus.UNAUTHORIZED);
 			}
-            const result = await this._vehicleService.getMyVehicles(ownerId.userId);
-            if (!result.success) {
+			const result = await this._vehicleService.getMyVehicles(ownerId.userId);
+			console.log("response is : ", result);
+			if (!result.success) {
 				return errorResponse(
 					res,
 					result.message,
@@ -307,16 +313,16 @@ export class VehicleController implements IVehicleController {
 				);
 			}
 
-            if (!result.vehicles) {
+			if (!result.vehicles) {
 				return successResponse(res, "Vehicles fetched successfully", {
 					vehicles: [],
 				});
 			}
 
-            return successResponse(res, "Vehicles fetched successfully", {
+			return successResponse(res, "Vehicles fetched successfully", {
 				vehicles: result.vehicles,
 			});
-        } catch (error) {
+		} catch (error) {
 			console.error("Error in getMyVehicles controller:", error);
 			return errorResponse(
 				res,
@@ -324,7 +330,7 @@ export class VehicleController implements IVehicleController {
 				HttpStatus.INTERNAL_SERVER_ERROR,
 			);
 		}
-    }
+	}
 
 	async rejectVehicle(req: Request, res: Response): Promise<Response> {
 		try {

@@ -25,6 +25,7 @@ const vehicleRepo = new VehicleRepo();
 const vehicleService = new VehicleService(vehicleRepo);
 const adminVehicleController = new AdminVehicleController(vehicleService);
 
+//auth
 adminRouter.post(
 	ROUTES.ADMIN.LOGIN,
 	authController.adminLogin.bind(authController),
@@ -34,8 +35,10 @@ adminRouter.post(
 	authController.adminLogout.bind(authController),
 );
 
+// Public Admin routes for frontend access
 adminRouter.use(categoryRouter);
 
+// Protected Admin Routes
 adminRouter.use(AuthGuard(ADMIN_ONLY));
 
 adminRouter.get(
@@ -43,6 +46,7 @@ adminRouter.get(
 	adminController.getDashboardStats.bind(adminController),
 );
 
+//user management
 adminRouter.get(
 	ROUTES.ADMIN.GET_USERS,
 	adminController.getAllUsers.bind(adminController),

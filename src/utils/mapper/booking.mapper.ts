@@ -1,12 +1,13 @@
 import type { IBooking } from "../../types/booking/booking.types";
 
 export const bookingDTO = (booking: IBooking): Partial<IBooking> => {
+	// Provide safe mapping of booking to frontend without internal Mongoose fields like __v
 	return {
 		_id: booking._id,
 		bookingId: booking.bookingId,
-		userId: booking.userId,
-		vehicleId: booking.vehicleId,
-		ownerId: booking.ownerId,
+		userId: booking.userId, // may be populated
+		vehicleId: booking.vehicleId, // may be populated
+		ownerId: booking.ownerId, // may be populated
 		startDate: booking.startDate,
 		endDate: booking.endDate,
 		totalAmount: booking.totalAmount,

@@ -72,8 +72,9 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 
 			return { totalVehicles, pendingApproval, approved, blocked };
 		} catch (error) {
-            return { totalVehicles: 0, pendingApproval: 0, approved: 0, blocked: 0 };
-        }
+			console.log(error);
+			return { totalVehicles: 0, pendingApproval: 0, approved: 0, blocked: 0 };
+		}
 	}
 
 	async approveVehicle(id: string): Promise<(Document & IVehicle) | null> {
@@ -148,6 +149,7 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 				};
 				filter.$and = [...(filter.$and || []), categoryQuery];
 			}
+			// Filter by subcategory (e.g. SUV, Sedan) stored on the vehicle as category2
 			if (filters.category2) {
 				filter.category2 = filters.category2;
 			}
