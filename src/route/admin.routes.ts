@@ -35,6 +35,9 @@ adminRouter.post(
 	authController.adminLogout.bind(authController),
 );
 
+// Public Admin routes for frontend access
+adminRouter.use(categoryRouter);
+
 // Protected Admin Routes
 adminRouter.use(AuthGuard(ADMIN_ONLY));
 
@@ -89,7 +92,5 @@ adminRouter.patch(
 	ROUTES.ADMIN.REJECT_VEHICLE,
 	adminVehicleController.rejectVehicle.bind(adminVehicleController),
 );
-
-adminRouter.use(categoryRouter);
 
 export default adminRouter;

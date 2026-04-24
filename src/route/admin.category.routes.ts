@@ -3,6 +3,8 @@ import { AdminCategoryController } from "../controller/Implementation/admin.cate
 import { CategoryRepository } from "../repositories/Implementation/category.repository";
 import { FuelTypeRepository } from "../repositories/Implementation/fueltype.repository";
 import { AdminCategoryService } from "../services/Implementation/admin.category.service";
+import { AuthGuard } from "../middlewares/authGuard";
+import { ADMIN_ONLY } from "../constants/roles";
 
 const categoryRouter = Router();
 
@@ -24,6 +26,13 @@ categoryRouter.get(
 	"/categories/:id",
 	adminCategoryController.getCategoryById.bind(adminCategoryController),
 );
+categoryRouter.get(
+	"/fuel-types",
+	adminCategoryController.getAllFuelTypes.bind(adminCategoryController),
+);
+
+categoryRouter.use(AuthGuard(ADMIN_ONLY));
+
 categoryRouter.post(
 	"/categories",
 	adminCategoryController.createCategory.bind(adminCategoryController),
@@ -37,10 +46,6 @@ categoryRouter.patch(
 	adminCategoryController.toggleCategoryStatus.bind(adminCategoryController),
 );
 
-categoryRouter.get(
-	"/fuel-types",
-	adminCategoryController.getAllFuelTypes.bind(adminCategoryController),
-);
 categoryRouter.post(
 	"/fuel-types",
 	adminCategoryController.createFuelType.bind(adminCategoryController),
