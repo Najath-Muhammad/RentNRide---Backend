@@ -21,7 +21,7 @@ import type {
 } from "../interfaces/auth.interface.service";
 
 export class AuthService implements IAuthService {
-	constructor(private _userRepo: IUserRepository) {}
+	constructor(private _userRepo: IUserRepository) { }
 
 	async signup(user: UserType): Promise<{ success: boolean; message: string }> {
 		try {
@@ -471,13 +471,15 @@ export class AuthService implements IAuthService {
 
 	async refreshToken(token: string): Promise<{ accessToken: string }> {
 		let user: {
-			userId: string;
+			userId?: string;
+			adminId?: string;
 			email: string;
 			role: string;
 		};
 		try {
 			user = verifyToken(token, env.JWT_REFRESH_SECRET_KEY as string) as {
-				userId: string;
+				userId?: string;
+				adminId?: string;
 				email: string;
 				role: string;
 			};
@@ -486,17 +488,28 @@ export class AuthService implements IAuthService {
 			throw new Error("Invalid or expired refresh token");
 		}
 
-		const userData = await this._userRepo.findById(user.userId);
+		const id = user.userId || user.adminId;
+		if (!id) throw new Error("Invalid token payload missing ID");
+
+		const userData = await this._userRepo.findById(id as string);
 		console.log("after data fetch time: ", userData);
 		if (!userData) throw new Error("User not found");
 
+		// Retain whichever ID pattern the original token had
+		const payload: any = {
+			email: userData.email,
+			role: userData.role, // ✅ always fresh from DB
+			name: userData.name,
+		};
+
+		if (user.adminId) {
+			payload.adminId = userData._id;
+		} else {
+			payload.userId = userData._id;
+		}
+
 		const accessToken = generateToken(
-			{
-				userId: userData._id,
-				email: userData.email,
-				role: userData.role, // ✅ always fresh from DB
-				name: userData.name,
-			},
+			payload,
 			env.JWT_SECRET_KEY as string,
 			15 * 60,
 		);
