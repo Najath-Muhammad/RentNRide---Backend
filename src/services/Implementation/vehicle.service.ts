@@ -1,4 +1,5 @@
 import type { Document, FilterQuery, Types } from "mongoose";
+import { Category } from "../../model/category.model";
 import {
 	SubscriptionPlanRepo,
 	UserSubscriptionRepo,
@@ -18,13 +19,22 @@ import type { IVehicleService } from "../interfaces/vehicle.interface.service";
 import { SubscriptionService } from "./subscription.service";
 
 export class VehicleService implements IVehicleService {
-	constructor(private _vehicleRepo: IVehicleRepository) {}
+	constructor(private _vehicleRepo: IVehicleRepository) { }
 
 	async createVehicle(
 		vehicleData: IVehicle,
 		user: { userId: string; role: string },
 	) {
 		try {
+			// Validate that the category exists and is active
+			const category = await Category.findById(vehicleData.category);
+			if (!category || !category.isActive) {
+				return {
+					success: false,
+					message: "The selected category is currently not active or does not exist.",
+				};
+			}
+
 			// Enforce subscription vehicle limit
 			const subService = new SubscriptionService(
 				new SubscriptionPlanRepo(),
@@ -496,6 +506,6 @@ export class VehicleService implements IVehicleService {
 
 	async checkLimit(_userId: string) {
 		try {
-		} catch (_error) {}
+		} catch (_error) { }
 	}
 }
