@@ -29,12 +29,6 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 			delete queryFilters.search;
 		}
 
-		if (queryFilters.category) {
-			queryFilters.category = {
-				$regex: `^${queryFilters.category}$`,
-				$options: "i",
-			};
-		}
 
 		if (queryFilters.status) {
 			switch (queryFilters.status) {
