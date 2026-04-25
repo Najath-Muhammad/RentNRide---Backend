@@ -36,6 +36,27 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 			};
 		}
 
+		if (queryFilters.status) {
+			switch (queryFilters.status) {
+				case "Pending Approval":
+					queryFilters.isApproved = false;
+					queryFilters.isRejected = false;
+					break;
+				case "Approved":
+					queryFilters.isApproved = true;
+					queryFilters.isActive = true;
+					break;
+				case "Blocked":
+					queryFilters.isApproved = true;
+					queryFilters.isActive = false;
+					break;
+				case "Rejected":
+					queryFilters.isRejected = true;
+					break;
+			}
+			delete queryFilters.status;
+		}
+
 		const vehicles = await this.model
 			.find(queryFilters)
 			.populate("category", "name")
@@ -250,6 +271,6 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 		try {
 			const _today = Date.now();
 			const _count = this.model.find({ ownerId: ownerId });
-		} catch (_error) {}
+		} catch (_error) { }
 	}
 }
