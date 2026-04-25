@@ -5,9 +5,10 @@ import { WalletRepo } from "../../repositories/Implementation/wallet.repository"
 import type { IBookingRepo } from "../../repositories/interfaces/booking.interface";
 import type { IPaymentService } from "../interfaces/payment.interface.service";
 import { WalletService } from "./wallet.service";
+import { WalletModel } from "../../model/wallet.model";
 
 export class PaymentService implements IPaymentService {
-	constructor(private _bookingRepo: IBookingRepo) {}
+	constructor(private _bookingRepo: IBookingRepo) { }
 
 	async createAdvancePaymentIntent(
 		bookingId: string | Types.ObjectId,
@@ -136,6 +137,46 @@ export class PaymentService implements IPaymentService {
 					bookingStatus: "advance_authorized",
 					paymentStatus: "authorized",
 				});
+
+				const walletRepo = new WalletRepo();
+				const walletService = new WalletService(walletRepo);
+
+				// 1. Record debit history entry for the user (no balance deduction — paid via Stripe card)
+				try {
+					const userWallet = await walletService.getWallet(booking.userId.toString());
+					await WalletModel.findByIdAndUpdate(
+						userWallet._id,
+						{
+							$push: {
+								transactionHistory: {
+									$each: [{
+										amount: booking.advancePaid,
+										transactionType: "debit",
+										description: `Advance payment paid via card for booking ${booking.bookingId}`,
+										date: new Date(),
+									}],
+									$position: 0,
+								},
+							},
+						},
+						{ new: true },
+					);
+				} catch (userWalletErr) {
+					console.error("Failed to record user payment history (non-fatal):", userWalletErr);
+				}
+
+				// 2. Credit the owner's wallet immediately
+				try {
+					await walletService.addTransaction(
+						booking.ownerId.toString(),
+						booking.advancePaid,
+						"credit",
+						`Advance payment received for booking ${booking.bookingId}`,
+					);
+				} catch (ownerWalletErr) {
+					console.error("Failed to credit owner wallet (non-fatal):", ownerWalletErr);
+				}
+
 				return { success: true, message: "Payment verified successfully" };
 			}
 			return { success: false, message: "Payment not authorized yet" };
