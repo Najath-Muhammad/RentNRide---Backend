@@ -82,19 +82,22 @@ export class VehicleRepo extends BaseRepo<Document & IVehicle> {
 		try {
 			const totalVehicles = await this.model.countDocuments().exec();
 			const pendingApproval = await this.model
-				.countDocuments({ isApproved: false })
+				.countDocuments({ isApproved: false, isRejected: false })
 				.exec();
 			const approved = await this.model
-				.countDocuments({ isApproved: true, isActive: true })
+				.countDocuments({ isApproved: true, isActive: true, isRejected: false })
 				.exec();
 			const blocked = await this.model
-				.countDocuments({ isActive: false })
+				.countDocuments({ isActive: false, isRejected: false })
+				.exec();
+			const rejected = await this.model
+				.countDocuments({ isRejected: true })
 				.exec();
 
-			return { totalVehicles, pendingApproval, approved, blocked };
+			return { totalVehicles, pendingApproval, approved, blocked, rejected };
 		} catch (error) {
 			console.log(error);
-			return { totalVehicles: 0, pendingApproval: 0, approved: 0, blocked: 0 };
+			return { totalVehicles: 0, pendingApproval: 0, approved: 0, blocked: 0, rejected: 0 };
 		}
 	}
 

@@ -39,6 +39,7 @@ export interface IVehicleStats {
 	pendingApproval: number;
 	approved: number;
 	blocked: number;
+	rejected: number;
 }
 
 export type PaginatedVehicles = {
