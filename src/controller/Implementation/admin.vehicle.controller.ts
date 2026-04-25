@@ -7,7 +7,7 @@ import { rejectReasonSchema } from "../../validations/commonValidation";
 import type { IAdminVehicleController } from "../interfaces/iadmin.vehicle.controller";
 
 export class AdminVehicleController implements IAdminVehicleController {
-	constructor(private _vehicleService: IVehicleService) {}
+	constructor(private _vehicleService: IVehicleService) { }
 
 	async getAllVehicles(req: Request, res: Response): Promise<Response> {
 		try {
@@ -152,7 +152,7 @@ export class AdminVehicleController implements IAdminVehicleController {
 				return errorResponse(res, "Invalid vehicle ID", HttpStatus.BAD_REQUEST);
 			}
 
-			const result = await this._vehicleService.getVehicleById(id);
+			const result = await this._vehicleService.getVehicleById(id, { userId: "", role: "admin" });
 
 			if (!result.success) {
 				return errorResponse(res, result.message, HttpStatus.NOT_FOUND);
