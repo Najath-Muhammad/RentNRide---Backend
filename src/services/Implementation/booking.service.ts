@@ -217,4 +217,29 @@ export class BookingService implements IBookingService {
 			throw error;
 		}
 	}
+
+	async getOwnerDashboard(ownerId: string): Promise<{
+		totalRevenue: number;
+		totalBookings: number;
+		totalVehicles: number;
+		activeVehicles: number;
+		earningsThisMonth: number;
+		pendingPayments: number;
+	}> {
+		const [bookingStats, vehicleStats] = await Promise.all([
+			this._bookingRepo.getOwnerDashboardStats(ownerId),
+			this._vehicleRepo.getVehiclesByOwner(ownerId),
+		]);
+
+		const totalVehicles = vehicleStats.length;
+		const activeVehicles = vehicleStats.filter(
+			(v) => v.isApproved && v.isActive,
+		).length;
+
+		return {
+			...bookingStats,
+			totalVehicles,
+			activeVehicles,
+		};
+	}
 }

@@ -76,4 +76,10 @@ export interface IBookingRepo extends IBaseRepo<IBooking> {
 		bookingId: string | Types.ObjectId,
 		updateData: Partial<IBooking>,
 	): Promise<IBooking | null>;
+	getOwnerDashboardStats(ownerId: string | Types.ObjectId): Promise<{
+		totalRevenue: number;
+		totalBookings: number;
+		earningsThisMonth: number;
+		pendingPayments: number;
+	}>;
 }

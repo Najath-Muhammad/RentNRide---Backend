@@ -50,4 +50,11 @@ bookingRouter.patch(
 	bookingController.cancelBooking.bind(bookingController),
 );
 
+bookingRouter.get(
+	"/owner/dashboard",
+	AuthGuard(ALL_ROLES),
+	checkBlocked(authService),
+	bookingController.getOwnerDashboard.bind(bookingController),
+);
+
 export default bookingRouter;

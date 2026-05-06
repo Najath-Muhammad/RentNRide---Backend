@@ -147,4 +147,26 @@ export class BookingController implements IBookingController {
 			);
 		}
 	}
+
+	async getOwnerDashboard(req: Request, res: Response): Promise<void> {
+		try {
+			const user = (req as Request & { user?: { userId: string } }).user;
+			const ownerId = user?.userId;
+
+			if (!ownerId) {
+				errorResponse(res, "User not authenticated", HttpStatus.UNAUTHORIZED);
+				return;
+			}
+
+			const stats = await this._bookingService.getOwnerDashboard(ownerId);
+			successResponse(res, "Owner dashboard fetched successfully", stats);
+		} catch (error) {
+			console.error("Error in getOwnerDashboard controller:", error);
+			errorResponse(
+				res,
+				error instanceof Error ? error.message : "Internal server error",
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
 }

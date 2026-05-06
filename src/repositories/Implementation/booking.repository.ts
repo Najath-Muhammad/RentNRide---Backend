@@ -256,4 +256,61 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 			.findByIdAndUpdate(bookingId, { $set: updateData }, { new: true })
 			.exec();
 	}
+
+	async getOwnerDashboardStats(ownerId: string | Types.ObjectId): Promise<{
+		totalRevenue: number;
+		totalBookings: number;
+		earningsThisMonth: number;
+		pendingPayments: number;
+	}> {
+		const ownerIdObj = typeof ownerId === "string"
+			? new this.model.base.Types.ObjectId(ownerId)
+			: ownerId;
+
+		const now = new Date();
+		const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+		const [revenueResult, totalBookings, monthResult, pendingPayments] = await Promise.all([
+			// Total revenue from all captured/completed bookings
+			this.model.aggregate([
+				{
+					$match: {
+						ownerId: ownerIdObj,
+						paymentStatus: { $in: ["captured", "authorized"] },
+						bookingStatus: { $nin: ["cancelled", "rejected"] },
+					},
+				},
+				{ $group: { _id: null, total: { $sum: "$advancePaid" } } },
+			]),
+			// Total bookings (trips) — all non-cancelled
+			this.model.countDocuments({
+				ownerId: ownerIdObj,
+				bookingStatus: { $nin: ["cancelled", "rejected"] },
+			}),
+			// Earnings this month
+			this.model.aggregate([
+				{
+					$match: {
+						ownerId: ownerIdObj,
+						paymentStatus: { $in: ["captured", "authorized"] },
+						createdAt: { $gte: startOfMonth },
+					},
+				},
+				{ $group: { _id: null, total: { $sum: "$advancePaid" } } },
+			]),
+			// Pending payments — approved but advance not yet authorized
+			this.model.countDocuments({
+				ownerId: ownerIdObj,
+				bookingStatus: "approved",
+				paymentStatus: "pending",
+			}),
+		]);
+
+		return {
+			totalRevenue: revenueResult[0]?.total ?? 0,
+			totalBookings,
+			earningsThisMonth: monthResult[0]?.total ?? 0,
+			pendingPayments,
+		};
+	}
 }

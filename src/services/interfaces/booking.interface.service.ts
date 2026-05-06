@@ -35,4 +35,13 @@ export interface IBookingService {
 		userId: string | Types.ObjectId,
 		reason?: string,
 	): Promise<IBooking | null>;
+
+	getOwnerDashboard(ownerId: string): Promise<{
+		totalRevenue: number;
+		totalBookings: number;
+		totalVehicles: number;
+		activeVehicles: number;
+		earningsThisMonth: number;
+		pendingPayments: number;
+	}>;
 }
