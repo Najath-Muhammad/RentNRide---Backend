@@ -20,7 +20,7 @@ jobs:
           node-version: 18
 
       - name: Install Doppler CLI
-        uses: dopplerhq/cli-action@v3
+        run: sudo curl -Ls https://cli.doppler.com/install.sh | sudo sh
 
       - name: Install Dependencies
         run: npm install
