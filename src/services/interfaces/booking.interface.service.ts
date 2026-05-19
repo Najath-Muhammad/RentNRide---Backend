@@ -58,4 +58,31 @@ export interface IBookingService {
 		earningsThisMonth: number;
 		pendingPayments: number;
 	}>;
+
+	returnVehicle(
+		bookingId: string,
+		requesterId: string | Types.ObjectId,
+	): Promise<IBooking | null>;
+
+	requestExtension(
+		bookingId: string,
+		userId: string | Types.ObjectId,
+		newReturnDate: Date,
+		reason?: string,
+	): Promise<IBooking | null>;
+
+	approveExtension(
+		bookingId: string,
+		ownerId: string | Types.ObjectId,
+		approved: boolean,
+	): Promise<IBooking | null>;
+
+	getOverdueBookingsForOwner(ownerId: string | Types.ObjectId): Promise<IBooking[]>;
+	getPendingExtensions(ownerId: string | Types.ObjectId): Promise<IBooking[]>;
+	getRunningOvertimeFee(bookingId: string): Promise<{
+		extraHours: number;
+		extraDays: number;
+		lateFee: number;
+		isOverGrace: boolean;
+	}>;
 }

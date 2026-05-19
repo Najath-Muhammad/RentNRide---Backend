@@ -363,4 +363,231 @@ export class BookingService implements IBookingService {
 			activeVehicles,
 		};
 	}
+
+	// ─────────────────────────────────────────────────────────────────────────
+	// RETURN VEHICLE
+	// ─────────────────────────────────────────────────────────────────────────
+	async returnVehicle(
+		bookingId: string,
+		requesterId: string | Types.ObjectId,
+	): Promise<IBooking | null> {
+		const { calculateOvertimeFee } = await import("../../utils/overtime.util");
+
+		const booking = await this._bookingRepo.findById(bookingId);
+		if (!booking) throw new Error("Booking not found");
+
+		const isOwner = booking.ownerId.toString() === requesterId.toString();
+		const isUser = booking.userId.toString() === requesterId.toString();
+		if (!isOwner && !isUser) throw new Error("Not authorised to mark this booking as returned");
+
+		const allowedStatuses = ["ride_started", "extended", "overdue"];
+		if (!allowedStatuses.includes(booking.bookingStatus)) {
+			throw new Error(`Cannot mark return for booking in status: ${booking.bookingStatus}`);
+		}
+
+		const now = new Date();
+		const expectedReturn = booking.extendedTill ?? booking.expectedReturnDate ?? booking.endDate;
+		const fee = calculateOvertimeFee(expectedReturn, now, booking.pricePerDay);
+
+		const updated = await this._bookingRepo.updateBookingDetails(bookingId, {
+			bookingStatus: "completed",
+			returnStatus: "returned",
+			actualReturnDate: now,
+			extraHours: fee.extraHours,
+			extraDays: fee.extraDays,
+			lateFee: fee.lateFee,
+			overtimeCharge: fee.overtimeCharge,
+			pendingDues: fee.lateFee > 0 ? fee.lateFee : 0,
+		});
+
+		// Notify both parties
+		const userId = booking.userId.toString();
+		const ownerId = booking.ownerId.toString();
+
+		const lateFeeMsg = fee.lateFee > 0
+			? ` Late charge: ₹${fee.lateFee.toLocaleString("en-IN")}.`
+			: "";
+
+		await sendPushNotification(userId, {
+			title: "✅ Vehicle Returned",
+			body: `Booking ${booking.bookingId} marked as returned.${lateFeeMsg}`,
+			data: { type: "return", bookingId: booking.bookingId },
+		});
+
+		await sendPushNotification(ownerId, {
+			title: "✅ Vehicle Returned",
+			body: `Renter returned vehicle for booking ${booking.bookingId}.${lateFeeMsg}`,
+			data: { type: "return", bookingId: booking.bookingId },
+		});
+
+		return updated;
+	}
+
+	// ─────────────────────────────────────────────────────────────────────────
+	// REQUEST EXTENSION
+	// ─────────────────────────────────────────────────────────────────────────
+	async requestExtension(
+		bookingId: string,
+		userId: string | Types.ObjectId,
+		newReturnDate: Date,
+		reason?: string,
+	): Promise<IBooking | null> {
+		const booking = await this._bookingRepo.findById(bookingId);
+		if (!booking) throw new Error("Booking not found");
+
+		if (booking.userId.toString() !== userId.toString()) {
+			throw new Error("Only the renter can request an extension");
+		}
+
+		const allowedStatuses = ["ride_started", "extended", "overdue"];
+		if (!allowedStatuses.includes(booking.bookingStatus)) {
+			throw new Error(`Cannot request extension for booking in status: ${booking.bookingStatus}`);
+		}
+
+		if (booking.extensionRequested && !booking.extensionRejected) {
+			throw new Error("An extension request is already pending");
+		}
+
+		const currentEnd = booking.extendedTill ?? booking.endDate;
+		if (newReturnDate <= currentEnd) {
+			throw new Error("New return date must be after the current end date");
+		}
+
+		// Check vehicle availability for the extension period
+		const overlapping = await this._bookingRepo.findActiveBookingsForVehicle(
+			booking.vehicleId,
+			currentEnd,
+			newReturnDate,
+		);
+		const conflict = overlapping.filter((b) => b._id.toString() !== bookingId);
+		if (conflict.length > 0) {
+			throw new Error("Vehicle is not available for the requested extension period");
+		}
+
+		const updated = await this._bookingRepo.updateBookingDetails(bookingId, {
+			extensionRequested: true,
+			extensionApproved: false,
+			extensionRejected: false,
+			extendedTill: newReturnDate,
+			extensionReason: reason?.trim(),
+			extensionRequestedAt: new Date(),
+		});
+
+		// Notify owner
+		await sendPushNotification(booking.ownerId.toString(), {
+			title: "📅 Extension Requested",
+			body: `Renter requested an extension for booking ${booking.bookingId} until ${newReturnDate.toLocaleDateString("en-IN")}.`,
+			data: { type: "extension_request", bookingId: booking.bookingId },
+		});
+
+		return updated;
+	}
+
+	// ─────────────────────────────────────────────────────────────────────────
+	// APPROVE / REJECT EXTENSION
+	// ─────────────────────────────────────────────────────────────────────────
+	async approveExtension(
+		bookingId: string,
+		ownerId: string | Types.ObjectId,
+		approved: boolean,
+	): Promise<IBooking | null> {
+		const booking = await this._bookingRepo.findById(bookingId);
+		if (!booking) throw new Error("Booking not found");
+
+		if (booking.ownerId.toString() !== ownerId.toString()) {
+			throw new Error("Only the vehicle owner can approve extensions");
+		}
+
+		if (!booking.extensionRequested) throw new Error("No extension request found");
+		if (booking.extensionApproved) throw new Error("Extension already approved");
+
+		let updateData: Partial<IBooking>;
+
+		if (approved) {
+			const newEndDate = booking.extendedTill!;
+
+			// Re-verify availability (no new conflicting bookings since request)
+			const currentEnd = booking.endDate;
+			const overlapping = await this._bookingRepo.findActiveBookingsForVehicle(
+				booking.vehicleId,
+				currentEnd,
+				newEndDate,
+			);
+			const conflict = overlapping.filter((b) => b._id.toString() !== bookingId);
+			if (conflict.length > 0) {
+				throw new Error("Vehicle is no longer available for this extension period");
+			}
+
+			// Recalculate extra amount
+			const extensionDays = Math.ceil(
+				(newEndDate.getTime() - currentEnd.getTime()) / (1000 * 60 * 60 * 24),
+			);
+			const extraAmount = extensionDays * booking.pricePerDay;
+
+			updateData = {
+				extensionApproved: true,
+				extensionRejected: false,
+				bookingStatus: "extended",
+				returnStatus: "extended",
+				expectedReturnDate: newEndDate,
+				endDate: newEndDate,
+				totalAmount: booking.totalAmount + extraAmount,
+				pendingDues: (booking.pendingDues ?? 0) + extraAmount,
+			};
+
+			// Notify renter
+			await sendPushNotification(booking.userId.toString(), {
+				title: "✅ Extension Approved!",
+				body: `Your extension for booking ${booking.bookingId} was approved until ${newEndDate.toLocaleDateString("en-IN")}.`,
+				data: { type: "extension_approved", bookingId: booking.bookingId },
+			});
+		} else {
+			updateData = {
+				extensionRejected: true,
+				extensionApproved: false,
+				extendedTill: undefined as unknown as Date,
+			};
+
+			// Notify renter
+			await sendPushNotification(booking.userId.toString(), {
+				title: "❌ Extension Rejected",
+				body: `Your extension request for booking ${booking.bookingId} was declined by the owner.`,
+				data: { type: "extension_rejected", bookingId: booking.bookingId },
+			});
+		}
+
+		return this._bookingRepo.updateBookingDetails(bookingId, updateData);
+	}
+
+	// ─────────────────────────────────────────────────────────────────────────
+	// OWNER OVERDUE & EXTENSIONS
+	// ─────────────────────────────────────────────────────────────────────────
+	async getOverdueBookingsForOwner(ownerId: string | Types.ObjectId): Promise<IBooking[]> {
+		return this._bookingRepo.getOverdueBookingsForOwner(ownerId);
+	}
+
+	async getPendingExtensions(ownerId: string | Types.ObjectId): Promise<IBooking[]> {
+		return this._bookingRepo.getPendingExtensions(ownerId);
+	}
+
+	async getRunningOvertimeFee(bookingId: string): Promise<{
+		extraHours: number;
+		extraDays: number;
+		lateFee: number;
+		isOverGrace: boolean;
+	}> {
+		const { calculateRunningOvertimeFee } = await import("../../utils/overtime.util");
+		const booking = await this._bookingRepo.findById(bookingId);
+		if (!booking) throw new Error("Booking not found");
+
+		const expectedReturn = booking.extendedTill ?? booking.expectedReturnDate ?? booking.endDate;
+		const fee = calculateRunningOvertimeFee(expectedReturn, booking.pricePerDay);
+		return {
+			extraHours: fee.extraHours,
+			extraDays: fee.extraDays,
+			lateFee: fee.lateFee,
+			isOverGrace: fee.isOverGrace,
+		};
+	}
 }
+

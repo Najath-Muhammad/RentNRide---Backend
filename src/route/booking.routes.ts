@@ -64,4 +64,46 @@ bookingRouter.get(
 	bookingController.getOwnerDashboard.bind(bookingController),
 );
 
+// ── Return & Extension routes ──────────────────────────────────────────────
+bookingRouter.patch(
+	"/:bookingId/return",
+	AuthGuard(USER_ROLES),
+	checkBlocked(authService),
+	bookingController.returnVehicle.bind(bookingController),
+);
+
+bookingRouter.patch(
+	"/:bookingId/request-extension",
+	AuthGuard(USER_ROLES),
+	checkBlocked(authService),
+	bookingController.requestExtension.bind(bookingController),
+);
+
+bookingRouter.patch(
+	"/:bookingId/approve-extension",
+	AuthGuard(USER_ROLES),
+	checkBlocked(authService),
+	bookingController.approveExtension.bind(bookingController),
+);
+
+bookingRouter.get(
+	"/owner/overdue",
+	AuthGuard(USER_ROLES),
+	checkBlocked(authService),
+	bookingController.getOverdueBookings.bind(bookingController),
+);
+
+bookingRouter.get(
+	"/owner/pending-extensions",
+	AuthGuard(USER_ROLES),
+	checkBlocked(authService),
+	bookingController.getPendingExtensions.bind(bookingController),
+);
+
+bookingRouter.get(
+	"/:bookingId/overtime-fee",
+	AuthGuard(USER_ROLES),
+	bookingController.getRunningOvertimeFee.bind(bookingController),
+);
+
 export default bookingRouter;

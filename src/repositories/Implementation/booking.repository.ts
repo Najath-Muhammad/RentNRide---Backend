@@ -320,4 +320,32 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 			pendingPayments,
 		};
 	}
+
+	async getOverdueBookingsForOwner(ownerId: string | Types.ObjectId): Promise<IBooking[]> {
+		return this.model
+			.find({
+				ownerId,
+				bookingStatus: "overdue",
+			})
+			.populate("vehicleId", "brand modelName vehicleImages")
+			.populate("userId", "name email")
+			.sort({ expectedReturnDate: 1 })
+			.exec();
+	}
+
+	async getPendingExtensions(ownerId: string | Types.ObjectId): Promise<IBooking[]> {
+		return this.model
+			.find({
+				ownerId,
+				extensionRequested: true,
+				extensionApproved: false,
+				extensionRejected: false,
+				bookingStatus: { $in: ["ride_started", "extended", "overdue"] },
+			})
+			.populate("vehicleId", "brand modelName vehicleImages")
+			.populate("userId", "name email")
+			.sort({ extensionRequestedAt: 1 })
+			.exec();
+	}
 }
+

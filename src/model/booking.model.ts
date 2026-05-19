@@ -82,45 +82,47 @@ const BookingSchema = new Schema<IBooking>(
 				"cancel_requested",
 				"no_show",
 				"rejected",
+				"overdue",
+				"extended",
 			],
 			default: "requested",
 		},
 
-		cancellationReason: {
-			type: String,
-			trim: true,
-		},
-
-		cancelledBy: {
-			type: String,
-			enum: ["user", "owner", "system", "admin"],
-		},
-
-		cancelledAt: {
-			type: Date,
-		},
-
-		refundAmount: {
-			type: Number,
-			min: 0,
-		},
-
-		refundStatus: {
-			type: String,
-			enum: ["pending", "processed", "failed"],
-		},
-
-		cancellationCharge: {
-			type: Number,
-			min: 0,
-		},
+		cancellationReason: { type: String, trim: true },
+		cancelledBy: { type: String, enum: ["user", "owner", "system", "admin"] },
+		cancelledAt: { type: Date },
+		refundAmount: { type: Number, min: 0 },
+		refundStatus: { type: String, enum: ["pending", "processed", "failed"] },
+		cancellationCharge: { type: Number, min: 0 },
 
 		tracking: {
-			isEnabled: {
-				type: Boolean,
-				default: false,
-			},
+			isEnabled: { type: Boolean, default: false },
 		},
+
+		// ── Return Tracking ────────────────────────────────────────────────
+		expectedReturnDate: { type: Date },
+		actualReturnDate: { type: Date },
+		returnStatus: {
+			type: String,
+			enum: ["pending", "returned", "overdue", "extended"],
+			default: "pending",
+		},
+
+		// ── Extension ──────────────────────────────────────────────────────
+		extensionRequested: { type: Boolean, default: false },
+		extensionApproved: { type: Boolean, default: false },
+		extensionRejected: { type: Boolean, default: false },
+		extensionReason: { type: String, trim: true },
+		extendedTill: { type: Date },
+		extensionRequestedAt: { type: Date },
+
+		// ── Late / Overtime Fees ───────────────────────────────────────────
+		extraHours: { type: Number, min: 0, default: 0 },
+		extraDays: { type: Number, min: 0, default: 0 },
+		lateFee: { type: Number, min: 0, default: 0 },
+		overtimeCharge: { type: Number, min: 0, default: 0 },
+		securityDepositDeduction: { type: Number, min: 0, default: 0 },
+		pendingDues: { type: Number, min: 0, default: 0 },
 	},
 	{
 		timestamps: true,

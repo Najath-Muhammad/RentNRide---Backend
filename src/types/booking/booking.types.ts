@@ -24,7 +24,9 @@ export interface IBooking extends Document {
 		| "cancelled"
 		| "cancel_requested"
 		| "no_show"
-		| "rejected";
+		| "rejected"
+		| "overdue"
+		| "extended";
 	cancellationReason?: string;
 	cancelledBy?: "user" | "owner" | "system" | "admin";
 	cancelledAt?: Date;
@@ -32,6 +34,24 @@ export interface IBooking extends Document {
 	refundStatus?: "pending" | "processed" | "failed";
 	cancellationCharge?: number;
 	tracking: { isEnabled: boolean };
+	// Return tracking
+	expectedReturnDate?: Date;
+	actualReturnDate?: Date;
+	returnStatus?: "pending" | "returned" | "overdue" | "extended";
+	// Extension
+	extensionRequested?: boolean;
+	extensionApproved?: boolean;
+	extensionRejected?: boolean;
+	extensionReason?: string;
+	extendedTill?: Date;
+	extensionRequestedAt?: Date;
+	// Late fees
+	extraHours?: number;
+	extraDays?: number;
+	lateFee?: number;
+	overtimeCharge?: number;
+	securityDepositDeduction?: number;
+	pendingDues?: number;
 	createdAt?: Date;
 	updatedAt?: Date;
 }

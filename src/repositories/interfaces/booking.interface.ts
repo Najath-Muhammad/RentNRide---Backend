@@ -83,4 +83,6 @@ export interface IBookingRepo extends IBaseRepo<IBooking> {
 		earningsThisMonth: number;
 		pendingPayments: number;
 	}>;
+	getOverdueBookingsForOwner(ownerId: string | Types.ObjectId): Promise<IBooking[]>;
+	getPendingExtensions(ownerId: string | Types.ObjectId): Promise<IBooking[]>;
 }

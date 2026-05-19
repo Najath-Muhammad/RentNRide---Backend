@@ -206,4 +206,121 @@ export class BookingController implements IBookingController {
 			);
 		}
 	}
+
+	async returnVehicle(req: Request, res: Response): Promise<void> {
+		try {
+			const user = req.user;
+			const requesterId = user?.userId;
+			if (!requesterId) {
+				errorResponse(res, "User not authenticated", HttpStatus.UNAUTHORIZED);
+				return;
+			}
+			const { bookingId } = req.params;
+			const booking = await this._bookingService.returnVehicle(bookingId, requesterId);
+			if (!booking) {
+				errorResponse(res, "Booking not found", HttpStatus.NOT_FOUND);
+				return;
+			}
+			successResponse(res, "Vehicle returned successfully", bookingDTO(booking));
+		} catch (error) {
+			errorResponse(
+				res,
+				error instanceof Error ? error.message : "Internal server error",
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	async requestExtension(req: Request, res: Response): Promise<void> {
+		try {
+			const userId = req.user?.userId;
+			if (!userId) {
+				errorResponse(res, "User not authenticated", HttpStatus.UNAUTHORIZED);
+				return;
+			}
+			const { bookingId } = req.params;
+			const { newReturnDate, reason } = req.body;
+			if (!newReturnDate) {
+				errorResponse(res, "newReturnDate is required", HttpStatus.BAD_REQUEST);
+				return;
+			}
+			const booking = await this._bookingService.requestExtension(
+				bookingId,
+				userId,
+				new Date(newReturnDate),
+				reason,
+			);
+			successResponse(res, "Extension requested successfully", bookingDTO(booking!));
+		} catch (error) {
+			errorResponse(
+				res,
+				error instanceof Error ? error.message : "Internal server error",
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	async approveExtension(req: Request, res: Response): Promise<void> {
+		try {
+			const ownerId = req.user?.userId;
+			if (!ownerId) {
+				errorResponse(res, "User not authenticated", HttpStatus.UNAUTHORIZED);
+				return;
+			}
+			const { bookingId } = req.params;
+			const { approved } = req.body;
+			if (typeof approved !== "boolean") {
+				errorResponse(res, "'approved' (boolean) is required", HttpStatus.BAD_REQUEST);
+				return;
+			}
+			const booking = await this._bookingService.approveExtension(bookingId, ownerId, approved);
+			const msg = approved ? "Extension approved" : "Extension rejected";
+			successResponse(res, msg, bookingDTO(booking!));
+		} catch (error) {
+			errorResponse(
+				res,
+				error instanceof Error ? error.message : "Internal server error",
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
+	async getOverdueBookings(req: Request, res: Response): Promise<void> {
+		try {
+			const ownerId = req.user?.userId;
+			if (!ownerId) {
+				errorResponse(res, "User not authenticated", HttpStatus.UNAUTHORIZED);
+				return;
+			}
+			const bookings = await this._bookingService.getOverdueBookingsForOwner(ownerId);
+			successResponse(res, "Overdue bookings fetched", bookings.map((b: IBooking) => bookingDTO(b)));
+		} catch (error) {
+			errorResponse(res, error instanceof Error ? error.message : "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	async getPendingExtensions(req: Request, res: Response): Promise<void> {
+		try {
+			const ownerId = req.user?.userId;
+			if (!ownerId) {
+				errorResponse(res, "User not authenticated", HttpStatus.UNAUTHORIZED);
+				return;
+			}
+			const bookings = await this._bookingService.getPendingExtensions(ownerId);
+			successResponse(res, "Pending extensions fetched", bookings.map((b: IBooking) => bookingDTO(b)));
+		} catch (error) {
+			errorResponse(res, error instanceof Error ? error.message : "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
+	async getRunningOvertimeFee(req: Request, res: Response): Promise<void> {
+		try {
+			const { bookingId } = req.params;
+			const fee = await this._bookingService.getRunningOvertimeFee(bookingId);
+			successResponse(res, "Running overtime fee calculated", fee);
+		} catch (error) {
+			errorResponse(res, error instanceof Error ? error.message : "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 }
+

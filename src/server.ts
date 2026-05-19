@@ -5,6 +5,7 @@ import { env } from "./config/env";
 import { initFirebase } from "./config/firebase.config";
 import redisClient from "./config/redis.config";
 import logger from "./utils/logger";
+import { startOverdueCron, startReturnReminderCron } from "./utils/overdue.cron";
 import { initSocket } from "./utils/socket";
 
 const PORT = env.PORT || 5000;
@@ -16,6 +17,8 @@ async function bootstrap() {
 	await connectDB();
 	await redisClient.connect();
 	initFirebase();
+	startOverdueCron();
+	startReturnReminderCron();
 	const httpServer = createServer(app);
 
 	initSocket(httpServer);
