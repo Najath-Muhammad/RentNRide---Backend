@@ -22,7 +22,8 @@ jobs:
             cd RentNRide---Backend
             
             # Pull the newest code you just pushed
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             
             # Build the new Docker image
             docker build -t rentnride-backend .
