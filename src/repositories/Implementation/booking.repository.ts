@@ -59,7 +59,7 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 
 		const bookings = await this.model
 			.find(filter)
-			.populate("vehicleId", "brand modelName vehicleId")
+			.populate("vehicleId", "brand modelName vehicleId vehicleImages")
 			.populate("userId", "name email")
 			.skip(skip)
 			.limit(limit)

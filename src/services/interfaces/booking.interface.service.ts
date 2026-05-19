@@ -30,6 +30,19 @@ export interface IBookingService {
 		totalPages: number;
 	}>;
 
+	getOwnerBookings(
+		ownerId: string | Types.ObjectId,
+		page?: number,
+		limit?: number,
+		status?: string,
+	): Promise<{
+		data: IBooking[];
+		total: number;
+		page: number;
+		limit: number;
+		totalPages: number;
+	}>;
+
 	cancelBooking(
 		bookingId: string,
 		userId: string | Types.ObjectId,

@@ -75,6 +75,34 @@ export class BookingService implements IBookingService {
 		}
 	}
 
+	async getOwnerBookings(
+		ownerId: string | Types.ObjectId,
+		page: number = 1,
+		limit: number = 10,
+		status?: string,
+	): Promise<{
+		data: IBooking[];
+		total: number;
+		page: number;
+		limit: number;
+		totalPages: number;
+	}> {
+		try {
+			// Auto-expire stale bookings for this owner's vehicles
+			await this._bookingRepo.expireStaleBookings();
+
+			return await this._bookingRepo.findBookingsByOwner(
+				ownerId,
+				page,
+				limit,
+				status as IBooking["bookingStatus"],
+			);
+		} catch (error) {
+			console.error("Error in getOwnerBookings:", error);
+			throw error;
+		}
+	}
+
 	async createBooking(
 		userId: string | Types.ObjectId,
 		input: CreateBookingInput,
@@ -275,17 +303,32 @@ export class BookingService implements IBookingService {
 				bookingStatus: "cancelled",
 			});
 
-			// Notify user/owner via FCM
+			// Notify user/owner via FCM and In-App Notification
 			try {
 				const notifyTargetId = isOwner ? booking.userId.toString() : booking.ownerId.toString();
 				const cancelledByStr = isOwner ? "Owner" : "User";
+				
+				const title = `Booking Cancelled ❌`;
+				const message = `${cancelledByStr} cancelled the booking ${booking.bookingId}.`;
+				
+				// Push Notification
 				await sendPushNotification(notifyTargetId, {
-					title: `Booking Cancelled ❌`,
-					body: `${cancelledByStr} cancelled the booking ${booking.bookingId}.`,
+					title,
+					body: message,
 					data: { type: "booking", bookingId: booking.bookingId },
 				});
-			} catch (fcmErr) {
-				console.error("[FCM] Cancel notification failed:", fcmErr);
+
+				// In-App Notification
+				const { NotificationModel } = require("../../model/notification.model");
+				await NotificationModel.create({
+					userId: notifyTargetId,
+					title,
+					message,
+					type: "booking",
+					metadata: { bookingId: booking._id.toString() }
+				});
+			} catch (notifyErr) {
+				console.error("[Notification] Cancel notification failed:", notifyErr);
 			}
 
 			return this._bookingRepo.findById(bookingId);

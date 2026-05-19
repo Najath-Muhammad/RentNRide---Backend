@@ -97,6 +97,43 @@ export class BookingController implements IBookingController {
 		}
 	}
 
+	async getOwnerBookings(req: Request, res: Response): Promise<void> {
+		try {
+			const user = (req as Request & { user?: { userId: string } }).user;
+			const ownerId = user?.userId;
+
+			if (!ownerId) {
+				errorResponse(res, "User not authenticated", HttpStatus.UNAUTHORIZED);
+				return;
+			}
+
+			const page = Number.parseInt(req.query.page as string, 10) || 1;
+			const limit = Number.parseInt(req.query.limit as string, 10) || 10;
+			const status = req.query.status as string;
+
+			const result = await this._bookingService.getOwnerBookings(
+				ownerId,
+				page,
+				limit,
+				status,
+			);
+
+			const mappedResult = {
+				...result,
+				data: result.data.map((b: IBooking) => bookingDTO(b)),
+			};
+
+			successResponse(res, "Owner bookings fetched successfully", mappedResult);
+		} catch (error) {
+			console.error("Error in getOwnerBookings controller:", error);
+			errorResponse(
+				res,
+				error instanceof Error ? error.message : "Internal server error",
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
+
 	async cancelBooking(req: Request, res: Response): Promise<void> {
 		try {
 			const user = (req as Request & { user?: { userId: string } }).user;

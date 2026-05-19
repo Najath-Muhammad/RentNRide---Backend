@@ -43,6 +43,13 @@ bookingRouter.get(
 	bookingController.getUserBookings.bind(bookingController),
 );
 
+bookingRouter.get(
+	"/owner",
+	AuthGuard(USER_ROLES),
+	checkBlocked(authService),
+	bookingController.getOwnerBookings.bind(bookingController),
+);
+
 bookingRouter.patch(
 	"/:bookingId/cancel",
 	AuthGuard(USER_ROLES),
