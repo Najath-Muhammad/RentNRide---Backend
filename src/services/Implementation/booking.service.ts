@@ -298,6 +298,7 @@ export class BookingService implements IBookingService {
 	async getOwnerDashboard(ownerId: string): Promise<{
 		totalRevenue: number;
 		totalBookings: number;
+		totalCancelled: number;
 		totalVehicles: number;
 		activeVehicles: number;
 		earningsThisMonth: number;

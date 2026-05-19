@@ -24,10 +24,10 @@ export class VehicleController implements IVehicleController {
 
 			const _response = await this._vehicleService.createVehicle(
 				{
-					ownerId: user.userId,
+					ownerId: user.userId as string,
 					...VehicleData,
 				},
-				user,
+				user as { userId: string; role: string },
 			);
 
 			console.log("Response from vehicle service in controller:", _response);
@@ -194,7 +194,7 @@ export class VehicleController implements IVehicleController {
 			}
 
 			const user = req.user
-				? { userId: req.user.userId, role: req.user.role }
+				? { userId: req.user.userId as string, role: req.user.role }
 				: undefined;
 			const result = await this._vehicleService.getVehicleById(id, user);
 
@@ -300,10 +300,10 @@ export class VehicleController implements IVehicleController {
 		try {
 			const ownerId = req.user;
 			console.log("owner id is: ", ownerId);
-			if (!ownerId) {
+			if (!ownerId || !ownerId.userId) {
 				return errorResponse(res, "Unauthorized", HttpStatus.UNAUTHORIZED);
 			}
-			const result = await this._vehicleService.getMyVehicles(ownerId.userId);
+			const result = await this._vehicleService.getMyVehicles(ownerId.userId as string);
 			console.log("response is : ", result);
 			if (!result.success) {
 				return errorResponse(
