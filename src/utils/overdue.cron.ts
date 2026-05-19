@@ -28,22 +28,28 @@ async function checkOverdueBookings(): Promise<void> {
 			bookingStatus: { $in: ["ride_started", "extended"] },
 			returnStatus: { $in: ["pending", "extended"] },
 			expectedReturnDate: { $lt: now },
-		}).populate("userId", "_id name email")
-		  .populate("ownerId", "_id name email");
+		})
+			.populate("userId", "_id name email")
+			.populate("ownerId", "_id name email");
 
 		if (overdueBookings.length === 0) return;
 
-		console.log(`[Overdue Cron] Found ${overdueBookings.length} overdue booking(s)`);
+		console.log(
+			`[Overdue Cron] Found ${overdueBookings.length} overdue booking(s)`,
+		);
 
 		for (const booking of overdueBookings) {
 			try {
+				const expectedReturn = booking.expectedReturnDate;
+				if (!expectedReturn) continue; // guard — should never happen given the query filter
+
 				const fee = calculateRunningOvertimeFee(
-					booking.expectedReturnDate!,
+					expectedReturn,
 					booking.pricePerDay,
 				);
 
 				const isEscalated =
-					(now.getTime() - booking.expectedReturnDate!.getTime()) / (1000 * 60 * 60) >
+					(now.getTime() - expectedReturn.getTime()) / (1000 * 60 * 60) >
 					OVERDUE_THRESHOLD_HOURS;
 
 				// Update booking status
@@ -56,10 +62,14 @@ async function checkOverdueBookings(): Promise<void> {
 					pendingDues: fee.lateFee,
 				});
 
-				const userId = (booking.userId as { _id: { toString(): string } })._id.toString();
-				const ownerId = (booking.ownerId as { _id: { toString(): string } })._id.toString();
+				const userId = (
+					booking.userId as { _id: { toString(): string } }
+				)._id.toString();
+				const ownerId = (
+					booking.ownerId as { _id: { toString(): string } }
+				)._id.toString();
 				const hoursLate = Math.ceil(
-					(now.getTime() - booking.expectedReturnDate!.getTime()) / (1000 * 60 * 60),
+					(now.getTime() - expectedReturn.getTime()) / (1000 * 60 * 60),
 				);
 
 				// Notify renter

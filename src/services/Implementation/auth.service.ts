@@ -496,7 +496,13 @@ export class AuthService implements IAuthService {
 		if (!userData) throw new Error("User not found");
 
 		// Retain whichever ID pattern the original token had
-		const payload: any = {
+		const payload: {
+			email: string;
+			role: string;
+			name: string;
+			adminId?: unknown;
+			userId?: unknown;
+		} = {
 			email: userData.email,
 			role: userData.role, // ✅ always fresh from DB
 			name: userData.name,

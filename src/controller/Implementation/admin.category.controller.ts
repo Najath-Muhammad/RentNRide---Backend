@@ -20,7 +20,7 @@ export class AdminCategoryController implements IAdminCategoryController {
 	async getAllCategories(
 		req: Request,
 		res: Response,
-		next: NextFunction,
+		_next: NextFunction,
 	): Promise<Response> {
 		try {
 			const page = Number.parseInt(req.query.page as string, 10) || 1;
@@ -54,7 +54,7 @@ export class AdminCategoryController implements IAdminCategoryController {
 	async getCategoryById(
 		req: Request,
 		res: Response,
-		next: NextFunction,
+		_next: NextFunction,
 	): Promise<Response> {
 		try {
 			const category = await this.adminService.getCategoryById(req.params.id);
@@ -75,7 +75,7 @@ export class AdminCategoryController implements IAdminCategoryController {
 	async createCategory(
 		req: Request,
 		res: Response,
-		next: NextFunction,
+		_next: NextFunction,
 	): Promise<Response> {
 		try {
 			const parsed = createCategorySchema.safeParse(req.body);
@@ -111,7 +111,7 @@ export class AdminCategoryController implements IAdminCategoryController {
 	async updateCategory(
 		req: Request,
 		res: Response,
-		next: NextFunction,
+		_next: NextFunction,
 	): Promise<Response> {
 		try {
 			const parsed = updateCategorySchema.safeParse(req.body);
@@ -143,7 +143,7 @@ export class AdminCategoryController implements IAdminCategoryController {
 	async toggleCategoryStatus(
 		req: Request,
 		res: Response,
-		next: NextFunction,
+		_next: NextFunction,
 	): Promise<Response> {
 		try {
 			const category = await this.adminService.toggleCategoryStatus(
@@ -170,7 +170,7 @@ export class AdminCategoryController implements IAdminCategoryController {
 	async getAllFuelTypes(
 		_req: Request,
 		res: Response,
-		next: NextFunction,
+		_next: NextFunction,
 	): Promise<Response> {
 		try {
 			const fuelTypes = await this.adminService.getAllFuelTypes();
@@ -193,7 +193,7 @@ export class AdminCategoryController implements IAdminCategoryController {
 	async createFuelType(
 		req: Request,
 		res: Response,
-		next: NextFunction,
+		_next: NextFunction,
 	): Promise<Response> {
 		try {
 			const parsed = fuelTypeSchema.safeParse(req.body);
@@ -224,7 +224,7 @@ export class AdminCategoryController implements IAdminCategoryController {
 	async updateFuelType(
 		req: Request,
 		res: Response,
-		next: NextFunction,
+		_next: NextFunction,
 	): Promise<Response> {
 		try {
 			const parsed = updateFuelTypeSchema.safeParse(req.body);
@@ -256,7 +256,7 @@ export class AdminCategoryController implements IAdminCategoryController {
 	async toggleFuelTypeStatus(
 		req: Request,
 		res: Response,
-		next: NextFunction,
+		_next: NextFunction,
 	): Promise<Response> {
 		try {
 			const fuel = await this.adminService.toggleFuelTypeStatus(req.params.id);

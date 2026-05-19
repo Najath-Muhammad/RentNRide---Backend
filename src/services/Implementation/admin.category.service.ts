@@ -61,9 +61,9 @@ export class AdminCategoryService implements IAdminCategoryService {
 				description: input.description,
 				subCategories,
 			});
-		} catch (error: any) {
+		} catch (error) {
 			console.error("Error creating category:", error);
-			if (error?.code === 11000) {
+			if ((error as { code?: number })?.code === 11000) {
 				throw new Error("A category with this name already exists");
 			}
 			throw new Error(
@@ -98,9 +98,9 @@ export class AdminCategoryService implements IAdminCategoryService {
 				throw new Error("Category not found");
 			}
 			return updated;
-		} catch (error: any) {
+		} catch (error) {
 			console.error(`Error updating category ${id}:`, error);
-			if (error?.code === 11000) {
+			if ((error as { code?: number })?.code === 11000) {
 				throw new Error("A category with this name already exists");
 			}
 			throw new Error(
@@ -138,9 +138,9 @@ export class AdminCategoryService implements IAdminCategoryService {
 	async createFuelType(data: Partial<IFuelType>): Promise<IFuelType> {
 		try {
 			return await this.fuelTypeRepo.create(data);
-		} catch (error: any) {
+		} catch (error) {
 			console.error("Error creating fuel type:", error);
-			if (error?.code === 11000) {
+			if ((error as { code?: number })?.code === 11000) {
 				throw new Error("A fuel type with this name already exists");
 			}
 			throw new Error(
@@ -159,9 +159,9 @@ export class AdminCategoryService implements IAdminCategoryService {
 				throw new Error("Fuel type not found");
 			}
 			return updated;
-		} catch (error: any) {
+		} catch (error) {
 			console.error(`Error updating fuel type ${id}:`, error);
-			if (error?.code === 11000) {
+			if ((error as { code?: number })?.code === 11000) {
 				throw new Error("A fuel type with this name already exists");
 			}
 			throw new Error(

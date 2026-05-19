@@ -504,7 +504,10 @@ export class BookingService implements IBookingService {
 		let updateData: Partial<IBooking>;
 
 		if (approved) {
-			const newEndDate = booking.extendedTill!;
+			if (!booking.extendedTill) {
+				throw new Error("No extension date provided in the request");
+			}
+			const newEndDate = booking.extendedTill;
 
 			// Re-verify availability (no new conflicting bookings since request)
 			const currentEnd = booking.endDate;

@@ -250,7 +250,11 @@ export class BookingController implements IBookingController {
 				new Date(newReturnDate),
 				reason,
 			);
-			successResponse(res, "Extension requested successfully", bookingDTO(booking!));
+			if (!booking) {
+				errorResponse(res, "Booking not found", HttpStatus.NOT_FOUND);
+				return;
+			}
+			successResponse(res, "Extension requested successfully", bookingDTO(booking));
 		} catch (error) {
 			errorResponse(
 				res,
@@ -274,8 +278,12 @@ export class BookingController implements IBookingController {
 				return;
 			}
 			const booking = await this._bookingService.approveExtension(bookingId, ownerId, approved);
+			if (!booking) {
+				errorResponse(res, "Booking not found", HttpStatus.NOT_FOUND);
+				return;
+			}
 			const msg = approved ? "Extension approved" : "Extension rejected";
-			successResponse(res, msg, bookingDTO(booking!));
+			successResponse(res, msg, bookingDTO(booking));
 		} catch (error) {
 			errorResponse(
 				res,

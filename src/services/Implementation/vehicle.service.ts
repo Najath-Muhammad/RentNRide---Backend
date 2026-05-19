@@ -56,8 +56,9 @@ export class VehicleService implements IVehicleService {
 		} catch (error) {
 			console.error("Error creating vehicle in service:", error);
 
-			if (typeof error === "object" && error !== null && "code" in error && (error as any).code === 11000) {
-				const duplicateField = (error as any).keyValue ? Object.keys((error as any).keyValue)[0] : "unique field";
+			if (typeof error === "object" && error !== null && "code" in error && (error as { code?: number }).code === 11000) {
+				const mongoError = error as { code?: number; keyValue?: Record<string, unknown> };
+				const duplicateField = mongoError.keyValue ? Object.keys(mongoError.keyValue)[0] : "unique field";
 				const fieldMap: Record<string, string> = { rcNumber: "RC Number" };
 				const readableField = fieldMap[duplicateField] || duplicateField;
 				return {
@@ -445,8 +446,9 @@ export class VehicleService implements IVehicleService {
 		} catch (error) {
 			console.error("Error updating vehicle:", error);
 
-			if (typeof error === "object" && error !== null && "code" in error && (error as any).code === 11000) {
-				const duplicateField = (error as any).keyValue ? Object.keys((error as any).keyValue)[0] : "unique field";
+			if (typeof error === "object" && error !== null && "code" in error && (error as { code?: number }).code === 11000) {
+				const mongoError = error as { code?: number; keyValue?: Record<string, unknown> };
+				const duplicateField = mongoError.keyValue ? Object.keys(mongoError.keyValue)[0] : "unique field";
 				const fieldMap: Record<string, string> = { rcNumber: "RC Number" };
 				const readableField = fieldMap[duplicateField] || duplicateField;
 				return { success: false, message: `A vehicle with this ${readableField} already exists in our system.` };
