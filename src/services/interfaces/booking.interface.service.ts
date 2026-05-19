@@ -39,6 +39,7 @@ export interface IBookingService {
 	getOwnerDashboard(ownerId: string): Promise<{
 		totalRevenue: number;
 		totalBookings: number;
+		totalCancelled: number;
 		totalVehicles: number;
 		activeVehicles: number;
 		earningsThisMonth: number;

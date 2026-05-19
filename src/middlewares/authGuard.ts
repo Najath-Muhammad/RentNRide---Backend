@@ -26,7 +26,8 @@ export const AuthGuard =
 
 			const verify = verifyToken(token, jwtSecret) as {
 				email: string;
-				userId: string;
+				userId?: string;
+				adminId?: string;
 				role: string;
 				name: string;
 			};

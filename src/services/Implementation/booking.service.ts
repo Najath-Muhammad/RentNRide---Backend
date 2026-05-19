@@ -10,6 +10,7 @@ import { sendPushNotification } from "../../utils/fcm.util";
 import { generateBookingId } from "../../utils/generate.bookinId";
 import type { IBookingService } from "../interfaces/booking.interface.service";
 import type { IChatService } from "../interfaces/chat.interface.service";
+import { PaymentService } from "./payment.service";
 
 export class BookingService implements IBookingService {
 	constructor(
@@ -195,23 +196,99 @@ export class BookingService implements IBookingService {
 				throw new Error("Booking not found");
 			}
 
-			if (booking.userId.toString() !== userId.toString()) {
+			const isUser = booking.userId.toString() === userId.toString();
+			const isOwner = booking.ownerId.toString() === userId.toString();
+
+			if (!isUser && !isOwner) {
 				throw new Error("Not authorized to cancel this booking");
 			}
 
-			if (booking.bookingStatus === "cancelled") {
-				throw new Error("Booking is already cancelled");
+			if (booking.bookingStatus === "cancelled" || booking.bookingStatus === "cancel_requested") {
+				throw new Error("Booking is already cancelled or cancel requested");
 			}
 
 			if (booking.bookingStatus === "completed") {
 				throw new Error("Cannot cancel a completed booking");
 			}
 
-			return await this._bookingRepo.cancelBooking(
-				bookingId,
-				ROLES.USER,
-				reason,
-			);
+			const now = new Date();
+			const startDate = new Date(booking.startDate);
+
+			if (now > startDate && isUser && booking.bookingStatus === "ride_started") {
+				throw new Error("Cannot cancel after trip has started");
+			}
+
+			// Calculate refund
+			let refundAmount = 0;
+			let cancellationCharge = 0;
+			const advancePaid = booking.advancePaid || 0;
+
+			if (isOwner) {
+				// Owner cancels: full refund
+				refundAmount = advancePaid;
+			} else {
+				// User cancels: apply time-based rules
+				const hoursUntilPickup = (startDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+				if (hoursUntilPickup > 48) {
+					refundAmount = advancePaid; // 100% refund
+				} else if (hoursUntilPickup > 24) {
+					refundAmount = advancePaid * 0.5; // 50% refund
+					cancellationCharge = advancePaid - refundAmount;
+				} else {
+					refundAmount = 0; // No refund
+					cancellationCharge = advancePaid;
+				}
+			}
+
+			// Execute DB update
+			const updatedBooking = await this._bookingRepo.updateBookingDetails(bookingId, {
+				bookingStatus: "cancel_requested",
+				cancelledBy: isOwner ? "owner" : "user",
+				cancellationReason: reason?.trim(),
+				cancelledAt: new Date(),
+				refundAmount,
+				cancellationCharge,
+				refundStatus: "pending"
+			});
+
+			if (!updatedBooking) throw new Error("Failed to update booking status");
+
+			// Trigger refund process if advance was paid via Stripe
+			if (booking.paymentIntentId && booking.paymentStatus !== "failed" && booking.paymentStatus !== "refunded") {
+				try {
+					const paymentService = new PaymentService(this._bookingRepo);
+					await paymentService.processRefund(bookingId, refundAmount, cancellationCharge);
+				} catch (refundErr) {
+					console.error("Refund processing error:", refundErr);
+				}
+			} else {
+				// No stripe payment or already refunded
+				await this._bookingRepo.updateBookingDetails(bookingId, {
+					bookingStatus: "cancelled",
+					refundStatus: "processed"
+				});
+			}
+			
+			// Final update to "cancelled" state
+			await this._bookingRepo.updateBookingDetails(bookingId, {
+				bookingStatus: "cancelled",
+			});
+
+			// Notify user/owner via FCM
+			try {
+				const notifyTargetId = isOwner ? booking.userId.toString() : booking.ownerId.toString();
+				const cancelledByStr = isOwner ? "Owner" : "User";
+				await sendPushNotification(notifyTargetId, {
+					title: `Booking Cancelled ❌`,
+					body: `${cancelledByStr} cancelled the booking ${booking.bookingId}.`,
+					data: { type: "booking", bookingId: booking.bookingId },
+				});
+			} catch (fcmErr) {
+				console.error("[FCM] Cancel notification failed:", fcmErr);
+			}
+
+			return this._bookingRepo.findById(bookingId);
 		} catch (error) {
 			console.error("Error in cancelBooking:", error);
 			throw error;

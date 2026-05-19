@@ -260,6 +260,7 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 	async getOwnerDashboardStats(ownerId: string | Types.ObjectId): Promise<{
 		totalRevenue: number;
 		totalBookings: number;
+		totalCancelled: number;
 		earningsThisMonth: number;
 		pendingPayments: number;
 	}> {
@@ -270,7 +271,7 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 		const now = new Date();
 		const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-		const [revenueResult, totalBookings, monthResult, pendingPayments] = await Promise.all([
+		const [revenueResult, totalBookings, totalCancelled, monthResult, pendingPayments] = await Promise.all([
 			// Total revenue from all captured/completed bookings
 			this.model.aggregate([
 				{
@@ -285,7 +286,12 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 			// Total bookings (trips) — all non-cancelled
 			this.model.countDocuments({
 				ownerId: ownerIdObj,
-				bookingStatus: { $nin: ["cancelled", "rejected"] },
+				bookingStatus: { $nin: ["cancelled", "cancel_requested", "rejected"] },
+			}),
+			// Total cancelled
+			this.model.countDocuments({
+				ownerId: ownerIdObj,
+				bookingStatus: { $in: ["cancelled", "cancel_requested"] },
 			}),
 			// Earnings this month
 			this.model.aggregate([
@@ -309,6 +315,7 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 		return {
 			totalRevenue: revenueResult[0]?.total ?? 0,
 			totalBookings,
+			totalCancelled,
 			earningsThisMonth: monthResult[0]?.total ?? 0,
 			pendingPayments,
 		};

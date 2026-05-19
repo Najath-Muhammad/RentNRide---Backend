@@ -1,6 +1,7 @@
 import type mongoose from "mongoose";
 
 export interface IAdminToFrontend {
+	id?: string;
 	name: string;
 	email: string;
 	role: string;

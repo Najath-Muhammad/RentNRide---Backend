@@ -15,6 +15,7 @@ export const adminUserDTO = (user: IUser): IUserToAdmin => {
 
 export const adminToToken = (user: IUser): IAdminToFrontend => {
 	return {
+		id: user._id.toString(),
 		name: user.name,
 		email: user.email,
 		role: user.role,

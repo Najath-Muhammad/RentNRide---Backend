@@ -433,7 +433,7 @@ export class AuthController implements IAuthController {
 
 			return successResponse(res, "Token verification successful", {
 				user: {
-					id: user.userId,
+					id: user.userId || user.adminId,
 					name: user.name,
 					email: user.email,
 					role: user.role,

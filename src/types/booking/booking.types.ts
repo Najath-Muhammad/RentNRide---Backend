@@ -22,9 +22,15 @@ export interface IBooking extends Document {
 		| "payment_captured"
 		| "completed"
 		| "cancelled"
+		| "cancel_requested"
+		| "no_show"
 		| "rejected";
 	cancellationReason?: string;
-	cancelledBy?: "user" | "owner" | "system";
+	cancelledBy?: "user" | "owner" | "system" | "admin";
+	cancelledAt?: Date;
+	refundAmount?: number;
+	refundStatus?: "pending" | "processed" | "failed";
+	cancellationCharge?: number;
 	tracking: { isEnabled: boolean };
 	createdAt?: Date;
 	updatedAt?: Date;

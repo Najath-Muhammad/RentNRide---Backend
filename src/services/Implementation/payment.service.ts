@@ -219,6 +219,78 @@ export class PaymentService implements IPaymentService {
 		}
 	}
 
+	async processRefund(
+		bookingId: string | Types.ObjectId,
+		refundAmount: number,
+		cancellationCharge: number,
+	): Promise<{ success: boolean; message: string }> {
+		const booking = await this._bookingRepo.findById(bookingId);
+		if (!booking || !booking.paymentIntentId) {
+			return { success: false, message: "No payment intent to refund" };
+		}
+
+		try {
+			const intent = await stripe.paymentIntents.retrieve(booking.paymentIntentId);
+
+			if (intent.status === "requires_capture") {
+				// Payment is authorized but not captured
+				if (cancellationCharge > 0) {
+					// Capture only the penalty, releases the rest
+					await stripe.paymentIntents.capture(booking.paymentIntentId, {
+						amount_to_capture: Math.round(cancellationCharge * 100),
+					});
+					
+					// Credit penalty to owner's wallet (since advance was taken back, we give owner their share of the penalty)
+					if (booking.ownerId) {
+						const walletRepo = new WalletRepo();
+						const walletService = new WalletService(walletRepo);
+						await walletService.addTransaction(
+							booking.ownerId.toString(),
+							cancellationCharge,
+							"credit",
+							`Cancellation charge received for booking ${booking.bookingId}`,
+						);
+					}
+
+					await this._bookingRepo.updateBookingDetails(bookingId, {
+						paymentStatus: "refunded",
+						refundStatus: "processed",
+					});
+					return { success: true, message: "Partial refund processed (penalty captured)" };
+				} else {
+					// 100% refund, just cancel the intent
+					await stripe.paymentIntents.cancel(booking.paymentIntentId);
+					await this._bookingRepo.updateBookingDetails(bookingId, {
+						paymentStatus: "refunded",
+						refundStatus: "processed",
+					});
+					return { success: true, message: "Full refund processed (hold released)" };
+				}
+			} else if (intent.status === "succeeded" || intent.status === "processing") {
+				// Already captured, we must issue an actual refund via Stripe Refunds API
+				if (refundAmount > 0) {
+					await stripe.refunds.create({
+						payment_intent: booking.paymentIntentId,
+						amount: Math.round(refundAmount * 100),
+					});
+				}
+				await this._bookingRepo.updateBookingDetails(bookingId, {
+					paymentStatus: "refunded",
+					refundStatus: "processed",
+				});
+				return { success: true, message: "Refund processed" };
+			}
+
+			return { success: false, message: "Payment state does not allow refund" };
+		} catch (error) {
+			console.error("Error processing refund:", error);
+			await this._bookingRepo.updateBookingDetails(bookingId, {
+				refundStatus: "failed",
+			});
+			throw new Error(`Refund failed: ${(error as Error).message}`);
+		}
+	}
+
 	async handleWebhook(body: string | Buffer, signature: string): Promise<void> {
 		const endpointSecret = env.STRIPE_WEBHOOK_SECRET;
 

@@ -79,6 +79,8 @@ const BookingSchema = new Schema<IBooking>(
 				"payment_captured",
 				"completed",
 				"cancelled",
+				"cancel_requested",
+				"no_show",
 				"rejected",
 			],
 			default: "requested",
@@ -91,7 +93,26 @@ const BookingSchema = new Schema<IBooking>(
 
 		cancelledBy: {
 			type: String,
-			enum: ["user", "owner", "system"],
+			enum: ["user", "owner", "system", "admin"],
+		},
+
+		cancelledAt: {
+			type: Date,
+		},
+
+		refundAmount: {
+			type: Number,
+			min: 0,
+		},
+
+		refundStatus: {
+			type: String,
+			enum: ["pending", "processed", "failed"],
+		},
+
+		cancellationCharge: {
+			type: Number,
+			min: 0,
 		},
 
 		tracking: {

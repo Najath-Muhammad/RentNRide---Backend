@@ -14,5 +14,10 @@ export interface IPaymentService {
 	cancelPaymentIntent(
 		bookingId: string | Types.ObjectId,
 	): Promise<{ success: boolean; message: string }>;
+	processRefund(
+		bookingId: string | Types.ObjectId,
+		refundAmount: number,
+		cancellationCharge: number,
+	): Promise<{ success: boolean; message: string }>;
 	handleWebhook(body: Buffer | string, signature: string): Promise<void>;
 }
