@@ -41,7 +41,6 @@ export class AdminCategoryController implements IAdminCategoryController {
 				mappedResult,
 			);
 		} catch (error) {
-			next(error);
 			return errorResponse(
 				res,
 				error instanceof Error
@@ -65,7 +64,6 @@ export class AdminCategoryController implements IAdminCategoryController {
 				categoryDTO(category),
 			);
 		} catch (error) {
-			next(error);
 			const message = error instanceof Error ? error.message : "Unknown error";
 			const status = message.includes("not found")
 				? HttpStatus.NOT_FOUND
@@ -102,7 +100,6 @@ export class AdminCategoryController implements IAdminCategoryController {
 				HttpStatus.CREATED,
 			);
 		} catch (error) {
-			next(error);
 			return errorResponse(
 				res,
 				error instanceof Error ? error.message : "Unknown error",
@@ -135,7 +132,6 @@ export class AdminCategoryController implements IAdminCategoryController {
 				categoryDTO(category),
 			);
 		} catch (error) {
-			next(error);
 			const message = error instanceof Error ? error.message : "Unknown error";
 			const status = message.includes("not found")
 				? HttpStatus.NOT_FOUND
@@ -159,7 +155,6 @@ export class AdminCategoryController implements IAdminCategoryController {
 				categoryDTO(category),
 			);
 		} catch (error) {
-			next(error);
 			const message = error instanceof Error ? error.message : "Unknown error";
 			const status = message.includes("not found")
 				? HttpStatus.NOT_FOUND
@@ -185,7 +180,6 @@ export class AdminCategoryController implements IAdminCategoryController {
 				fuelTypes.map((f: IFuelType) => fuelTypeDTO(f)),
 			);
 		} catch (error) {
-			next(error);
 			return errorResponse(
 				res,
 				error instanceof Error
@@ -219,7 +213,6 @@ export class AdminCategoryController implements IAdminCategoryController {
 				HttpStatus.CREATED,
 			);
 		} catch (error) {
-			next(error);
 			return errorResponse(
 				res,
 				error instanceof Error ? error.message : "Unknown error",
@@ -252,7 +245,6 @@ export class AdminCategoryController implements IAdminCategoryController {
 				fuelTypeDTO(fuel),
 			);
 		} catch (error) {
-			next(error);
 			const message = error instanceof Error ? error.message : "Unknown error";
 			const status = message.includes("not found")
 				? HttpStatus.NOT_FOUND
@@ -274,7 +266,6 @@ export class AdminCategoryController implements IAdminCategoryController {
 				fuelTypeDTO(fuel),
 			);
 		} catch (error) {
-			next(error);
 			const message = error instanceof Error ? error.message : "Unknown error";
 			const status = message.includes("not found")
 				? HttpStatus.NOT_FOUND
