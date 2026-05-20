@@ -330,5 +330,26 @@ export class BookingController implements IBookingController {
 			errorResponse(res, error instanceof Error ? error.message : "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+
+	async getBookedDates(req: Request, res: Response): Promise<void> {
+		try {
+			const { vehicleId } = req.params;
+			if (!vehicleId) {
+				errorResponse(res, "vehicleId is required", HttpStatus.BAD_REQUEST);
+				return;
+			}
+
+			const bookings = await this._bookingService.getActiveBookingsForVehicle(vehicleId);
+
+			const bookedRanges = bookings.map((b) => ({
+				startDate: b.startDate,
+				endDate: b.endDate,
+			}));
+
+			successResponse(res, "Booked dates fetched", bookedRanges);
+		} catch (error) {
+			errorResponse(res, error instanceof Error ? error.message : "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 }
 

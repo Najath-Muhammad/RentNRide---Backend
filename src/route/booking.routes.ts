@@ -106,4 +106,10 @@ bookingRouter.get(
 	bookingController.getRunningOvertimeFee.bind(bookingController),
 );
 
+// Public route — no auth needed (shown on vehicle detail page)
+bookingRouter.get(
+	"/vehicle/:vehicleId/booked-dates",
+	bookingController.getBookedDates.bind(bookingController),
+);
+
 export default bookingRouter;

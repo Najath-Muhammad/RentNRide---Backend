@@ -85,4 +85,5 @@ export interface IBookingService {
 		lateFee: number;
 		isOverGrace: boolean;
 	}>;
+	getActiveBookingsForVehicle(vehicleId: string): Promise<IBooking[]>;
 }

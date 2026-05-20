@@ -632,5 +632,9 @@ export class BookingService implements IBookingService {
 			isOverGrace: fee.isOverGrace,
 		};
 	}
+
+	async getActiveBookingsForVehicle(vehicleId: string): Promise<IBooking[]> {
+		return this._bookingRepo.findActiveBookingsForVehicle(vehicleId);
+	}
 }
 
