@@ -1,6 +1,7 @@
 import type { Document, Types } from "mongoose";
 
-export type MessageType = "text" | "booking_request" | "booking_action";
+export type MessageType = "text" | "booking_request" | "booking_action" | "booking_cancelled";
+
 
 export interface IMessage extends Document {
 	_id: Types.ObjectId;

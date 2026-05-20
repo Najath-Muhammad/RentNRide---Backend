@@ -331,6 +331,27 @@ export class BookingService implements IBookingService {
 				console.error("[Notification] Cancel notification failed:", notifyErr);
 			}
 
+			// Send cancellation message to the chat conversation
+			if (this._chatService) {
+				try {
+					const senderId = isOwner ? booking.ownerId : booking.userId;
+					const receiverId = isOwner ? booking.userId : booking.ownerId;
+					const vehicleId = booking.vehicleId.toString();
+					const cancelledByStr = isOwner ? "Owner" : "User";
+					const chatContent = `❌ Booking Cancelled\nBooking ID: ${booking.bookingId}\nCancelled by: ${cancelledByStr}${booking.cancellationReason ? `\nReason: ${booking.cancellationReason}` : ""}${refundAmount > 0 ? `\nRefund: ₹${refundAmount.toLocaleString("en-IN")}` : "\nNo refund applicable"}`;
+
+					await this._chatService.sendMessage(senderId, {
+						receiverId: receiverId.toString(),
+						vehicleId,
+						content: chatContent,
+						messageType: "booking_cancelled",
+						bookingId: booking._id.toString(),
+					});
+				} catch (chatErr) {
+					console.error("[Chat] Cancel message failed (non-fatal):", chatErr);
+				}
+			}
+
 			return this._bookingRepo.findById(bookingId);
 		} catch (error) {
 			console.error("Error in cancelBooking:", error);

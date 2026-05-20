@@ -25,7 +25,7 @@ const MessageSchema = new Schema<IMessage>(
 		},
 		messageType: {
 			type: String,
-			enum: ["text", "booking_request", "booking_action"],
+			enum: ["text", "booking_request", "booking_action", "booking_cancelled"],
 			default: "text",
 		},
 		bookingId: {
