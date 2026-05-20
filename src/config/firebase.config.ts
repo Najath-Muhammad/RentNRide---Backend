@@ -13,8 +13,16 @@ export function initFirebase(): admin.app.App | null {
 
 	const projectId = env.FIREBASE_PROJECT_ID;
 	const clientEmail = env.FIREBASE_CLIENT_EMAIL;
-	// The private key is stored in .env with escaped \n — unescape them
-	const privateKey = env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+	let privateKey = env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+
+	if (privateKey) {
+		// Strip surrounding double/single quotes that might be injected by hosting dashboards
+		if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+			privateKey = privateKey.slice(1, -1);
+		} else if (privateKey.startsWith("'") && privateKey.endsWith("'")) {
+			privateKey = privateKey.slice(1, -1);
+		}
+	}
 
 	// Skip gracefully if placeholder / missing values
 	const isPlaceholder =
