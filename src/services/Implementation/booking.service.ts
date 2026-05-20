@@ -11,6 +11,8 @@ import { generateBookingId } from "../../utils/generate.bookinId";
 import type { IBookingService } from "../interfaces/booking.interface.service";
 import type { IChatService } from "../interfaces/chat.interface.service";
 import { PaymentService } from "./payment.service";
+import { WalletRepo } from "../../repositories/Implementation/wallet.repository";
+import { WalletService } from "./wallet.service";
 
 export class BookingService implements IBookingService {
 	constructor(
@@ -269,39 +271,56 @@ export class BookingService implements IBookingService {
 				}
 			}
 
-			// Execute DB update
+			// Owner cancels: go straight to cancelled.
+			// User cancels: set cancel_requested first, then finalize to cancelled.
+			const initialStatus = isOwner ? "cancelled" : "cancel_requested";
+
 			const updatedBooking = await this._bookingRepo.updateBookingDetails(bookingId, {
-				bookingStatus: "cancel_requested",
+				bookingStatus: initialStatus,
 				cancelledBy: isOwner ? "owner" : "user",
 				cancellationReason: reason?.trim(),
 				cancelledAt: new Date(),
 				refundAmount,
 				cancellationCharge,
-				refundStatus: "pending"
+				refundStatus: refundAmount > 0 ? "pending" : "processed"
 			});
 
 			if (!updatedBooking) throw new Error("Failed to update booking status");
 
-			// Trigger refund process if advance was paid via Stripe
-			if (booking.paymentIntentId && booking.paymentStatus !== "failed" && booking.paymentStatus !== "refunded") {
+			// ── Wallet refund (paid via wallet) ───────────────────────────────
+			if (booking.paymentMethod === "wallet" && refundAmount > 0) {
+				try {
+					const walletRepo = new WalletRepo();
+					const walletService = new WalletService(walletRepo);
+					await walletService.addTransaction(
+						booking.userId.toString(),
+						refundAmount,
+						"credit",
+						`Refund for cancelled booking ${booking.bookingId}`,
+					);
+					await this._bookingRepo.updateBookingDetails(bookingId, {
+						bookingStatus: "cancelled",
+						refundStatus: "processed",
+					});
+				} catch (walletRefundErr) {
+					console.error("[Wallet Refund] Failed:", walletRefundErr);
+				}
+			// ── Stripe refund (paid via card) ─────────────────────────────────
+			} else if (booking.paymentIntentId && booking.paymentStatus !== "failed" && booking.paymentStatus !== "refunded") {
 				try {
 					const paymentService = new PaymentService(this._bookingRepo);
 					await paymentService.processRefund(bookingId, refundAmount, cancellationCharge);
 				} catch (refundErr) {
-					console.error("Refund processing error:", refundErr);
+					console.error("[Stripe Refund] Error:", refundErr);
 				}
+				await this._bookingRepo.updateBookingDetails(bookingId, { bookingStatus: "cancelled" });
 			} else {
-				// No stripe payment or already refunded
+				// No payment made yet — just mark cancelled
 				await this._bookingRepo.updateBookingDetails(bookingId, {
 					bookingStatus: "cancelled",
-					refundStatus: "processed"
+					refundStatus: "processed",
 				});
 			}
-			
-			// Final update to "cancelled" state
-			await this._bookingRepo.updateBookingDetails(bookingId, {
-				bookingStatus: "cancelled",
-			});
 
 			// Notify user/owner via FCM and In-App Notification
 			try {
