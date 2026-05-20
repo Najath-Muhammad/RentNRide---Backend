@@ -1,4 +1,4 @@
-import type { Types } from "mongoose";
+import { Types } from "mongoose";
 import { ConversationModel } from "../../model/conversation.model";
 import type { IConversation } from "../../types/chat/chat.types";
 import type { IConversationRepo } from "../interfaces/chat.interface";
@@ -21,7 +21,10 @@ export class ConversationRepo
 			participants: { $all: [userAId, userBId], $size: 2 },
 		};
 		if (vehicleId) {
-			filter.vehicleId = vehicleId;
+			filter.vehicleId =
+				typeof vehicleId === "string"
+					? new Types.ObjectId(vehicleId)
+					: vehicleId;
 		}
 		return await this.model.findOne(filter).exec();
 	}
