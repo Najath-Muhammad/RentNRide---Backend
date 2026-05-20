@@ -82,6 +82,9 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 		startDate?: Date,
 		endDate?: Date,
 	): Promise<IBooking[]> {
+		const today = new Date();
+		today.setHours(0, 0, 0, 0);
+
 		const filter: FilterQuery<IBooking> = {
 			vehicleId,
 			bookingStatus: {
@@ -93,6 +96,8 @@ export class BookingRepo extends BaseRepo<IBooking> implements IBookingRepo {
 					"payment_captured",
 				],
 			},
+			// Only return bookings that end today or in the future
+			endDate: { $gte: today },
 		};
 
 		if (startDate && endDate) {
