@@ -219,6 +219,60 @@ export class PaymentService implements IPaymentService {
 		}
 	}
 
+	async payWithWallet(
+		bookingId: string | Types.ObjectId,
+		userId: string | Types.ObjectId,
+	): Promise<{ success: boolean; message: string }> {
+		const booking = await this._bookingRepo.findById(bookingId);
+		if (!booking) throw new Error("Booking not found");
+		if (booking.userId.toString() !== userId.toString()) {
+			throw new Error("Unauthorized to pay for this booking");
+		}
+		if (booking.bookingStatus !== "approved") {
+			throw new Error("Booking must be approved before paying advance");
+		}
+		if (booking.paymentStatus === "authorized" || booking.paymentStatus === "captured") {
+			throw new Error("Advance has already been paid for this booking");
+		}
+
+		const walletRepo = new WalletRepo();
+		const walletService = new WalletService(walletRepo);
+
+		// Check balance
+		const userWallet = await walletService.getWallet(userId.toString());
+		if (userWallet.balance < booking.advancePaid) {
+			throw new Error(
+				`Insufficient wallet balance. Required: ₹${booking.advancePaid}, Available: ₹${userWallet.balance}`,
+			);
+		}
+
+		// Debit user wallet
+		await walletService.addTransaction(
+			userId.toString(),
+			booking.advancePaid,
+			"debit",
+			`Advance payment via wallet for booking ${booking.bookingId}`,
+		);
+
+		// Credit owner wallet immediately
+		await walletService.addTransaction(
+			booking.ownerId.toString(),
+			booking.advancePaid,
+			"credit",
+			`Advance payment received for booking ${booking.bookingId}`,
+		);
+
+		// Mark booking as advance_authorized (same state as Stripe card flow)
+		await this._bookingRepo.updateBookingDetails(bookingId, {
+			bookingStatus: "advance_authorized",
+			paymentStatus: "authorized",
+			paymentMethod: "wallet",
+		});
+
+		return { success: true, message: "Advance paid successfully from wallet" };
+	}
+
+
 	async processRefund(
 		bookingId: string | Types.ObjectId,
 		refundAmount: number,

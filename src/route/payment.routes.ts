@@ -33,5 +33,9 @@ router.post(
 	"/cancel-intent",
 	paymentController.cancelPaymentIntent.bind(paymentController),
 );
+router.post(
+	"/pay-with-wallet",
+	paymentController.payWithWallet.bind(paymentController),
+);
 
 export default router;

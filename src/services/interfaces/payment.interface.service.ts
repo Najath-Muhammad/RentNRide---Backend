@@ -14,6 +14,10 @@ export interface IPaymentService {
 	cancelPaymentIntent(
 		bookingId: string | Types.ObjectId,
 	): Promise<{ success: boolean; message: string }>;
+	payWithWallet(
+		bookingId: string | Types.ObjectId,
+		userId: string | Types.ObjectId,
+	): Promise<{ success: boolean; message: string }>;
 	processRefund(
 		bookingId: string | Types.ObjectId,
 		refundAmount: number,

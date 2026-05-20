@@ -63,6 +63,11 @@ const BookingSchema = new Schema<IBooking>(
 			type: String,
 		},
 
+		paymentMethod: {
+			type: String,
+			enum: ["card", "wallet"],
+		},
+
 		paymentStatus: {
 			type: String,
 			enum: ["pending", "authorized", "captured", "refunded", "failed"],

@@ -109,6 +109,23 @@ export class PaymentController {
 		}
 	}
 
+	async payWithWallet(req: Request, res: Response) {
+		try {
+			const parsed = bookingIdSchema.safeParse(req.body);
+			if (!parsed.success) {
+				errorResponse(res, parsed.error.issues[0].message, HttpStatus.BAD_REQUEST);
+				return;
+			}
+			const { bookingId } = parsed.data;
+			const { userId } = (req as AuthRequest).user as { userId: string };
+
+			const result = await this._paymentService.payWithWallet(bookingId, userId);
+			successResponse(res, result.message, result);
+		} catch (error) {
+			errorResponse(res, (error as Error).message, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 	async handleWebhook(req: Request, res: Response) {
 		try {
 			const signature = req.headers["stripe-signature"] as string;

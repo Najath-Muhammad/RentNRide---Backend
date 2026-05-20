@@ -13,7 +13,9 @@ export interface IBooking extends Document {
 	totalAmount: number;
 	advancePaid: number;
 	paymentIntentId?: string;
+	paymentMethod?: "card" | "wallet";
 	paymentStatus: "pending" | "authorized" | "captured" | "refunded" | "failed";
+
 	bookingStatus:
 		| "requested"
 		| "approved"
