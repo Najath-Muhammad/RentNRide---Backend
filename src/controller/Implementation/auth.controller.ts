@@ -89,7 +89,7 @@ export class AuthController implements IAuthController {
 			return successResponse(
 				res,
 				result.message || MESSAGES.AUTH.OTP_VERIFIED,
-				{ user: result.user },
+				{ user: result.user, accessToken: result.accessToken },
 			);
 		} catch (error) {
 			next(error);
@@ -200,6 +200,7 @@ export class AuthController implements IAuthController {
 
 			return successResponse(res, MESSAGES.AUTH.LOGIN_SUCCESS, {
 				user: result.user,
+				accessToken: result.accessToken,
 				expiresIn: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 		} catch (error) {
@@ -272,6 +273,7 @@ export class AuthController implements IAuthController {
 
 			return successResponse(res, MESSAGES.AUTH.LOGIN_SUCCESS, {
 				user: result.user,
+				accessToken: result.accessToken,
 				expiresIn: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 		} catch (error) {
@@ -340,6 +342,7 @@ export class AuthController implements IAuthController {
 			});
 
 			return successResponse(res, MESSAGES.AUTH.REFRESH_TOKEN_SUCCESS, {
+				accessToken,
 				expiresIn: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 		} catch (error) {
@@ -392,6 +395,7 @@ export class AuthController implements IAuthController {
 
 			return successResponse(res, MESSAGES.AUTH.GOOGLE_LOGIN_SUCCESS, {
 				user: result.user,
+				accessToken: result.accessToken,
 				expiresIn: Number(env.ACCESS_TOKEN_MAXAGE),
 			});
 		} catch (error) {

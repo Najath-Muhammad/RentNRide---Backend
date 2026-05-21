@@ -8,7 +8,10 @@ export const AuthGuard =
 	(roles: Array<string>) =>
 	async (req: Request, res: Response, next: NextFunction) => {
 		try {
-			const token = req.cookies?.accessToken;
+			// Accept token from cookie (same-domain) OR Authorization header (cross-domain)
+			const cookieToken = req.cookies?.accessToken;
+			const headerToken = req.headers.authorization?.replace("Bearer ", "");
+			const token = cookieToken || headerToken;
 			if (!token) {
 				return res.status(401).json({
 					success: false,
