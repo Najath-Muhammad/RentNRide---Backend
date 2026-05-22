@@ -84,4 +84,24 @@ export class NotificationController {
 			);
 		}
 	}
+
+	async clearAllNotifications(req: Request, res: Response): Promise<void> {
+		try {
+			const userId = (req as AuthRequest).user?.userId;
+			if (!userId) {
+				errorResponse(res, "Unauthorized", HttpStatus.UNAUTHORIZED);
+				return;
+			}
+			const deletedCount =
+				await this._notificationService.clearAllNotifications(userId);
+			successResponse(res, "All notifications cleared", { deletedCount });
+		} catch (error) {
+			console.error("Error clearing notifications:", error);
+			errorResponse(
+				res,
+				"Failed to clear notifications",
+				HttpStatus.INTERNAL_SERVER_ERROR,
+			);
+		}
+	}
 }

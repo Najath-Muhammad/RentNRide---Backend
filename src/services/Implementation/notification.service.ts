@@ -27,6 +27,10 @@ export class NotificationService implements INotificationService {
 		return await this._notificationRepo.delete(id);
 	}
 
+	async clearAllNotifications(userId: string): Promise<number> {
+		return await this._notificationRepo.deleteAllByUserId(userId);
+	}
+
 	async getUnreadCount(userId: string): Promise<number> {
 		return await this._notificationRepo.getUnreadCount(userId);
 	}

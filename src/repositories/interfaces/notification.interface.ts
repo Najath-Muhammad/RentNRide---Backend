@@ -5,5 +5,6 @@ export interface INotificationRepository {
 	findByUserId(userId: string): Promise<INotification[]>;
 	markAsRead(id: string): Promise<INotification | null>;
 	delete(id: string): Promise<INotification | null>;
+	deleteAllByUserId(userId: string): Promise<number>;
 	getUnreadCount(userId: string): Promise<number>;
 }

@@ -26,5 +26,9 @@ notificationRouter.delete(
 	"/:id",
 	notificationController.deleteNotification.bind(notificationController),
 );
+notificationRouter.delete(
+	"/",
+	notificationController.clearAllNotifications.bind(notificationController),
+);
 
 export default notificationRouter;

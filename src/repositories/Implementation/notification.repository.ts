@@ -23,6 +23,11 @@ export class NotificationRepository implements INotificationRepository {
 		return await NotificationModel.findByIdAndDelete(id);
 	}
 
+	async deleteAllByUserId(userId: string): Promise<number> {
+		const result = await NotificationModel.deleteMany({ userId });
+		return result.deletedCount;
+	}
+
 	async getUnreadCount(userId: string): Promise<number> {
 		return await NotificationModel.countDocuments({ userId, isRead: false });
 	}
