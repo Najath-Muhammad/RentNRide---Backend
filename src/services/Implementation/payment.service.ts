@@ -79,8 +79,19 @@ export class PaymentService implements IPaymentService {
 		if (!booking) {
 			throw new Error("Booking not found");
 		}
+		if (booking.paymentMethod === 'wallet') {
+			await this._bookingRepo.updateBookingDetails(bookingId, {
+				paymentStatus: "captured",
+				bookingStatus: "payment_captured",
+			});
+			return {
+				success: true,
+				message: "Wallet payment confirmed successfully",
+			};
+		}
+
 		if (!booking.paymentIntentId) {
-			throw new Error("No payment internet found for this booking");
+			throw new Error("No payment intent found for this booking");
 		}
 
 		if (
