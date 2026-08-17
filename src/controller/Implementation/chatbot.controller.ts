@@ -61,7 +61,7 @@ Return ONLY JSON matching one of the two formats. Do not return markdown formatt
 				const groq = new Groq({ apiKey: env.GROQ_API_KEY });
 				const completion = await groq.chat.completions.create({
 					messages: [{ role: "user", content: prompt }],
-					model: "llama-3.3-70b-versatile",
+					model: "llama3-70b-8192",
 					temperature: 0.1,
 				});
 
