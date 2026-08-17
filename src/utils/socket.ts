@@ -20,6 +20,7 @@ export function initSocket(server: HttpServer): SocketServer {
 			origin: [
 				"http://localhost:3000",
 				"https://master.dce6adyzplih9.amplifyapp.com",
+				"https://master.dzkkq4gzm2ocw.amplifyapp.com",
 				"https://rentnride.ddns.net"
 			],
 			credentials: true,
